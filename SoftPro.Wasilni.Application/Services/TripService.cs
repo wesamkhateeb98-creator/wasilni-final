@@ -2,6 +2,8 @@ using Domain.Resources;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts;
 using SoftPro.Wasilni.Application.Abstracts.Services;
+using SoftPro.Wasilni.Application.Cache;
+using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Models.Trips;
@@ -10,11 +12,6 @@ namespace SoftPro.Wasilni.Application.Services;
 
 public class TripService(IUnitOfWork unitOfWork, IMemoryCache cache) : ITripService
 {
-    // ─── Cache Keys ───────────────────────────────────────────────────────────
-
-    private static string LocationKey(int tripId)   => $"bus-location:{tripId}";
-    private static string DriverTripKey(int driverId) => $"driver-trip:{driverId}";
-
     // ─── Driver Operations ────────────────────────────────────────────────────
 
     public async Task<GetTripModel> StartTripAsync(int busId, int driverId, CancellationToken cancellationToken)
@@ -32,9 +29,9 @@ public class TripService(IUnitOfWork unitOfWork, IMemoryCache cache) : ITripServ
             if (existing.DriverId == driverId)
             {
                 // Reconnect → restore cache and return existing trip
-                cache.Set(DriverTripKey(driverId), existing.Id);
-                var loc = cache.Get<BusLocationModel>(LocationKey(existing.Id));
-                return ToModel(existing, bus.Plate, bus.LineEntity.Name, loc);
+                cache.Set(TripCacheKeys.DriverTrip(driverId), existing.Id);
+                var loc = cache.Get<BusLocationModel>(TripCacheKeys.Location(existing.Id));
+                return existing.ToModel(bus.Plate, bus.LineEntity.Name, loc);
             }
             throw new AlreadyExistsException(Phrases.BusAlreadyActive);
         }
@@ -43,9 +40,9 @@ public class TripService(IUnitOfWork unitOfWork, IMemoryCache cache) : ITripServ
         await unitOfWork.TripRepository.AddAsync(trip, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        cache.Set(DriverTripKey(driverId), trip.Id);
+        cache.Set(TripCacheKeys.DriverTrip(driverId), trip.Id);
 
-        return ToModel(trip, bus.Plate, bus.LineEntity.Name, null);
+        return trip.ToModel(bus.Plate, bus.LineEntity.Name, null);
     }
 
     public async Task EndTripAsync(int tripId, int driverId, CancellationToken cancellationToken)
@@ -54,21 +51,21 @@ public class TripService(IUnitOfWork unitOfWork, IMemoryCache cache) : ITripServ
         trip.End();
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        cache.Remove(DriverTripKey(driverId));
-        cache.Remove(LocationKey(tripId));
+        cache.Remove(TripCacheKeys.DriverTrip(driverId));
+        cache.Remove(TripCacheKeys.Location(tripId));
     }
 
     public async Task UpdateLocationAsync(int tripId, double latitude, double longitude, int driverId, CancellationToken cancellationToken)
     {
         // Fast path: validate from cache (0 DB operations)
-        if (!cache.TryGetValue(DriverTripKey(driverId), out int cachedTripId) || cachedTripId != tripId)
+        if (!cache.TryGetValue(TripCacheKeys.DriverTrip(driverId), out int cachedTripId) || cachedTripId != tripId)
         {
             // Fallback to DB (server restart / first update after reconnect)
             await GetOwnedActiveTripAsync(tripId, driverId, cancellationToken);
-            cache.Set(DriverTripKey(driverId), tripId);
+            cache.Set(TripCacheKeys.DriverTrip(driverId), tripId);
         }
 
-        cache.Set(LocationKey(tripId), new BusLocationModel(latitude, longitude, DateTime.UtcNow));
+        cache.Set(TripCacheKeys.Location(tripId), new BusLocationModel(latitude, longitude, DateTime.UtcNow));
     }
 
     public async Task<int> AdjustAnonymousAsync(int tripId, int delta, int driverId, CancellationToken cancellationToken)
@@ -84,8 +81,8 @@ public class TripService(IUnitOfWork unitOfWork, IMemoryCache cache) : ITripServ
         TripEntity? trip = await unitOfWork.TripRepository.GetActiveTripByDriverIdAsync(driverId, cancellationToken);
         if (trip is null) return null;
 
-        var location = cache.Get<BusLocationModel>(LocationKey(trip.Id));
-        return ToModel(trip, trip.Bus.Plate, trip.Bus.LineEntity.Name, location);
+        var location = cache.Get<BusLocationModel>(TripCacheKeys.Location(trip.Id));
+        return trip.ToModel(trip.Bus.Plate, trip.Bus.LineEntity.Name, location);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -100,8 +97,4 @@ public class TripService(IUnitOfWork unitOfWork, IMemoryCache cache) : ITripServ
 
         return trip;
     }
-
-    private static GetTripModel ToModel(TripEntity trip, string busPlate, string lineName, BusLocationModel? location)
-        => new(trip.Id, trip.BusId, busPlate, trip.LineId, lineName, trip.Status,
-               location?.Latitude, location?.Longitude, trip.AnonymousCount, trip.StartedAt);
 }
