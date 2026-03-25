@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.SignalR;
 using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Infrastructure.Extensions;
 using SoftPro.Wasilni.Presentation.ActionFilters;
 using SoftPro.Wasilni.Presentation.Extensions;
+using SoftPro.Wasilni.Presentation.Filters;
 using SoftPro.Wasilni.Presentation.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +15,12 @@ builder.Services.AddControllers(x =>
     x.Filters.Add<ValidatorActionFilter>();
 });
 
-builder.Services.AddSignalR(o => o.EnableDetailedErrors = true);
+builder.Services.AddSignalR(o => o.EnableDetailedErrors = true)
+                .AddHubOptions<SoftPro.Wasilni.Presentation.Hubs.TrackingHub>(o =>
+                {
+                    o.AddFilter<HubExceptionFilter>();
+                });
+
 builder.Services.AddMemoryCache();
 
 builder.Services

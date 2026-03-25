@@ -155,6 +155,26 @@
       <button class="btn-danger" onclick="endTrip()" id="btn-end" disabled>⏹ End Trip</button>
     </div>
 
+    <!-- Demo -->
+    <div class="card">
+      <h2>④ Auto Demo</h2>
+      <label>Demo Driver Index (0–4)</label>
+      <input type="number" id="demo-driver-idx" value="0" min="0" max="4" />
+      <label>Location Updates</label>
+      <input type="number" id="demo-loc-count"  value="5" min="1" max="20" />
+      <label>Delay between steps (ms)</label>
+      <input type="number" id="demo-delay"      value="1200" min="300" step="100" />
+      <button class="btn-seed" onclick="runDemo()" id="btn-demo">🚀 Run Full Demo</button>
+      <button class="btn-danger" onclick="stopDemo()" id="btn-stop-demo" disabled style="margin-top:6px;">⏹ Stop</button>
+
+      <div id="demo-progress" style="display:none; margin-top:10px;">
+        <div style="height:6px; background:#1e293b; border-radius:3px; overflow:hidden;">
+          <div id="demo-bar" style="height:100%; width:0%; background:#7c3aed; transition:width .3s;"></div>
+        </div>
+        <div id="demo-step-label" style="font-size:0.72rem; color:#94a3b8; margin-top:4px;"></div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ─── RIGHT PANEL ────────────────────────────────────────────────────── -->
@@ -292,7 +312,7 @@
     logEntry('sent', 'StartTrip →', { busId });
     try {
       await connection.invoke('StartTrip', busId);
-    } catch (e) { logEntry('error', 'StartTrip ✗', e.message); }
+    } catch (e) { logEntry('error', 'StartTrip ✗', parseHubError(e)); }
   }
 
   async function endTrip() {
@@ -301,7 +321,7 @@
     try {
       await connection.invoke('EndTrip', tripId);
       clearActiveTrip();
-    } catch (e) { logEntry('error', 'EndTrip ✗', e.message); }
+    } catch (e) { logEntry('error', 'EndTrip ✗', parseHubError(e)); }
   }
 
   async function updateLocation() {
@@ -311,7 +331,7 @@
     logEntry('sent', 'UpdateLocation →', { tripId, lat, lng });
     try {
       await connection.invoke('UpdateLocation', tripId, lat, lng);
-    } catch (e) { logEntry('error', 'UpdateLocation ✗', e.message); }
+    } catch (e) { logEntry('error', 'UpdateLocation ✗', parseHubError(e)); }
   }
 
   async function adjustAnon(delta) {
@@ -319,7 +339,17 @@
     logEntry('sent', 'AdjustAnonymous →', { tripId, delta });
     try {
       await connection.invoke('AdjustAnonymousPassenger', tripId, delta);
-    } catch (e) { logEntry('error', 'AdjustAnon ✗', e.message); }
+    } catch (e) { logEntry('error', 'AdjustAnon ✗', parseHubError(e)); }
+  }
+
+  // ─── Hub Error Parser ────────────────────────────────────────────────────────
+  function parseHubError(e) {
+    try {
+      const obj = JSON.parse(e.message);
+      return `[${obj.type}] ${obj.detail}`;
+    } catch {
+      return e.message;
+    }
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -379,6 +409,126 @@
   function copyLog()  {
     navigator.clipboard.writeText(document.getElementById('log').innerText)
       .then(() => logEntry('info','System','Log copied'));
+  }
+
+  // ─── Demo ─────────────────────────────────────────────────────────────────
+  let demoAborted = false;
+
+  // Damascus route — small incremental steps going east
+  const ROUTE_START = { lat: 33.5138, lng: 36.2765 };
+
+  async function runDemo() {
+    demoAborted = false;
+    document.getElementById('btn-demo').disabled      = true;
+    document.getElementById('btn-stop-demo').disabled = false;
+    document.getElementById('demo-progress').style.display = 'block';
+
+    const driverIdx = parseInt(document.getElementById('demo-driver-idx').value ?? 0);
+    const locCount  = parseInt(document.getElementById('demo-loc-count').value  ?? 5);
+    const delay     = parseInt(document.getElementById('demo-delay').value       ?? 1200);
+
+    const totalSteps = 5 + locCount;   // seed + login + start + locations + anon + end
+    let   step       = 0;
+
+    const progress = (label) => {
+      step++;
+      const pct = Math.round((step / totalSteps) * 100);
+      document.getElementById('demo-bar').style.width        = pct + '%';
+      document.getElementById('demo-step-label').textContent = label;
+      logEntry('info', `[${step}/${totalSteps}]`, label);
+    };
+
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
+    const abort = () => demoAborted;
+
+    try {
+      // ── Step 1: Seed ────────────────────────────────────────────────────
+      progress('Seeding database …');
+      await loadSeed();
+      if (abort()) return demoFinish();
+      await wait(delay);
+
+      if (!seedData?.drivers?.length) {
+        logEntry('error', 'Demo', 'No seed data — seed failed'); return demoFinish();
+      }
+
+      const idx    = Math.min(driverIdx, seedData.drivers.length - 1);
+      const driver = seedData.drivers[idx];
+      const busId  = driver.busId;
+
+      // ── Step 2: Login ────────────────────────────────────────────────────
+      progress(`Logging in as driver: ${driver.name} (${driver.phone})`);
+      document.getElementById('phone').value    = driver.phone;
+      document.getElementById('password').value = 'Password@123';
+      document.getElementById('busId').value    = busId;
+      await login();
+      if (abort()) return demoFinish();
+      await wait(delay);
+
+      // ── Step 3: Start trip ───────────────────────────────────────────────
+      progress(`StartTrip → busId: ${busId}`);
+      await startTrip();
+      if (abort()) return demoFinish();
+      await wait(delay);
+
+      // trip id auto-filled from OnTripStarted
+      const tripId = parseInt(document.getElementById('tripId').value);
+      if (!tripId) { logEntry('error','Demo','Trip ID not set — StartTrip may have failed'); return demoFinish(); }
+
+      // ── Steps 4…N: Location updates ──────────────────────────────────────
+      for (let i = 0; i < locCount; i++) {
+        if (abort()) return demoFinish();
+        const lat = +(ROUTE_START.lat + i * 0.0015).toFixed(6);
+        const lng = +(ROUTE_START.lng + i * 0.0020).toFixed(6);
+        document.getElementById('lat').value = lat;
+        document.getElementById('lng').value = lng;
+        progress(`UpdateLocation #${i+1} → (${lat}, ${lng})`);
+        await updateLocation();
+        await wait(delay);
+      }
+
+      // ── Anon passengers ──────────────────────────────────────────────────
+      if (abort()) return demoFinish();
+      progress('AdjustAnonymous → +1 (passenger boarded)');
+      await adjustAnon(+1);
+      await wait(delay);
+
+      if (abort()) return demoFinish();
+      progress('AdjustAnonymous → +1 (passenger boarded)');
+      await adjustAnon(+1);
+      await wait(delay);
+
+      if (abort()) return demoFinish();
+      progress('AdjustAnonymous → -1 (passenger exited)');
+      await adjustAnon(-1);
+      await wait(delay);
+
+      // ── End trip ─────────────────────────────────────────────────────────
+      if (abort()) return demoFinish();
+      progress(`EndTrip → tripId: ${tripId}`);
+      await endTrip();
+      await wait(delay / 2);
+
+      logEntry('info', 'Demo', '✅ Demo completed successfully!');
+
+    } catch (e) {
+      logEntry('error', 'Demo', 'Unexpected error: ' + e.message);
+    } finally {
+      demoFinish();
+    }
+  }
+
+  function stopDemo() {
+    demoAborted = true;
+    logEntry('info', 'Demo', '⏹ Demo stopped by user');
+    demoFinish();
+  }
+
+  function demoFinish() {
+    document.getElementById('btn-demo').disabled      = false;
+    document.getElementById('btn-stop-demo').disabled = true;
+    document.getElementById('demo-bar').style.width   = '0%';
+    document.getElementById('demo-step-label').textContent = '';
   }
 </script>
 </body>
