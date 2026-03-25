@@ -12,7 +12,7 @@ public class TrackingHub(ITripService tripService) : Hub
 {
     // ─── Driver Methods ───────────────────────────────────────────────────────
 
-    public async Task StartTrip(int busId, CancellationToken cancellationToken)
+    public async Task StartTrip(int busId)
     {
         int driverId = Context.User!.GetId();
         GetTripModel trip = await tripService.StartTripAsync(busId, driverId, cancellationToken);
