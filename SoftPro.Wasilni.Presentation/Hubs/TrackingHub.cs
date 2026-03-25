@@ -4,29 +4,33 @@ using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Models.Trips;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
+using SoftPro.Wasilni.Presentation.Hubs.Helpers;
 using SoftPro.Wasilni.Presentation.Models.Request.Hub;
+using SoftPro.Wasilni.Presentation.Models.Response.Trip;
 
 namespace SoftPro.Wasilni.Presentation.Hubs;
 
 [Authorize]
 public class TrackingHub(ITripService tripService) : Hub
 {
-    // ─── Driver Methods ───────────────────────────────────────────────────────
+    // ─── Driver: Start Trip ───────────────────────────────────────────────────
 
     public async Task StartTrip(StartTripHubRequest request)
     {
         var ct       = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
-        GetTripModel trip = await tripService.StartTripAsync(request.BusId, driverId, ct);
+        GetTripModel    trip    = await tripService.StartTripAsync(request.BusId, driverId, ct);
+        GetTripResponse payload = trip.ToResponse();
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, TripGroup(trip.Id), ct);
+        await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Trip(trip.Id), ct);
 
-        var payload = trip.ToResponse();
-        await Clients.Group(LineGroup(trip.LineId)).SendAsync("OnTripStarted", payload, ct);
-        await Clients.Group("admin").SendAsync("OnTripStarted", payload, ct);
-        await Clients.Caller.SendAsync("OnTripStarted", payload, ct);
+        await Clients.Group(TrackingGroups.Line(trip.LineId)).OnTripStartedAsync(payload, ct);
+        await Clients.Group(TrackingGroups.Admin).OnTripStartedAsync(payload, ct);
+        await Clients.Caller.OnTripStartedAsync(payload, ct);
     }
+
+    // ─── Driver: End Trip ─────────────────────────────────────────────────────
 
     public async Task EndTrip(EndTripHubRequest request)
     {
@@ -35,11 +39,13 @@ public class TrackingHub(ITripService tripService) : Hub
 
         await tripService.EndTripAsync(request.TripId, driverId, ct);
 
-        var payload = new { tripId = request.TripId };
-        await Clients.Group(TripGroup(request.TripId)).SendAsync("OnTripEnded", payload, ct);
-        await Clients.Group("admin").SendAsync("OnTripEnded", payload, ct);
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, TripGroup(request.TripId), ct);
+        await Clients.Group(TrackingGroups.Trip(request.TripId)).OnTripEndedAsync(request.TripId, ct);
+        await Clients.Group(TrackingGroups.Admin).OnTripEndedAsync(request.TripId, ct);
+
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Trip(request.TripId), ct);
     }
+
+    // ─── Driver: Update Location ──────────────────────────────────────────────
 
     public async Task UpdateLocation(UpdateLocationHubRequest request)
     {
@@ -48,16 +54,14 @@ public class TrackingHub(ITripService tripService) : Hub
 
         await tripService.UpdateLocationAsync(request.TripId, request.Latitude, request.Longitude, driverId, ct);
 
-        var payload = new
-        {
-            tripId    = request.TripId,
-            latitude  = request.Latitude,
-            longitude = request.Longitude,
-            updatedAt = DateTime.UtcNow
-        };
-        await Clients.Group(TripGroup(request.TripId)).SendAsync("OnLocationUpdated", payload, ct);
-        await Clients.Group("admin").SendAsync("OnLocationUpdated", payload, ct);
+        await Clients.Group(TrackingGroups.Trip(request.TripId))
+                     .OnLocationUpdatedAsync(request.TripId, request.Latitude, request.Longitude, ct);
+
+        await Clients.Group(TrackingGroups.Admin)
+                     .OnLocationUpdatedAsync(request.TripId, request.Latitude, request.Longitude, ct);
     }
+
+    // ─── Driver: Adjust Anonymous Passengers ─────────────────────────────────
 
     public async Task AdjustAnonymousPassenger(AdjustAnonymousHubRequest request)
     {
@@ -66,29 +70,18 @@ public class TrackingHub(ITripService tripService) : Hub
 
         int newCount = await tripService.AdjustAnonymousAsync(request.TripId, request.Delta, driverId, ct);
 
-        await Clients.Group(TripGroup(request.TripId)).SendAsync("OnAnonymousCountUpdated",
-            new { tripId = request.TripId, count = newCount }, ct);
+        await Clients.Group(TrackingGroups.Trip(request.TripId))
+                     .OnAnonymousCountUpdatedAsync(request.TripId, newCount, ct);
     }
 
-    // ─── Passenger Methods ────────────────────────────────────────────────────
+    // ─── Passenger: Subscribe / Unsubscribe ──────────────────────────────────
 
-    public async Task SubscribeToTrip(int tripId)
-    {
-        await Groups.AddToGroupAsync(Context.ConnectionId, TripGroup(tripId), Context.ConnectionAborted);
-    }
+    public Task SubscribeToTrip(int tripId)
+        => Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Trip(tripId), Context.ConnectionAborted);
 
-    public async Task SubscribeToLine(int lineId)
-    {
-        await Groups.AddToGroupAsync(Context.ConnectionId, LineGroup(lineId), Context.ConnectionAborted);
-    }
+    public Task SubscribeToLine(int lineId)
+        => Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), Context.ConnectionAborted);
 
-    public async Task UnsubscribeFromTrip(int tripId)
-    {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, TripGroup(tripId), Context.ConnectionAborted);
-    }
-
-    // ─── Group Helpers ────────────────────────────────────────────────────────
-
-    private static string TripGroup(int tripId) => $"trip-{tripId}";
-    private static string LineGroup(int lineId) => $"line-{lineId}";
+    public Task UnsubscribeFromTrip(int tripId)
+        => Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Trip(tripId), Context.ConnectionAborted);
 }
