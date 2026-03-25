@@ -6,6 +6,7 @@ using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Lines;
 
+
 namespace SoftPro.Wasilni.Application.Services;
 
 public class LineService(IUnitOfWork unitOfWork) : ILineService
@@ -18,17 +19,8 @@ public class LineService(IUnitOfWork unitOfWork) : ILineService
 
         LineEntity line = LineEntity.Create(model);
 
-        await unitOfWork.Transaction(async () =>
-        {
-            await unitOfWork.LineRepository.AddAsync(line, cancellationToken);
-            await unitOfWork.CompleteAsync(cancellationToken);
-
-            List<PointEntity> points = [.. model.Points.Select(p => PointEntity.Create(p, line.Id))];
-
-            await unitOfWork.PointRepository.AddAllAsync(points, cancellationToken);
-            await unitOfWork.CompleteAsync(cancellationToken);
-
-        }, cancellationToken);
+        await unitOfWork.LineRepository.AddAsync(line, cancellationToken);
+        await unitOfWork.CompleteAsync(cancellationToken);
 
         return line.Id;
     }

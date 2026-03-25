@@ -10,8 +10,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<AccountEntity> Accounts { get; set; } = null!;
     public DbSet<BusEntity> Buses { get; set; } = null!;
-    public DbSet<NotificationEntity> Notifications { get; set; } = null!;
-    public DbSet<PointEntity> Points { get; set; } = null!;
     public DbSet<LineEntity> Lines { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

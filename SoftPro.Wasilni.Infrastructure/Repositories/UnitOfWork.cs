@@ -11,10 +11,6 @@ public class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
 
     public IBusRepository BusRepository { get; } = new BusRepository(dbContext);
 
-    public INotificationRepository NotificationRepository { get; } = new NotificationRepository(dbContext);
-
-    public IPointRepository PointRepository { get; } = new PointRepository(dbContext);
-
     public ILineRepository LineRepository { get; } = new LineRepository(dbContext);
 
 

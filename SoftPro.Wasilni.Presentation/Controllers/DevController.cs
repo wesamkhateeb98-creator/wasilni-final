@@ -21,7 +21,7 @@ public class DevController(AppDbContext dbContext) : BaseController
         await dbContext.Accounts.ExecuteDeleteAsync(cancellationToken);
 
         // 1. Create one line
-        var line = LineEntity.Create(new SoftPro.Wasilni.Domain.Models.Lines.AddLineModel("Main Line", []));
+        var line = LineEntity.Create(new SoftPro.Wasilni.Domain.Models.Lines.AddLineModel("Main Line"));
         await dbContext.Lines.AddAsync(line, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 

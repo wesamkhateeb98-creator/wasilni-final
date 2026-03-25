@@ -12,13 +12,5 @@ public static class RegistrationExtensions
                     .AddScoped<IBusService, BusService>()
         //            .AddScoped<ICityService, CityService>()
                     .AddScoped<ILineService, LineService>()
-                    .AddScoped<IPointService, PointService>()
-        //            .AddScoped<IAssignDriverService, AssignDriverService>()
-        //            .AddScoped<ICoordinatorService, CoordinatorService>()
-        //            .AddScoped<ITripService, TripService>()
-        //            .AddScoped<IBookingService, BookingService>()
-                    .AddScoped<IFirebaseNotificationService, FirebaseNotificationService>()
-        //            .AddScoped<IOwnerService,OwnerService>()
-        //            .AddScoped<IDriverService, DriverService>()
                     .AddScoped<AuthHelper>();
 }
