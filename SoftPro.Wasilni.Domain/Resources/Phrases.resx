@@ -390,10 +390,10 @@
   <data name="NotYourBus" xml:space="preserve">
     <value>هذا الباص غير مخصص لك</value>
   </data>
-  <data name="TripNotFound" xml:space="preserve">
-    <value>الرحلة غير موجودة</value>
-  </data>
   <data name="TripAlreadyEnded" xml:space="preserve">
     <value>الرحلة منتهية بالفعل</value>
+  </data>
+  <data name="InvalidDelta" xml:space="preserve">
+    <value>القيمة يجب أن تكون 1 أو -1 فقط</value>
   </data>
 </root>

@@ -438,5 +438,14 @@ namespace Domain.Resources
                 return ResourceManager.GetString("Points", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to التغيير.
+        /// </summary>
+        public static string Delta {
+            get {
+                return ResourceManager.GetString("Delta", resourceCulture);
+            }
+        }
     }
 }

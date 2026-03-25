@@ -888,5 +888,14 @@ namespace Domain.Resources
                 return ResourceManager.GetString("TripAlreadyEnded", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to القيمة يجب أن تكون 1 أو -1 فقط.
+        /// </summary>
+        public static string InvalidDelta {
+            get {
+                return ResourceManager.GetString("InvalidDelta", resourceCulture);
+            }
+        }
     }
 }

@@ -18,7 +18,8 @@ builder.Services.AddControllers(x =>
 builder.Services.AddSignalR(o => o.EnableDetailedErrors = true)
                 .AddHubOptions<SoftPro.Wasilni.Presentation.Hubs.TrackingHub>(o =>
                 {
-                    o.AddFilter<HubExceptionFilter>();
+                    o.AddFilter<HubValidationFilter>();   // ① validates first
+                    o.AddFilter<HubExceptionFilter>();    // ② catches & formats errors
                 });
 
 builder.Services.AddMemoryCache();
