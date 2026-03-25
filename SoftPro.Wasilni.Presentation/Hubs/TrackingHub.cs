@@ -14,43 +14,55 @@ public class TrackingHub(ITripService tripService) : Hub
 
     public async Task StartTrip(int busId)
     {
+        var ct       = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
-        GetTripModel trip = await tripService.StartTripAsync(busId, driverId, cancellationToken);
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, TripGroup(trip.Id), cancellationToken);
+        GetTripModel trip = await tripService.StartTripAsync(busId, driverId, ct);
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, TripGroup(trip.Id), ct);
 
         var payload = trip.ToResponse();
-        await Clients.Group(LineGroup(trip.LineId)).SendAsync("OnTripStarted", payload, cancellationToken);
-        await Clients.Group("admin").SendAsync("OnTripStarted", payload, cancellationToken);
+        await Clients.Group(LineGroup(trip.LineId)).SendAsync("OnTripStarted", payload, ct);
+        await Clients.Group("admin").SendAsync("OnTripStarted", payload, ct);
+
+        // Also notify the driver themselves
+        await Clients.Caller.SendAsync("OnTripStarted", payload, ct);
     }
 
-    public async Task EndTrip(int tripId, CancellationToken cancellationToken)
+    public async Task EndTrip(int tripId)
     {
+        var ct       = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
-        await tripService.EndTripAsync(tripId, driverId, cancellationToken);
 
-        await Clients.Group(TripGroup(tripId)).SendAsync("OnTripEnded", new { tripId }, cancellationToken);
-        await Clients.Group("admin").SendAsync("OnTripEnded", new { tripId }, cancellationToken);
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, TripGroup(tripId), cancellationToken);
+        await tripService.EndTripAsync(tripId, driverId, ct);
+
+        var payload = new { tripId };
+        await Clients.Group(TripGroup(tripId)).SendAsync("OnTripEnded", payload, ct);
+        await Clients.Group("admin").SendAsync("OnTripEnded", payload, ct);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, TripGroup(tripId), ct);
     }
 
-    public async Task UpdateLocation(int tripId, double latitude, double longitude, CancellationToken cancellationToken)
+    public async Task UpdateLocation(int tripId, double latitude, double longitude)
     {
+        var ct       = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
-        await tripService.UpdateLocationAsync(tripId, latitude, longitude, driverId, cancellationToken);
+
+        await tripService.UpdateLocationAsync(tripId, latitude, longitude, driverId, ct);
 
         var payload = new { tripId, latitude, longitude, updatedAt = DateTime.UtcNow };
-        await Clients.Group(TripGroup(tripId)).SendAsync("OnLocationUpdated", payload, cancellationToken);
-        await Clients.Group("admin").SendAsync("OnLocationUpdated", payload, cancellationToken);
+        await Clients.Group(TripGroup(tripId)).SendAsync("OnLocationUpdated", payload, ct);
+        await Clients.Group("admin").SendAsync("OnLocationUpdated", payload, ct);
     }
 
-    public async Task AdjustAnonymousPassenger(int tripId, int delta, CancellationToken cancellationToken)
+    public async Task AdjustAnonymousPassenger(int tripId, int delta)
     {
+        var ct       = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
-        int newCount = await tripService.AdjustAnonymousAsync(tripId, delta, driverId, cancellationToken);
+
+        int newCount = await tripService.AdjustAnonymousAsync(tripId, delta, driverId, ct);
 
         await Clients.Group(TripGroup(tripId)).SendAsync("OnAnonymousCountUpdated",
-            new { tripId, count = newCount }, cancellationToken);
+            new { tripId, count = newCount }, ct);
     }
 
     // ─── Group Helpers ────────────────────────────────────────────────────────
