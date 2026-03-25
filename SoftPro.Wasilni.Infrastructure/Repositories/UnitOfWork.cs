@@ -12,6 +12,7 @@ public class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
     public IBusRepository BusRepository { get; } = new BusRepository(dbContext);
 
     public ILineRepository LineRepository { get; } = new LineRepository(dbContext);
+    public ITripRepository TripRepository { get; } = new TripRepository(dbContext);
 
 
     public Task CompleteAsync(CancellationToken cancellationToken)

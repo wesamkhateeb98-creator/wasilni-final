@@ -15,4 +15,5 @@ public interface IBusRepository : IRepository<BusEntity>
     Task<BusEntity?> GetWithBusWithRequestBusByIdAsync(int busId, CancellationToken cancellationToken);
     Task<BusEntity?> GetWithRequestByIdAsync(int id, CancellationToken cancellationToken);
     Task<BusEntity?> GetByIdWithDriverAsync(int busId, CancellationToken cancellationToken);
+    Task<BusEntity?> GetByIdWithLineAsync(int id, CancellationToken cancellationToken);
 }

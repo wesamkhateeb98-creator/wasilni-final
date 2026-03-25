@@ -384,4 +384,16 @@
   <data name="PointsRequired" xml:space="preserve">
     <value>يجب إضافة نقطة واحدة على الأقل</value>
   </data>
+  <data name="BusAlreadyActive" xml:space="preserve">
+    <value>الباص في رحلة نشطة بالفعل</value>
+  </data>
+  <data name="NotYourBus" xml:space="preserve">
+    <value>هذا الباص غير مخصص لك</value>
+  </data>
+  <data name="TripNotFound" xml:space="preserve">
+    <value>الرحلة غير موجودة</value>
+  </data>
+  <data name="TripAlreadyEnded" xml:space="preserve">
+    <value>الرحلة منتهية بالفعل</value>
+  </data>
 </root>

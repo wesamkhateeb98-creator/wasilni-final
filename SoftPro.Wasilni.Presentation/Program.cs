@@ -13,6 +13,9 @@ builder.Services.AddControllers(x =>
     x.Filters.Add<ValidatorActionFilter>();
 });
 
+builder.Services.AddSignalR();
+builder.Services.AddMemoryCache();
+
 builder.Services
     .RegisterApplication()
     .RegisterInfrastructure(builder.Configuration)
@@ -46,10 +49,11 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-//app.UseStaticFiles();
+app.UseStaticFiles();
 
 
 app.MapControllers();
+app.MapHub<SoftPro.Wasilni.Presentation.Hubs.TrackingHub>("/hubs/tracking");
 
 app.Run();
 

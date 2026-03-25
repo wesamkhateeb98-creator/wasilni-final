@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wasilni — SignalR Hub Tester</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      color: #38bdf8;
+      margin-bottom: 24px;
+      letter-spacing: 1px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #334155;
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 10px 16px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+    }
+
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+      transition: background .3s;
+      flex-shrink: 0;
+    }
+    .dot.connected   { background: #22c55e; }
+    .dot.connecting  { background: #f59e0b; animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .4; }
+    }
+
+    #status-text { font-size: 0.85rem; color: #94a3b8; }
+
+    #token-display {
+      margin-left: auto;
+      font-size: 0.7rem;
+      color: #64748b;
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Form elements */
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+    label:first-of-type { margin-top: 0; }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus { border-color: #38bdf8; }
+
+    button {
+      margin-top: 12px;
+      width: 100%;
+      padding: 9px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    button:active { transform: scale(.98); }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-primary  { background: #38bdf8; color: #0f172a; }
+    .btn-success  { background: #22c55e; color: #0f172a; }
+    .btn-danger   { background: #ef4444; color: #fff; }
+    .btn-warning  { background: #f59e0b; color: #0f172a; }
+    .btn-neutral  { background: #475569; color: #e2e8f0; }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .btn-row button { margin-top: 0; }
+
+    hr { border: none; border-top: 1px solid #334155; margin: 16px 0; }
+
+    /* Event log */
+    .log-wrap {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    #log {
+      flex: 1;
+      min-height: 480px;
+      overflow-y: auto;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.78rem;
+      line-height: 1.6;
+    }
+
+    .log-entry {
+      padding: 3px 0;
+      border-bottom: 1px solid #1e293b;
+    }
+    .log-time   { color: #64748b; }
+    .log-event  { color: #38bdf8; font-weight: 600; }
+    .log-data   { color: #a3e635; }
+    .log-info   { color: #94a3b8; }
+    .log-error  { color: #f87171; }
+    .log-sent   { color: #f59e0b; }
+
+    .log-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .log-controls button {
+      margin-top: 0;
+      width: auto;
+      flex: 1;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+    }
+
+    /* Trip info badge */
+    #trip-info {
+      display: none;
+      background: #0f172a;
+      border: 1px solid #22c55e;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 12px;
+      font-size: 0.78rem;
+      color: #86efac;
+    }
+    #trip-info span { display: block; }
+  </style>
+</head>
+<body>
+
+<h1>🚌 Wasilni — SignalR Hub Tester</h1>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <div class="dot" id="dot"></div>
+  <span id="status-text">Disconnected</span>
+  <span id="token-display">No token</span>
+</div>
+
+<div class="grid">
+
+  <!-- ─── LEFT PANEL ────────────────────────────────────────── -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+
+    <!-- 1. Login -->
+    <div class="card">
+      <h2>① Login</h2>
+      <label>Phone Number</label>
+      <input type="text" id="phone" placeholder="09XXXXXXXX" />
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••" />
+      <button class="btn-primary" onclick="login()">Login &amp; Connect</button>
+      <button class="btn-neutral" onclick="disconnect()" disabled id="btn-disconnect">Disconnect</button>
+    </div>
+
+    <!-- 2. Driver Actions -->
+    <div class="card">
+      <h2>② Driver Actions</h2>
+
+      <label>Bus ID</label>
+      <input type="number" id="busId" value="1" min="1" />
+      <button class="btn-success" onclick="startTrip()" id="btn-start" disabled>▶ Start Trip</button>
+
+      <div id="trip-info">
+        <span id="ti-id"></span>
+        <span id="ti-bus"></span>
+        <span id="ti-line"></span>
+      </div>
+
+      <hr/>
+
+      <label>Trip ID</label>
+      <input type="number" id="tripId" value="" min="1" placeholder="auto-filled on StartTrip" />
+
+      <label>Latitude</label>
+      <input type="number" id="lat" value="33.5138" step="0.0001" />
+      <label>Longitude</label>
+      <input type="number" id="lng" value="36.2765" step="0.0001" />
+      <button class="btn-primary" onclick="updateLocation()" id="btn-loc" disabled>📍 Update Location</button>
+
+      <hr/>
+
+      <label>Anonymous Passenger Delta</label>
+      <div class="btn-row">
+        <button class="btn-success" onclick="adjustAnon(+1)" id="btn-anon-plus"  disabled>+1 Board</button>
+        <button class="btn-warning" onclick="adjustAnon(-1)" id="btn-anon-minus" disabled>-1 Exit</button>
+      </div>
+
+      <hr/>
+
+      <button class="btn-danger" onclick="endTrip()" id="btn-end" disabled>⏹ End Trip</button>
+    </div>
+
+  </div>
+
+  <!-- ─── RIGHT PANEL ───────────────────────────────────────── -->
+  <div class="card log-wrap">
+    <h2>📡 Event Log</h2>
+    <div id="log"></div>
+    <div class="log-controls">
+      <button class="btn-neutral" onclick="clearLog()">🗑 Clear</button>
+      <button class="btn-neutral" onclick="copyLog()">📋 Copy</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ─── State ──────────────────────────────────────────────────────────────────
+  let connection = null;
+  let token      = null;
+  let activeTripId = null;
+
+  const API_BASE = window.location.origin;   // https://localhost:7297
+
+  // ─── Login & Connect ────────────────────────────────────────────────────────
+  async function login() {
+    const phone    = document.getElementById('phone').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!phone || !password) { logEntry('error', 'System', 'Phone and password are required.'); return; }
+
+    logEntry('info', 'System', `Logging in as ${phone}…`);
+
+    try {
+      const res  = await fetch(`${API_BASE}/api/v1.0/accounts/login`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ phoneNumber: phone, password })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        logEntry('error', 'Login', err.title ?? `HTTP ${res.status}`);
+        return;
+      }
+
+      const data = await res.json();
+      token = data.token ?? data.accessToken ?? data.Token ?? data.AccessToken;
+
+      if (!token) { logEntry('error', 'Login', 'No token found in response: ' + JSON.stringify(data)); return; }
+
+      document.getElementById('token-display').textContent = 'Token: ' + token.substring(0, 40) + '…';
+      logEntry('info', 'Login', '✅ Authenticated successfully');
+
+      await connectHub();
+
+    } catch (e) {
+      logEntry('error', 'Login', e.message);
+    }
+  }
+
+  // ─── SignalR Connection ──────────────────────────────────────────────────────
+  async function connectHub() {
+    setStatus('connecting');
+
+    connection = new signalR.HubConnectionBuilder()
+      .withUrl(`${API_BASE}/hubs/tracking`, {
+        accessTokenFactory: () => token
+      })
+      .withAutomaticReconnect([0, 2000, 5000, 10000])
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+
+    // ── Server → Client events ────────────────────────────────────────────────
+    connection.on('OnTripStarted', payload => {
+      logEntry('event', 'OnTripStarted', payload);
+    });
+
+    connection.on('OnTripEnded', payload => {
+      logEntry('event', 'OnTripEnded', payload);
+      if (payload?.tripId == activeTripId) clearActiveTrip();
+    });
+
+    connection.on('OnLocationUpdated', payload => {
+      logEntry('event', 'OnLocationUpdated', payload);
+    });
+
+    connection.on('OnAnonymousCountUpdated', payload => {
+      logEntry('event', 'OnAnonymousCountUpdated', payload);
+    });
+
+    connection.onreconnecting(() => { setStatus('connecting'); logEntry('info', 'Hub', 'Reconnecting…'); });
+    connection.onreconnected(() =>   { setStatus('connected');  logEntry('info', 'Hub', '✅ Reconnected'); });
+    connection.onclose(err => {
+      setStatus('disconnected');
+      logEntry('error', 'Hub', 'Connection closed' + (err ? ': ' + err.message : ''));
+    });
+
+    try {
+      await connection.start();
+      setStatus('connected');
+      logEntry('info', 'Hub', `✅ Connected  (id: ${connection.connectionId})`);
+      setDriverButtons(true);
+    } catch (e) {
+      setStatus('disconnected');
+      logEntry('error', 'Hub', 'Connection failed: ' + e.message);
+    }
+  }
+
+  async function disconnect() {
+    if (connection) {
+      await connection.stop();
+      connection = null;
+      token = null;
+    }
+    setStatus('disconnected');
+    setDriverButtons(false);
+    document.getElementById('token-display').textContent = 'No token';
+    document.getElementById('btn-disconnect').disabled = true;
+    clearActiveTrip();
+  }
+
+  // ─── Driver Hub Calls ────────────────────────────────────────────────────────
+  async function startTrip() {
+    const busId = parseInt(document.getElementById('busId').value);
+    if (!busId) { logEntry('error', 'Client', 'Enter a valid Bus ID'); return; }
+
+    logEntry('sent', 'StartTrip', { busId });
+    try {
+      await connection.invoke('StartTrip', busId);
+    } catch (e) { logEntry('error', 'StartTrip', e.message); }
+  }
+
+  async function endTrip() {
+    const tripId = getTripId();
+    if (!tripId) return;
+
+    logEntry('sent', 'EndTrip', { tripId });
+    try {
+      await connection.invoke('EndTrip', tripId);
+      clearActiveTrip();
+    } catch (e) { logEntry('error', 'EndTrip', e.message); }
+  }
+
+  async function updateLocation() {
+    const tripId = getTripId();
+    if (!tripId) return;
+    const lat = parseFloat(document.getElementById('lat').value);
+    const lng = parseFloat(document.getElementById('lng').value);
+
+    logEntry('sent', 'UpdateLocation', { tripId, lat, lng });
+    try {
+      await connection.invoke('UpdateLocation', tripId, lat, lng);
+    } catch (e) { logEntry('error', 'UpdateLocation', e.message); }
+  }
+
+  async function adjustAnon(delta) {
+    const tripId = getTripId();
+    if (!tripId) return;
+
+    logEntry('sent', 'AdjustAnonymousPassenger', { tripId, delta });
+    try {
+      await connection.invoke('AdjustAnonymousPassenger', tripId, delta);
+    } catch (e) { logEntry('error', 'AdjustAnon', e.message); }
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+  function getTripId() {
+    const val = parseInt(document.getElementById('tripId').value);
+    if (!val) { logEntry('error', 'Client', 'Trip ID is required (auto-fills after StartTrip)'); return null; }
+    return val;
+  }
+
+  function setActiveTrip(trip) {
+    activeTripId = trip.id;
+    document.getElementById('tripId').value = trip.id;
+    const info = document.getElementById('trip-info');
+    info.style.display = 'block';
+    document.getElementById('ti-id').textContent   = `Trip ID : ${trip.id}`;
+    document.getElementById('ti-bus').textContent  = `Bus     : ${trip.busPlate}`;
+    document.getElementById('ti-line').textContent = `Line    : ${trip.lineName}`;
+  }
+
+  function clearActiveTrip() {
+    activeTripId = null;
+    document.getElementById('trip-info').style.display = 'none';
+  }
+
+  function setStatus(state) {
+    const dot  = document.getElementById('dot');
+    const text = document.getElementById('status-text');
+    dot.className = 'dot ' + state;
+    text.textContent = state.charAt(0).toUpperCase() + state.slice(1);
+  }
+
+  function setDriverButtons(enabled) {
+    ['btn-start','btn-loc','btn-anon-plus','btn-anon-minus','btn-end']
+      .forEach(id => document.getElementById(id).disabled = !enabled);
+    document.getElementById('btn-disconnect').disabled = !enabled;
+  }
+
+  // ─── Log ─────────────────────────────────────────────────────────────────────
+  function logEntry(type, name, data) {
+    const log  = document.getElementById('log');
+    const time = new Date().toLocaleTimeString('en', { hour12: false, fractionalSecondDigits: 2 });
+
+    // Auto-fill Trip ID from OnTripStarted
+    if (type === 'event' && name === 'OnTripStarted' && data) {
+      setActiveTrip(data);
+    }
+
+    const pretty = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML =
+      `<span class="log-time">[${time}]</span> ` +
+      `<span class="log-${type}">${name}</span> ` +
+      `<span class="log-data">${escapeHtml(pretty)}</span>`;
+
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function clearLog() { document.getElementById('log').innerHTML = ''; }
+
+  function copyLog() {
+    const text = document.getElementById('log').innerText;
+    navigator.clipboard.writeText(text).then(() => logEntry('info','System','Log copied to clipboard'));
+  }
+</script>
+</body>
+</html>

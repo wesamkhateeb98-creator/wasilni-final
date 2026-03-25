@@ -131,6 +131,11 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
              (int)Math.Ceiling((double)count / inputModel.PageSize),
              result
              );
-        
+
     }
+
+    public Task<BusEntity?> GetByIdWithLineAsync(int id, CancellationToken cancellationToken)
+        => dbContext.Buses
+            .Include(b => b.LineEntity)
+            .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 }

@@ -861,5 +861,32 @@ namespace Domain.Resources
                 return ResourceManager.GetString("PointsRequired", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الباص في رحلة نشطة بالفعل.
+        /// </summary>
+        public static string BusAlreadyActive {
+            get {
+                return ResourceManager.GetString("BusAlreadyActive", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to هذا الباص غير مخصص لك.
+        /// </summary>
+        public static string NotYourBus {
+            get {
+                return ResourceManager.GetString("NotYourBus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الرحلة منتهية بالفعل.
+        /// </summary>
+        public static string TripAlreadyEnded {
+            get {
+                return ResourceManager.GetString("TripAlreadyEnded", resourceCulture);
+            }
+        }
     }
 }

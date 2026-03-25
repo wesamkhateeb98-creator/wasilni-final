@@ -3,4 +3,5 @@
   <Project Path="SoftPro.Wasilni.Domain/SoftPro.Wasilni.Domain.csproj" />
   <Project Path="SoftPro.Wasilni.Infrastructure/SoftPro.Wasilni.Infrastructure.csproj" />
   <Project Path="SoftPro.Wasilni.Presentation/SoftPro.Wasilni.Presentation.csproj" />
+  <Project Path="SoftPro.Wasilni.Tests/SoftPro.Wasilni.Tests.csproj" />
 </Solution>
