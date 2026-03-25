@@ -17,8 +17,7 @@ public static class ToModelExtensions
     public static LoginModel ToModel(this LoginAccountRequest loginRequest)
         => new(
             loginRequest.Phonenumber,
-            loginRequest.Password,
-            loginRequest.FCMToken);
+            loginRequest.Password);
 
     public static RefreshModel ToModel(this RefreshRequest loginRequest)
         => new(loginRequest.RefreshToken);

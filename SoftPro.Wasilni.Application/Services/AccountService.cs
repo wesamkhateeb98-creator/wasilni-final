@@ -35,7 +35,6 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 
         List<Claim> claims = account.GetClaim();
 
-        account.SetFCMToken(loginModel.FCMToken);
         account.ChangeRefreshToken(AuthHelper.GenerateRefreshToken());
 
         await unitOfWork.CompleteAsync(cancellationToken);

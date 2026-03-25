@@ -13,7 +13,7 @@ builder.Services.AddControllers(x =>
     x.Filters.Add<ValidatorActionFilter>();
 });
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(o => o.EnableDetailedErrors = true);
 builder.Services.AddMemoryCache();
 
 builder.Services
