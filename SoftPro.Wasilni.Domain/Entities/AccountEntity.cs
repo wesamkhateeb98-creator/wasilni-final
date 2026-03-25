@@ -1,0 +1,112 @@
+﻿using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Models.Accounts;
+
+namespace SoftPro.Wasilni.Domain.Entities;
+
+public class AccountEntity : IEntity
+{
+    public string Name { get; private set; }
+    public string FCMToken { get; private set; } 
+    public string PhoneNumber { get; private set; }
+    public byte[] Password { get; private set; }
+    public byte[] Salt { get; private set; }
+    public string? Code { get;private set; }
+    public int SendCodeCount { get; private set; }
+    public bool Confirmed { get; private set; }
+    public DateTime? CodeExpiration { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public Role Role { get; private set; }
+    public Permission Permission { get; private set; }
+    public string RefreshToken { get; private set; }
+    public DateTime RefreshTokenExpiresAt { get; private set; }
+
+    private const int RefreshTokenDurationDays = 30;
+
+    public AccountEntity(
+        string name,
+        string phoneNumber,
+        byte[] password,
+        byte[] salt,
+        string? code,
+        DateTime? codeExpiration,
+        int sendCodeCount,
+        DateTime createdAt,
+        Role role,
+        Permission permission,
+        bool confirmed,
+        string refreshToken,
+        DateTime refreshTokenExpiresAt,
+        string fCMToken)
+    {
+        Name = name;
+        PhoneNumber = phoneNumber;
+        Password = password;
+        Salt = salt;
+        Code = code;
+        SendCodeCount = sendCodeCount;
+        CodeExpiration = codeExpiration;
+        CreatedAt = createdAt;
+        Role = role;
+        Confirmed = confirmed;
+        RefreshToken = refreshToken;
+        RefreshTokenExpiresAt = refreshTokenExpiresAt;
+        Permission = permission;
+        FCMToken = fCMToken;
+    }
+
+    public static AccountEntity Create(RegisterModel registerModel, byte[] passwordHashed, byte[] salt, string refreshToken, string code)
+        => new(
+            registerModel.Username,
+            registerModel.Phonenumber,
+            passwordHashed,
+            salt,
+            code,
+            null,
+            3,
+            DateTime.UtcNow.AddHours(3),
+            registerModel.Role,
+            Permission.None,
+            false,
+            refreshToken,
+            DateTime.UtcNow.AddDays(RefreshTokenDurationDays),
+            registerModel.FCMToken);
+
+    public void SetCountCode(int codeCount) 
+        => SendCodeCount = codeCount;
+
+    public void MinusCountCode() => SendCodeCount--;
+
+    public void SetCode(string code)
+        => Code = code;
+        
+    public void SetCodeExpiration(DateTime? dateTime)
+        => CodeExpiration = dateTime;
+
+    public void ConfirmAccount()
+    {
+        Code = null;
+        CodeExpiration = null;
+        SendCodeCount = 3;
+        Confirmed = true;
+    }
+    public bool ChangeData(string username)
+        => string.Equals(Name, username, StringComparison.OrdinalIgnoreCase);
+
+    public void SetPassword(byte[] newHashPassword)
+        => Password = newHashPassword;
+
+    public void SetName(string name)
+        => Name = name;
+
+    public void ChangeRefreshToken(string refreshToken)
+    {
+        RefreshToken = refreshToken;
+        RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(RefreshTokenDurationDays);
+    }
+
+    public void ChangePermission(Permission permission)
+        => Permission = permission;
+
+    public void SetFCMToken(string fCMToken)
+        => FCMToken=fCMToken;
+}

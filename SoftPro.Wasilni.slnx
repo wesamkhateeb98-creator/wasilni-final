@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SoftPro.Wasilni.Application/SoftPro.Wasilni.Application.csproj" />
+  <Project Path="SoftPro.Wasilni.Domain/SoftPro.Wasilni.Domain.csproj" />
+  <Project Path="SoftPro.Wasilni.Infrastructure/SoftPro.Wasilni.Infrastructure.csproj" />
+  <Project Path="SoftPro.Wasilni.Presentation/SoftPro.Wasilni.Presentation.csproj" />
+</Solution>

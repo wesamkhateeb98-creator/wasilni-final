@@ -1,0 +1,29 @@
+﻿using Domain.Resources;
+using FluentValidation;
+using SoftPro.Wasilni.Presentation;
+using SoftPro.Wasilni.Presentation.Models.Request.Account;
+using System.Text.RegularExpressions;
+
+namespace SoftPro.Wasilni.Presentation.Validations.Accounts;
+
+public class RegisterPassengerRequestValidator : AbstractValidator<SignupPassengerRequest>
+{
+    public RegisterPassengerRequestValidator()
+    {
+        RuleFor(x => x.Username)
+            .Length(1, 20)
+            .WithName(Title.Username)
+            .WithMessage(Phrases.InvalidUsername);
+
+        RuleFor(x => x.Phonenumber)
+            .Must(x => Regex.IsMatch(x, PresentationConsts.phonenumberExpression))
+            .WithName(Title.Phonenumber)
+            .WithMessage(Phrases.InvalidPhonenumber);
+
+        RuleFor(x => x.Password)
+            .Must(x => Regex.IsMatch(x, PresentationConsts.passwordExpression))
+            .WithName(Title.Password)
+            .WithMessage(Phrases.InvalidPassword);
+
+    }
+}
