@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wasilni — driver-test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --text:      #c9d1d9;
+      --muted:     #8b949e;
+      --sky:       #58a6ff;
+      --green:     #3fb950;
+      --yellow:    #d29922;
+      --red:       #f85149;
+      --purple:    #bc8cff;
+      --orange:    #f0883e;
+    }
+
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; }
+
+    h1 { text-align: center; font-size: 1.35rem; color: var(--sky); margin-bottom: 14px; letter-spacing: 1px; }
+
+    /* Status bar */
+    .status-bar { display: flex; align-items: center; gap: 10px; max-width: 1300px; margin: 0 auto 14px; padding: 8px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; flex-wrap: wrap; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); transition: background .3s; flex-shrink: 0; }
+    .dot.connected  { background: var(--green); }
+    .dot.connecting { background: var(--yellow); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    #status-text { font-size: 0.8rem; color: var(--muted); }
+    .bus-badge { margin-left: 10px; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); transition: all .3s; }
+    .bus-badge.active  { background: #0e3a1a; border-color: var(--green); color: var(--green); }
+    .bus-badge.inactive{ background: var(--surface2); border-color: var(--border); color: var(--muted); }
+    #token-display { margin-left: auto; font-size: 0.68rem; color: #484f58; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 14px; max-width: 1300px; margin: 0 auto; align-items: start; }
+    @media(max-width:900px) { .grid { grid-template-columns: 1fr; } }
+    .right-panel { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Card */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .card h2 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+
+    /* Form */
+    label { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 3px; margin-top: 9px; }
+    label:first-of-type { margin-top: 0; }
+    input, select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 9px; font-size: 0.82rem; outline: none; transition: border-color .2s; }
+    input:focus, select:focus { border-color: var(--sky); }
+    input.inline { display: inline-block; width: calc(50% - 4px); }
+
+    /* Buttons */
+    button { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: 7px; border: none; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: opacity .15s, filter .15s, transform .1s; }
+    button:active { transform: scale(.98); }
+    button:disabled { opacity: .3; cursor: not-allowed; }
+    button:not(:disabled):hover { filter: brightness(1.1); }
+    .btn-sky    { background: var(--sky);    color: #0d1117; }
+    .btn-green  { background: var(--green);  color: #0d1117; }
+    .btn-red    { background: var(--red);    color: #fff; }
+    .btn-yellow { background: var(--yellow); color: #0d1117; }
+    .btn-muted  { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-purple { background: var(--purple); color: #0d1117; }
+    .btn-orange { background: var(--orange); color: #0d1117; }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 8px; }
+    .btn-row button { margin-top: 0; }
+    .btn-sm { padding: 4px 8px; font-size: 0.72rem; margin-top: 0; width: auto; }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+    /* Seed table */
+    .seed-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; margin-top: 6px; }
+    .seed-table th { color: #484f58; text-align: left; padding: 3px 5px; border-bottom: 1px solid var(--border); }
+    .seed-table td { padding: 4px 5px; border-bottom: 1px solid #161b22; }
+    .seed-table tr.row { cursor: pointer; }
+    .seed-table tr.row:hover td { background: var(--bg); }
+    .seed-table tr.sel td { background: #0d2136; color: var(--sky); }
+    .badge { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 0.62rem; font-weight: 700; }
+    .badge-d { background: #1a3355; color: #79b8ff; }
+    .badge-b { background: #0e3a1a; color: #56d364; }
+    .badge-p { background: #3a1f55; color: #d2a8ff; }
+
+    /* Bus info strip */
+    #bus-info { display: none; background: var(--bg); border: 1px solid var(--green); border-radius: 7px; padding: 8px 11px; margin-top: 9px; font-size: 0.73rem; color: #56d364; }
+    #bus-info span { display: block; line-height: 1.7; }
+
+    /* Bookings list */
+    #bookings-list { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; margin-top: 10px; padding-right: 2px; }
+    #bookings-empty { text-align: center; color: var(--muted); font-size: 0.78rem; padding: 24px 0; display: none; }
+    .bk-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; transition: border-color .25s; }
+    .bk-card:hover { border-color: #444c56; }
+    .bk-card.confirmed { border-color: var(--green); opacity: .55; }
+    .bk-card.noshow    { border-color: var(--red);   opacity: .45; }
+    .bk-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .bk-id     { font-size: 0.72rem; color: var(--sky); font-weight: 700; }
+    .bk-status { font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #162b40; color: var(--sky); }
+    .bk-status.picked-up  { background: #0e3a1a; color: var(--green); }
+    .bk-status.cancelled  { background: #3a1010; color: var(--red); }
+    .bk-detail { font-size: 0.73rem; color: var(--muted); line-height: 1.8; }
+    .bk-detail b { color: var(--text); }
+    .bk-actions { display: flex; gap: 7px; margin-top: 8px; }
+    .bk-actions button { flex: 1; margin-top: 0; padding: 5px; font-size: 0.72rem; }
+    #bookings-count { font-size: 0.7rem; color: var(--muted); margin-left: auto; }
+
+    /* GPS auto ticker */
+    #gps-ticker { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+    /* Log */
+    .log-wrap { display: flex; flex-direction: column; }
+    #log { flex: 1; min-height: 400px; max-height: 500px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; font-family: 'Consolas', 'Cascadia Code', monospace; font-size: 0.72rem; line-height: 1.75; }
+    .le  { padding: 1px 0; }
+    .lt  { color: #484f58; }
+    .ln  { font-weight: 700; }
+    .ln-event { color: var(--sky); }
+    .ln-sent  { color: var(--yellow); }
+    .ln-info  { color: var(--muted); }
+    .ln-error { color: var(--red); }
+    .ln-api   { color: var(--purple); }
+    .ln-book  { color: var(--green); }
+    .ld  { color: #7ee787; }
+    .log-controls { display: flex; gap: 7px; margin-top: 8px; }
+    .log-controls button { margin-top: 0; width: auto; flex: 1; }
+
+    /* Demo */
+    .demo-prog { margin-top: 10px; display: none; }
+    .demo-track { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .demo-fill  { height: 100%; width: 0%; background: var(--purple); transition: width .3s; }
+    .demo-label { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+    /* Section toggle */
+    details summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: '▶'; font-size: 0.6rem; color: var(--muted); transition: transform .2s; }
+    details[open] summary::before { transform: rotate(90deg); }
+    details + details { margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>🚌 Wasilni — driver-test</h1>
+
+<!-- ── Status Bar ──────────────────────────────────────────────────────────── -->
+<div class="status-bar">
+  <div class="dot" id="dot"></div>
+  <span id="status-text">Disconnected</span>
+  <span class="bus-badge inactive" id="bus-badge">🚌 Inactive</span>
+  <span id="token-display">No token</span>
+</div>
+
+<div class="grid">
+
+  <!-- ════════════════════════ LEFT PANEL ════════════════════════ -->
+  <div style="display:flex;flex-direction:column;gap:12px;">
+
+    <!-- ① Seed -->
+    <div class="card">
+      <h2>① Seed Data</h2>
+      <button class="btn-purple" onclick="loadSeed()">🌱 Load / Reset Seed</button>
+
+      <div id="seed-wrap" style="display:none; margin-top:10px;">
+        <label>Drivers — click to auto-fill</label>
+        <table class="seed-table" id="seed-drivers">
+          <thead><tr><th>Name</th><th>Phone</th><th>Bus</th><th>Line</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <label style="margin-top:10px;">Passengers — click to fill Passenger Sim</label>
+        <table class="seed-table" id="seed-passengers">
+          <thead><tr><th>Name</th><th>Phone</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ② Login -->
+    <div class="card">
+      <h2>② Driver Login &amp; Connect</h2>
+      <label>Phone</label>
+      <input type="text"     id="phone"    placeholder="09XXXXXXXX" />
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••" value="Password@123" />
+      <button class="btn-sky"   onclick="login()"      >🔑 Login &amp; Connect</button>
+      <button class="btn-muted" onclick="disconnect()" id="btn-disconnect" disabled>⏏ Disconnect</button>
+    </div>
+
+    <!-- ③ Bus Control -->
+    <div class="card">
+      <h2>③ Bus Control</h2>
+      <button class="btn-green"  onclick="toggleStatus()" id="btn-toggle" disabled>▶ Activate Bus</button>
+
+      <div id="bus-info">
+        <span id="bi-plate"></span>
+        <span id="bi-line"></span>
+        <span id="bi-since"></span>
+      </div>
+
+      <hr/>
+
+      <!-- GPS -->
+      <label>Latitude</label>
+      <input type="number" id="lat" value="33.5138" step="0.0001" />
+      <label>Longitude</label>
+      <input type="number" id="lng" value="36.2765" step="0.0001" />
+      <button class="btn-sky" onclick="sendLocation()" id="btn-loc" disabled>📍 Update Location (Hub)</button>
+      <div id="gps-ticker"></div>
+
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn-muted" onclick="startAutoGPS()" id="btn-auto-gps" disabled>🔄 Auto GPS (5s)</button>
+        <button class="btn-muted" onclick="stopAutoGPS()"  id="btn-stop-gps"  disabled>⏹ Stop Auto GPS</button>
+      </div>
+
+      <hr/>
+
+      <!-- Anonymous -->
+      <label>Anonymous Passengers on Bus</label>
+      <div class="btn-row">
+        <button class="btn-green"  onclick="adjustAnon(+1)" id="btn-anon-plus"  disabled>+1 Boarded</button>
+        <button class="btn-yellow" onclick="adjustAnon(-1)" id="btn-anon-minus" disabled>-1 Exited</button>
+      </div>
+      <button class="btn-muted" onclick="confirmRider()" id="btn-confirm-rider" disabled style="margin-top:6px;">✔ Confirm Anon Rider (Hub)</button>
+    </div>
+
+    <!-- ④ Passenger Simulator -->
+    <div class="card">
+      <h2>④ Passenger Simulator</h2>
+      <label>Passenger Phone</label>
+      <input type="text"     id="p-phone"    placeholder="09XXXXXXXX" />
+      <label>Passenger Password</label>
+      <input type="password" id="p-password" placeholder="••••••••" value="Password@123" />
+      <label>Line ID</label>
+      <input type="number"   id="p-line-id"  placeholder="1" min="1" />
+      <label>Latitude (near bus)</label>
+      <input type="number"   id="p-lat"      value="33.5138" step="0.0001" />
+      <label>Longitude (near bus)</label>
+      <input type="number"   id="p-lng"      value="36.2765" step="0.0001" />
+      <button class="btn-green"  onclick="passengerBook()"   >📌 Login &amp; Book</button>
+      <button class="btn-yellow" onclick="passengerCancel()" >✖ Login &amp; Cancel Booking</button>
+    </div>
+
+    <!-- ⑤ Subscribe (Passenger / Admin) -->
+    <div class="card">
+      <h2>⑤ Subscriptions</h2>
+      <label>Bus ID</label>
+      <input type="number" id="sub-bus-id" placeholder="busId" min="1" />
+      <div class="btn-row">
+        <button class="btn-muted" onclick="subscribeBus()"   id="btn-sub-bus"   disabled>👂 Subscribe Bus</button>
+        <button class="btn-muted" onclick="unsubscribeBus()" id="btn-unsub-bus" disabled>🔕 Unsubscribe</button>
+      </div>
+      <label style="margin-top:8px;">Line ID</label>
+      <input type="number" id="sub-line-id" placeholder="lineId" min="1" />
+      <button class="btn-muted" onclick="subscribeLine()" id="btn-sub-line" disabled>👂 Subscribe Line</button>
+      <button class="btn-muted" onclick="joinAdmin()"     id="btn-admin"   disabled style="margin-top:6px;">🛡 Join Admin Group</button>
+    </div>
+
+    <!-- ⑥ Auto Demo -->
+    <div class="card">
+      <h2>⑥ Auto Demo</h2>
+      <label>Driver Index (0–N)</label>
+      <input type="number" id="demo-driver-idx" value="0" min="0" />
+      <label>Passenger Index (0–N)</label>
+      <input type="number" id="demo-pass-idx" value="0" min="0" />
+      <label>GPS Updates</label>
+      <input type="number" id="demo-loc-count" value="4" min="1" max="20" />
+      <label>Delay ms</label>
+      <input type="number" id="demo-delay" value="1500" min="400" step="100" />
+      <button class="btn-purple" onclick="runDemo()" id="btn-demo">🚀 Run Full Demo</button>
+      <button class="btn-red"    onclick="stopDemo()" id="btn-stop-demo" disabled style="margin-top:5px;">⏹ Stop</button>
+      <div class="demo-prog" id="demo-prog">
+        <div class="demo-track"><div class="demo-fill" id="demo-fill"></div></div>
+        <div class="demo-label" id="demo-label"></div>
+      </div>
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- ════════════════════════ RIGHT PANEL ════════════════════════ -->
+  <div class="right-panel">
+
+    <!-- Bookings Panel -->
+    <div class="card">
+      <h2>
+        📋 Nearby Bookings
+        <span id="bookings-count"></span>
+        <button class="btn-sky btn-sm" onclick="fetchNearby()" id="btn-nearby" disabled style="margin-left:auto;margin-top:0;">🔄 Refresh (GET /bookings/nearby)</button>
+      </h2>
+
+      <div style="font-size:0.72rem; color:var(--muted); margin-bottom:6px;">
+        Shows <strong style="color:var(--text)">Waiting</strong> bookings on your line within
+        <strong style="color:var(--orange)">40 m</strong> of the bus.
+        New bookings arrive live via <code style="color:var(--sky)">OnBookingAdded</code>.
+      </div>
+
+      <div id="bookings-list"></div>
+      <div id="bookings-empty">— No nearby bookings —</div>
+    </div>
+
+    <!-- Event Log -->
+    <div class="card log-wrap">
+      <h2>📡 Event Log</h2>
+      <div id="log"></div>
+      <div class="log-controls">
+        <button class="btn-muted" onclick="clearLog()">🗑 Clear</button>
+        <button class="btn-muted" onclick="copyLog()">📋 Copy</button>
+      </div>
+    </div>
+
+  </div><!-- /right -->
+</div>
+
+<!-- ══════════════════════════ SCRIPT ══════════════════════════════════ -->
+<script>
+  'use strict';
+
+  const API   = window.location.origin;
+  let conn    = null;
+  let token   = null;
+  let busActive = false;
+  let activeBusId   = null;
+  let activeLineId  = null;
+  let seedData      = null;
+  let autoGpsTimer  = null;
+  let demoAborted   = false;
+
+  // Map<bookingId → { id, lineId, passengerId, lat, lng, status, createdAt }>
+  const bookings = new Map();
+
+  // ── Utils ──────────────────────────────────────────────────────────────────
+  const $  = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const fmt = o  => typeof o === 'object' ? JSON.stringify(o, null, 2) : String(o ?? '');
+
+  function log(type, name, data) {
+    const time = new Date().toLocaleTimeString('en-GB');
+    const div  = document.createElement('div');
+    div.className = 'le';
+    div.innerHTML =
+      `<span class="lt">[${time}]</span> ` +
+      `<span class="ln ln-${type}">${esc(name)}</span> ` +
+      `<span class="ld">${esc(fmt(data))}</span>`;
+    const el = $('log');
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function clearLog() { $('log').innerHTML = ''; }
+  function copyLog()  { navigator.clipboard.writeText($('log').innerText).then(() => log('info','System','Copied')); }
+
+  function setStatus(s) {
+    $('dot').className = 'dot ' + s;
+    $('status-text').textContent = s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function setBusActive(active, model) {
+    busActive = active;
+    if (active) {
+      activeBusId  = model.busId;
+      activeLineId = model.lineId;
+      $('bus-badge').className   = 'bus-badge active';
+      $('bus-badge').textContent = `🚌 Active — Bus #${model.busId}`;
+      $('bus-info').style.display = 'block';
+      $('bi-plate').textContent  = `🪪 Plate  : ${model.plate}`;
+      $('bi-line').textContent   = `🛣  Line   : ${model.lineId} — ${model.lineName}`;
+      $('bi-since').textContent  = `🕐 Since  : ${new Date(model.activeSince ?? Date.now()).toLocaleTimeString()}`;
+      $('btn-toggle').textContent   = '⏹ Deactivate Bus';
+      $('btn-toggle').className     = 'btn-red';
+    } else {
+      $('bus-badge').className   = 'bus-badge inactive';
+      $('bus-badge').textContent = '🚌 Inactive';
+      $('bus-info').style.display = 'none';
+      $('btn-toggle').textContent = '▶ Activate Bus';
+      $('btn-toggle').className   = 'btn-green';
+    }
+  }
+
+  function setConnected(on) {
+    ['btn-toggle','btn-loc','btn-anon-plus','btn-anon-minus',
+     'btn-confirm-rider','btn-auto-gps','btn-nearby',
+     'btn-sub-bus','btn-unsub-bus','btn-sub-line','btn-admin'].forEach(id => $(id).disabled = !on);
+    $('btn-disconnect').disabled = !on;
+  }
+
+  // ── Seed ───────────────────────────────────────────────────────────────────
+  async function loadSeed() {
+    log('info','Seed','Calling GET /api/v1.0/seed …');
+    try {
+      const r = await fetch(`${API}/api/v1.0/seed`);
+      if (!r.ok) { log('error','Seed',`HTTP ${r.status}`); return; }
+      seedData = await r.json();
+      log('info','Seed',`✅ ${seedData.summary.drivers} drivers · ${seedData.summary.passengers} passengers · ${seedData.summary.buses} buses`);
+
+      // Drivers table
+      const dtb = document.querySelector('#seed-drivers tbody');
+      dtb.innerHTML = '';
+      (seedData.drivers ?? []).forEach(d => {
+        const tr = document.createElement('tr');
+        tr.className = 'row';
+        tr.innerHTML = `<td>${d.name}</td><td>${d.phone}</td>
+          <td><span class="badge badge-b">#${d.busId}</span></td>
+          <td>${d.lineId ?? '—'}</td>`;
+        tr.onclick = () => {
+          document.querySelectorAll('#seed-drivers tr.row').forEach(x => x.classList.remove('sel'));
+          tr.classList.add('sel');
+          $('phone').value = d.phone;
+          $('password').value = 'Password@123';
+          $('p-line-id').value = d.lineId ?? '';
+          // pre-fill passenger lat near bus default
+          log('info','AutoFill', `Driver: ${d.name} | Bus #${d.busId} | Line #${d.lineId}`);
+        };
+        dtb.appendChild(tr);
+      });
+
+      // Passengers table
+      const ptb = document.querySelector('#seed-passengers tbody');
+      ptb.innerHTML = '';
+      (seedData.passengers ?? []).forEach(p => {
+        const tr = document.createElement('tr');
+        tr.className = 'row';
+        tr.innerHTML = `<td>${p.name}</td><td>${p.phone}</td>`;
+        tr.onclick = () => {
+          document.querySelectorAll('#seed-passengers tr.row').forEach(x => x.classList.remove('sel'));
+          tr.classList.add('sel');
+          $('p-phone').value = p.phone;
+          $('p-password').value = 'Password@123';
+          log('info','AutoFill',`Passenger: ${p.name}`);
+        };
+        ptb.appendChild(tr);
+      });
+
+      $('seed-wrap').style.display = 'block';
+    } catch (e) { log('error','Seed', e.message); }
+  }
+
+  // ── Login & Connect ────────────────────────────────────────────────────────
+  async function login() {
+    const phone = $('phone').value.trim();
+    const pass  = $('password').value;
+    if (!phone || !pass) { log('error','Login','Phone & password required'); return; }
+
+    log('info','Login',`Logging in as ${phone} …`);
+    try {
+      const r = await fetch(`${API}/api/v1.0/accounts/login`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ phoneNumber: phone, password: pass })
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(()=>({}));
+        log('error','Login',`HTTP ${r.status} — ${e.title ?? JSON.stringify(e)}`);
+        return;
+      }
+      const data = await r.json();
+      token = data.token ?? data.accessToken ?? data.Token ?? data.AccessToken;
+      if (!token) { log('error','Login','Token not found: ' + JSON.stringify(data)); return; }
+      $('token-display').textContent = 'Token: ' + token.substring(0,40) + '…';
+      log('info','Login','✅ Authenticated');
+      await connectHub();
+    } catch (e) { log('error','Login', e.message); }
+  }
+
+  // ── SignalR ────────────────────────────────────────────────────────────────
+  async function connectHub() {
+    setStatus('connecting');
+    conn = new signalR.HubConnectionBuilder()
+      .withUrl(`${API}/hubs/tracking`, { accessTokenFactory: () => token })
+      .withAutomaticReconnect([0, 2000, 5000, 10000])
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+
+    // ── Incoming events ──────────────────────────────────────────────────────
+
+    conn.on('OnBusActivated', m => {
+      log('event','OnBusActivated', m);
+      setBusActive(true, m);
+    });
+
+    conn.on('OnBusDeactivated', m => {
+      log('event','OnBusDeactivated', m);
+      setBusActive(false, null);
+      bookings.clear();
+      renderBookings();
+    });
+
+    conn.on('OnLocationUpdated', m => {
+      log('event','OnLocationUpdated', m);
+      $('gps-ticker').textContent = `📡 Last sent: (${m.latitude?.toFixed(5)}, ${m.longitude?.toFixed(5)}) @ ${new Date(m.updatedAt ?? Date.now()).toLocaleTimeString()}`;
+    });
+
+    conn.on('OnAnonymousCountUpdated', m => {
+      log('event','OnAnonymousCountUpdated', m);
+    });
+
+    conn.on('OnBookingAdded', m => {
+      log('book','OnBookingAdded ← NEW BOOKING', m);
+      bookings.set(m.id, { id: m.id, lineId: m.lineId, passengerId: m.passengerId,
+        lat: m.latitude, lng: m.longitude, status: 'Waiting', createdAt: m.createdAt });
+      renderBookings();
+    });
+
+    conn.on('OnBookingStatusChanged', m => {
+      log('event','OnBookingStatusChanged', m);
+      const bk = bookings.get(m.bookingId);
+      if (bk) {
+        bk.status = m.status;
+        renderBookings();
+        // remove after brief delay so user sees the status change
+        setTimeout(() => {
+          bookings.delete(m.bookingId);
+          renderBookings();
+        }, 1800);
+      }
+    });
+
+    conn.on('OnBookingCancelled', m => {
+      log('event','OnBookingCancelled', m);
+      bookings.delete(m.bookingId);
+      renderBookings();
+    });
+
+    conn.onreconnecting(() => { setStatus('connecting'); log('info','Hub','Reconnecting…'); });
+    conn.onreconnected(() => { setStatus('connected');  log('info','Hub','✅ Reconnected'); });
+    conn.onclose(e => {
+      setStatus('disconnected');
+      setConnected(false);
+      log('error','Hub','Closed' + (e ? ': ' + e.message : ''));
+    });
+
+    try {
+      await conn.start();
+      setStatus('connected');
+      setConnected(true);
+      log('info','Hub',`✅ Connected  (id: ${conn.connectionId})`);
+    } catch (e) {
+      setStatus('disconnected');
+      log('error','Hub','Connect failed: ' + e.message);
+    }
+  }
+
+  async function disconnect() {
+    stopAutoGPS();
+    if (conn) { await conn.stop(); conn = null; }
+    token = null;
+    setBusActive(false, null);
+    setStatus('disconnected');
+    setConnected(false);
+    $('token-display').textContent = 'No token';
+    $('btn-disconnect').disabled = true;
+  }
+
+  // ── Hub Invocations ────────────────────────────────────────────────────────
+  async function toggleStatus() {
+    log('sent','ToggleStatus →', '(no params)');
+    try {
+      await conn.invoke('ToggleStatus');
+    } catch (e) { log('error','ToggleStatus ✗', parseHubErr(e)); }
+  }
+
+  async function sendLocation() {
+    const lat = parseFloat($('lat').value);
+    const lng = parseFloat($('lng').value);
+    log('sent','UpdateLocation →', { latitude: lat, longitude: lng });
+    try {
+      await conn.invoke('UpdateLocation', { latitude: lat, longitude: lng });
+    } catch (e) { log('error','UpdateLocation ✗', parseHubErr(e)); }
+  }
+
+  function startAutoGPS() {
+    if (autoGpsTimer) return;
+    log('info','AutoGPS','Started — sending every 5 s');
+    $('btn-auto-gps').disabled = true;
+    $('btn-stop-gps').disabled = false;
+    autoGpsTimer = setInterval(async () => {
+      // nudge location slightly east each tick
+      const lat = parseFloat($('lat').value);
+      const lng = parseFloat($('lng').value);
+      $('lat').value = (lat + 0.00015).toFixed(6);
+      $('lng').value = (lng + 0.00020).toFixed(6);
+      await sendLocation();
+    }, 5000);
+    sendLocation(); // immediate first send
+  }
+
+  function stopAutoGPS() {
+    if (!autoGpsTimer) return;
+    clearInterval(autoGpsTimer);
+    autoGpsTimer = null;
+    $('btn-auto-gps').disabled = false;
+    $('btn-stop-gps').disabled = true;
+    log('info','AutoGPS','Stopped');
+  }
+
+  async function adjustAnon(delta) {
+    log('sent','AdjustAnonymousPassenger →', { delta });
+    try {
+      await conn.invoke('AdjustAnonymousPassenger', { delta });
+    } catch (e) { log('error','AdjustAnon ✗', parseHubErr(e)); }
+  }
+
+  async function confirmRider() {
+    log('sent','ConfirmRider →', '(no params)');
+    try {
+      await conn.invoke('ConfirmRider');
+      log('info','ConfirmRider','✅ Daily ridership incremented');
+    } catch (e) { log('error','ConfirmRider ✗', parseHubErr(e)); }
+  }
+
+  async function subscribeBus() {
+    const id = parseInt($('sub-bus-id').value);
+    if (!id) { log('error','Sub','Enter Bus ID'); return; }
+    log('sent','SubscribeToBus →', { busId: id });
+    try { await conn.invoke('SubscribeToBus', id); log('info','SubscribeToBus','✅'); }
+    catch (e) { log('error','SubscribeToBus ✗', parseHubErr(e)); }
+  }
+
+  async function unsubscribeBus() {
+    const id = parseInt($('sub-bus-id').value);
+    if (!id) { log('error','Sub','Enter Bus ID'); return; }
+    log('sent','UnsubscribeFromBus →', { busId: id });
+    try { await conn.invoke('UnsubscribeFromBus', id); log('info','UnsubscribeFromBus','✅'); }
+    catch (e) { log('error','UnsubscribeFromBus ✗', parseHubErr(e)); }
+  }
+
+  async function subscribeLine() {
+    const id = parseInt($('sub-line-id').value);
+    if (!id) { log('error','Sub','Enter Line ID'); return; }
+    log('sent','SubscribeToLine →', { lineId: id });
+    try { await conn.invoke('SubscribeToLine', id); log('info','SubscribeToLine','✅'); }
+    catch (e) { log('error','SubscribeToLine ✗', parseHubErr(e)); }
+  }
+
+  async function joinAdmin() {
+    log('sent','JoinAdminGroup →', '(no params)');
+    try { await conn.invoke('JoinAdminGroup'); log('info','JoinAdminGroup','✅'); }
+    catch (e) { log('error','JoinAdminGroup ✗', parseHubErr(e)); }
+  }
+
+  // ── Driver REST: nearby bookings ────────────────────────────────────────────
+  async function fetchNearby() {
+    log('api','GET /bookings/nearby','…');
+    try {
+      const r = await apiCall('GET', '/api/v1.0/bookings/nearby');
+      if (!r.ok) { const e = await r.json().catch(()=>({})); log('error','GET nearby',`HTTP ${r.status} — ${e.title ?? JSON.stringify(e)}`); return; }
+      const list = await r.json();
+      log('api','GET /bookings/nearby', `✅ ${list.length} booking(s)`);
+      bookings.clear();
+      list.forEach(bk => bookings.set(bk.id, {
+        id: bk.id, lineId: bk.lineId, passengerId: bk.passengerId,
+        lat: bk.latitude, lng: bk.longitude, status: bk.status, createdAt: bk.createdAt
+      }));
+      renderBookings();
+    } catch (e) { log('error','GET nearby', e.message); }
+  }
+
+  // ── Driver REST: confirm booking ─────────────────────────────────────────────
+  async function confirmBooking(bookingId) {
+    log('api',`PUT /bookings/${bookingId}/confirm`, '…');
+    try {
+      const r = await apiCall('PUT', `/api/v1.0/bookings/${bookingId}/confirm`);
+      if (!r.ok) { const e = await r.json().catch(()=>({})); log('error','Confirm',`HTTP ${r.status} — ${e.title ?? JSON.stringify(e)}`); return; }
+      const data = await r.json();
+      log('api',`Confirm #${bookingId}`,`✅ ${JSON.stringify(data)}`);
+      // Booking will be removed via OnBookingStatusChanged broadcast
+    } catch (e) { log('error',`Confirm #${bookingId}`, e.message); }
+  }
+
+  // ── Driver REST: no-show ─────────────────────────────────────────────────────
+  async function markNoShow(bookingId) {
+    log('api',`PUT /bookings/${bookingId}/no-show`, '…');
+    try {
+      const r = await apiCall('PUT', `/api/v1.0/bookings/${bookingId}/no-show`);
+      if (!r.ok) { const e = await r.json().catch(()=>({})); log('error','NoShow',`HTTP ${r.status} — ${e.title ?? JSON.stringify(e)}`); return; }
+      const data = await r.json();
+      log('api',`No-Show #${bookingId}`,`✅ ${JSON.stringify(data)}`);
+    } catch (e) { log('error',`NoShow #${bookingId}`, e.message); }
+  }
+
+  // ── Passenger Simulator ────────────────────────────────────────────────────
+  async function passengerBook() {
+    const phone  = $('p-phone').value.trim();
+    const pass   = $('p-password').value;
+    const lineId = parseInt($('p-line-id').value);
+    const lat    = parseFloat($('p-lat').value);
+    const lng    = parseFloat($('p-lng').value);
+    if (!phone || !lineId) { log('error','PassSim','Phone & Line ID required'); return; }
+
+    log('api','PassSim — login passenger', phone);
+    try {
+      const lr = await fetch(`${API}/api/v1.0/accounts/login`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ phoneNumber: phone, password: pass })
+      });
+      if (!lr.ok) { const e = await lr.json().catch(()=>({})); log('error','PassSim Login',`HTTP ${lr.status} — ${e.title ?? JSON.stringify(e)}`); return; }
+      const ld   = await lr.json();
+      const pTok = ld.token ?? ld.accessToken ?? ld.Token ?? ld.AccessToken;
+      log('api','PassSim','✅ Passenger logged in');
+
+      log('api',`POST /lines/${lineId}/bookings`, { lat, lng });
+      const br = await fetch(`${API}/api/v1.0/lines/${lineId}/bookings`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${pTok}` },
+        body: JSON.stringify({ latitude: lat, longitude: lng })
+      });
+      if (!br.ok) { const e = await br.json().catch(()=>({})); log('error','PassSim Book',`HTTP ${br.status} — ${e.title ?? JSON.stringify(e)}`); return; }
+      const bd = await br.json();
+      log('book',`PassSim — Booking created`, `✅ Booking ID: ${bd.id}`);
+    } catch (e) { log('error','PassSim', e.message); }
+  }
+
+  async function passengerCancel() {
+    const phone  = $('p-phone').value.trim();
+    const pass   = $('p-password').value;
+    const lineId = parseInt($('p-line-id').value);
+    if (!phone || !lineId) { log('error','PassSim','Phone & Line ID required'); return; }
+
+    log('api','PassSim — cancel booking', phone);
+    try {
+      const lr = await fetch(`${API}/api/v1.0/accounts/login`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ phoneNumber: phone, password: pass })
+      });
+      if (!lr.ok) { const e = await lr.json().catch(()=>({})); log('error','PassSim Login',`HTTP ${lr.status}`); return; }
+      const ld   = await lr.json();
+      const pTok = ld.token ?? ld.accessToken ?? ld.Token ?? ld.AccessToken;
+
+      const dr = await fetch(`${API}/api/v1.0/lines/${lineId}/bookings`, {
+        method:'DELETE',
+        headers:{ 'Authorization': `Bearer ${pTok}` }
+      });
+      if (!dr.ok) { const e = await dr.json().catch(()=>({})); log('error','PassSim Cancel',`HTTP ${dr.status} — ${e.title ?? JSON.stringify(e)}`); return; }
+      const dd = await dr.json();
+      log('book',`PassSim — Booking cancelled`, `✅ Booking ID: ${dd.id}`);
+    } catch (e) { log('error','PassSim', e.message); }
+  }
+
+  // ── Render bookings list ───────────────────────────────────────────────────
+  function renderBookings() {
+    const list = $('bookings-list');
+    list.innerHTML = '';
+
+    const arr = [...bookings.values()];
+    $('bookings-count').textContent = arr.length ? `(${arr.length})` : '';
+
+    if (!arr.length) {
+      $('bookings-empty').style.display = 'block';
+      return;
+    }
+    $('bookings-empty').style.display = 'none';
+
+    arr.forEach(bk => {
+      const statusClass = bk.status === 'PickedUp'  ? 'picked-up'
+                        : bk.status === 'Cancelled' ? 'cancelled'
+                        : '';
+      const cardClass   = bk.status === 'PickedUp'  ? 'confirmed'
+                        : bk.status === 'Cancelled' ? 'noshow'
+                        : '';
+
+      const timeAgo = bk.createdAt
+        ? new Date(bk.createdAt).toLocaleTimeString('en-GB')
+        : 'just now';
+
+      const div = document.createElement('div');
+      div.className = `bk-card ${cardClass}`;
+      div.id = `bk-${bk.id}`;
+      div.innerHTML = `
+        <div class="bk-header">
+          <span class="bk-id">Booking #${bk.id}</span>
+          <span class="bk-status ${statusClass}">${bk.status}</span>
+        </div>
+        <div class="bk-detail">
+          📍 <b>${bk.lat?.toFixed(5) ?? '?'}, ${bk.lng?.toFixed(5) ?? '?'}</b><br>
+          👤 Passenger #${bk.passengerId} &nbsp;|&nbsp; 🛣 Line #${bk.lineId}<br>
+          🕐 ${timeAgo}
+        </div>
+        ${bk.status === 'Waiting' ? `
+        <div class="bk-actions">
+          <button class="btn-green" onclick="confirmBooking(${bk.id})">✅ Confirm (Boarded)</button>
+          <button class="btn-red"   onclick="markNoShow(${bk.id})">❌ No-Show</button>
+        </div>` : ''}
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  // ── API helper (uses driver token) ────────────────────────────────────────
+  function apiCall(method, url, body) {
+    const opts = { method, headers: { 'Authorization': `Bearer ${token}` } };
+    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    return fetch(API + url, opts);
+  }
+
+  // ── Hub error parser ───────────────────────────────────────────────────────
+  function parseHubErr(e) {
+    try { const o = JSON.parse(e.message); return `[${o.type}] ${o.detail}`; }
+    catch { return e.message; }
+  }
+
+  // ── Auto Demo ──────────────────────────────────────────────────────────────
+  let demoStep = 0, demoTotal = 0;
+
+  function demoProgress(label) {
+    demoStep++;
+    const pct = Math.round((demoStep / demoTotal) * 100);
+    $('demo-fill').style.width  = pct + '%';
+    $('demo-label').textContent = label;
+    log('info', `[${demoStep}/${demoTotal}]`, label);
+  }
+
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  async function runDemo() {
+    demoAborted = false;
+    $('btn-demo').disabled      = true;
+    $('btn-stop-demo').disabled = false;
+    $('demo-prog').style.display = 'block';
+
+    const dIdx   = parseInt($('demo-driver-idx').value  ?? 0);
+    const pIdx   = parseInt($('demo-pass-idx').value    ?? 0);
+    const locs   = parseInt($('demo-loc-count').value   ?? 4);
+    const delay  = parseInt($('demo-delay').value       ?? 1500);
+
+    // steps: seed, login, activate, locs, passenger-book, nearby, confirm, deactivate
+    demoTotal = 8 + locs;
+    demoStep  = 0;
+
+    const abort = () => demoAborted;
+
+    try {
+      // 1. Seed
+      demoProgress('Seeding database …');
+      await loadSeed();
+      if (abort()) return demoFinish();
+      await wait(delay);
+
+      if (!seedData?.drivers?.length) { log('error','Demo','Seed failed'); return demoFinish(); }
+
+      const driver    = seedData.drivers[Math.min(dIdx, seedData.drivers.length - 1)];
+      const passenger = seedData.passengers?.[Math.min(pIdx, (seedData.passengers?.length ?? 1) - 1)];
+      const lineId    = driver.lineId;
+
+      // 2. Driver login
+      demoProgress(`Login: ${driver.name} (${driver.phone})`);
+      $('phone').value    = driver.phone;
+      $('password').value = 'Password@123';
+      await login();
+      if (abort()) return demoFinish();
+      await wait(delay);
+
+      // 3. Activate bus
+      demoProgress('ToggleStatus → Activate bus');
+      await toggleStatus();
+      if (abort()) return demoFinish();
+      await wait(delay);
+
+      // 4. GPS updates
+      const BASE_LAT = 33.5138, BASE_LNG = 36.2765;
+      for (let i = 0; i < locs; i++) {
+        if (abort()) return demoFinish();
+        const lat = +(BASE_LAT + i * 0.0003).toFixed(6);
+        const lng = +(BASE_LNG + i * 0.0004).toFixed(6);
+        $('lat').value = lat; $('lng').value = lng;
+        demoProgress(`UpdateLocation #${i+1} → (${lat}, ${lng})`);
+        await sendLocation();
+        await wait(delay);
+      }
+
+      // 5. Passenger books
+      if (passenger) {
+        demoProgress(`Passenger ${passenger.name} books on line #${lineId}`);
+        $('p-phone').value    = passenger.phone;
+        $('p-password').value = 'Password@123';
+        $('p-line-id').value  = lineId;
+        $('p-lat').value      = $('lat').value;  // same location as bus → within 40m
+        $('p-lng').value      = $('lng').value;
+        await passengerBook();
+        if (abort()) return demoFinish();
+        await wait(delay);
+      } else { demoStep++; }
+
+      // 6. Driver fetches nearby
+      demoProgress('Driver: GET /bookings/nearby');
+      await fetchNearby();
+      if (abort()) return demoFinish();
+      await wait(delay);
+
+      // 7. Confirm first nearby booking (if any)
+      const firstBk = [...bookings.values()].find(b => b.status === 'Waiting');
+      if (firstBk) {
+        demoProgress(`Confirm booking #${firstBk.id}`);
+        await confirmBooking(firstBk.id);
+        if (abort()) return demoFinish();
+        await wait(delay);
+      } else {
+        demoProgress('No nearby booking to confirm (skip)');
+        await wait(500);
+      }
+
+      // 8. Deactivate bus
+      if (abort()) return demoFinish();
+      demoProgress('ToggleStatus → Deactivate bus');
+      await toggleStatus();
+      await wait(delay / 2);
+
+      log('info','Demo','🎉 Demo completed successfully!');
+    } catch (e) {
+      log('error','Demo','Unexpected: ' + e.message);
+    } finally {
+      demoFinish();
+    }
+  }
+
+  function stopDemo() {
+    demoAborted = true;
+    log('info','Demo','⏹ Stopped by user');
+    demoFinish();
+  }
+
+  function demoFinish() {
+    $('btn-demo').disabled      = false;
+    $('btn-stop-demo').disabled = true;
+    $('demo-fill').style.width  = '0%';
+    $('demo-label').textContent = '';
+    setTimeout(() => { $('demo-prog').style.display = 'none'; }, 2000);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  renderBookings();
+</script>
+</body>
+</html>
