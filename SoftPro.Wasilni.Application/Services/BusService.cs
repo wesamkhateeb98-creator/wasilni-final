@@ -118,6 +118,9 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
     // ─── Driver: Bus state ────────────────────────────────────────────────────
 
+    public Task<bool> HasBusAsync(int busId, int driverId, CancellationToken cancellationToken)
+        => unitOfWork.BusRepository.AnyByDriverAsync(busId, driverId, cancellationToken);
+
     public async Task<GetActiveBusModel> ToggleStatusAsync(int driverId, CancellationToken cancellationToken)
     {
         BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)

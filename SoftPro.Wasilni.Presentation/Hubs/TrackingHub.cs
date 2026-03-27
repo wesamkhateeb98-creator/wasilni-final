@@ -1,9 +1,11 @@
+using Domain.Resources;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
 using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
@@ -108,8 +110,16 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     // ─── Passenger: Subscribe / Unsubscribe ──────────────────────────────────
 
-    public Task SubscribeToBus(int busId)
-        => Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Bus(busId), Context.ConnectionAborted);
+    public async Task SubscribeToBus(int busId)
+    {
+        var ct       = Context.ConnectionAborted;
+        int driverId = Context.User!.GetId();
+
+        if (!await busService.HasBusAsync(busId, driverId, ct))
+            throw new ForbiddenException(Phrases.Forbidden);
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Bus(busId), ct);
+    }
 
     public Task SubscribeToLine(int lineId)
         => Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), Context.ConnectionAborted);
@@ -120,5 +130,10 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
     // ─── Admin: Join admin group ──────────────────────────────────────────────
 
     public Task JoinAdminGroup()
-        => Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Admin, Context.ConnectionAborted);
+    {
+        if (Context.User!.GetRole() != Role.Admin)
+            throw new ForbiddenException(Phrases.Forbidden);
+
+        return Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Admin, Context.ConnectionAborted);
+    }
 }

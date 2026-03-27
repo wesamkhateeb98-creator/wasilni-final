@@ -144,6 +144,9 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
             .Include(b => b.LineEntity)
             .FirstOrDefaultAsync(b => b.DriverId == driverId, cancellationToken);
 
+    public Task<bool> AnyByDriverAsync(int busId, int driverId, CancellationToken cancellationToken)
+        => dbContext.Buses.AnyAsync(x => x.Id == busId && x.DriverId == driverId, cancellationToken);
+
     public Task<List<BusEntity>> GetActiveBusesAsync(int? lineId, CancellationToken cancellationToken)
     {
         IQueryable<BusEntity> query = dbContext.Buses

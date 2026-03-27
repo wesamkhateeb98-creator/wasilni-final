@@ -1,5 +1,6 @@
 ﻿
 using Domain.Resources;
+using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Exceptions;
 using System.Security.Claims;
 
@@ -11,6 +12,12 @@ public static class HelperExtensions
     {
         Claim claimId = claim.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedException(Phrases.LoginAgain);
         return int.Parse(claimId.Value);
+    }
+
+    public static Role GetRole(this ClaimsPrincipal claim)
+    {
+        Claim roleClaim = claim.FindFirst(ClaimTypes.Role) ?? throw new UnauthorizedException(Phrases.LoginAgain);
+        return Enum.Parse<Role>(roleClaim.Value);
     }
 
     public static bool GetEnums<T>(int x) where T :Enum     
