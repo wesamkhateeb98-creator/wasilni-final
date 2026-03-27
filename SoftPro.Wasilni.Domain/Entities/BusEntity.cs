@@ -1,75 +1,65 @@
-﻿using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Buses;
 
 namespace SoftPro.Wasilni.Domain.Entities;
 
 public class BusEntity : IEntity
 {
-    public BusEntity(
-        string plate, 
-        string color, 
-        int lineId,
-        BusType type, 
-        int numberOfSeats,
-        int ownId, 
-        int? driverId 
-        )
-    {
-        Plate = plate;
-        Color = color;
-        LineId = lineId;
-        Type = type;
-        NumberOfSeats = numberOfSeats;
-        OwnId = ownId;
-        DriverId = driverId;
-    }
+    public string    Plate          { get; private set; } = null!;
+    public string    Color          { get; private set; } = null!;
+    public int       LineId         { get; private set; }
+    public BusType   Type           { get; private set; }
+    public int       NumberOfSeats  { get; private set; }
+    public int       OwnId          { get; private set; }
+    public int?      DriverId       { get; private set; }
+    public BusStatus Status         { get; private set; } = BusStatus.Inactive;
+    public DateTime? ActiveSince    { get; private set; }
+    public int       AnonymousCount { get; private set; }
 
-    public string Plate { get; private set; }
-    public string Color { get; private set; }
-    public int LineId { get; private set; }
-    public LineEntity LineEntity { get; private set; } = null!;
-    public BusType Type { get; private set; }
-    public int NumberOfSeats { get; private set; }
+    public LineEntity    LineEntity { get; private set; } = null!;
+    public AccountEntity Own       { get; private set; } = null!;
+    public AccountEntity Driver    { get; private set; } = null!;
 
-    public int OwnId { get; private set; }
-    public AccountEntity Own { get; private set; } = null!;
+    private BusEntity() { }
 
-    public int? DriverId { get; private set; }
-    public AccountEntity Driver { get; private set; } = null!;
-
-    public List<int>? RequestsBusIds { get; private set; } = [];
-    //public List<RequestBusEntity> Requests { get; private set; } = [];
-
-    public List<int>? TripIds { get; private set; } = [];
-    //public List<TripEntity>? Trips { get; private set; } = [];
     public static BusEntity Create(RegisterBusModel model)
-        => new(
-            model.Plate,
-            model.Color,
-            model.lineId,
-            model.Type,
-            model.NumberOfSeats,
-            model.accountId,
-            null);
+        => new()
+        {
+            Plate         = model.Plate,
+            Color         = model.Color,
+            LineId        = model.lineId,
+            Type          = model.Type,
+            NumberOfSeats = model.NumberOfSeats,
+            OwnId         = model.accountId,
+            DriverId      = null,
+            Status        = BusStatus.Inactive,
+        };
 
     public void Update(UpdateBusModel model)
     {
-        Plate = model.Plate;
-        Color = model.Color;
-        LineId = model.LineId;
-        Type = model.Type;
+        Plate         = model.Plate;
+        Color         = model.Color;
+        LineId        = model.LineId;
+        Type          = model.Type;
         NumberOfSeats = model.NumberOfSeats;
     }
 
-    public void UnassignDriver()
-        => DriverId = null;
+    public void AssignDriverId(int id) => DriverId = id;
+    public void UnassignDriver()       => DriverId = null;
 
-    public void AssignDriverId(int id)
-        => DriverId = id;
-
-    
-    public void AddTrip(int id)
+    public void Activate()
     {
-        TripIds?.Add(id);
+        Status      = BusStatus.Active;
+        ActiveSince = DateTime.UtcNow;
     }
+
+    public void Deactivate()
+    {
+        Status         = BusStatus.Inactive;
+        ActiveSince    = null;
+        AnonymousCount = 0;
+    }
+
+    public void AdjustAnonymous(int delta)
+        => AnonymousCount = Math.Max(0, AnonymousCount + delta);
 }

@@ -4,6 +4,7 @@ using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Helper;
 using SoftPro.Wasilni.Domain.Models.Accounts;
+using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Domain.Models.Lines;
 using SoftPro.Wasilni.Infrastructure.Persistence;
 
@@ -46,7 +47,8 @@ public class DevController(AppDbContext dbContext) : BaseController
     public async Task<IActionResult> SeedAsync(CancellationToken cancellationToken)
     {
         // ── 1. Delete everything (order matters for FK constraints) ──────────
-        await dbContext.Trips.ExecuteDeleteAsync(cancellationToken);
+        await dbContext.Bookings.ExecuteDeleteAsync(cancellationToken);
+        await dbContext.DailyRiderships.ExecuteDeleteAsync(cancellationToken);
         await dbContext.Buses.ExecuteDeleteAsync(cancellationToken);
         await dbContext.Accounts.ExecuteDeleteAsync(cancellationToken);
         await dbContext.Lines.ExecuteDeleteAsync(cancellationToken);
@@ -86,14 +88,15 @@ public class DevController(AppDbContext dbContext) : BaseController
         for (int i = 0; i < 5; i++)
         {
             var (plate, color, type, seats) = BusSpecs[i];
-            var bus = new BusEntity(
-                plate        : plate,
-                color        : color,
-                lineId       : line.Id,
-                type         : type,
-                numberOfSeats: seats,
-                ownId        : admin.Id,
-                driverId     : drivers[i].Id);
+            var bus = BusEntity.Create(new RegisterBusModel(
+                Plate         : plate,
+                Color         : color,
+                lineId        : line.Id,
+                Type          : type,
+                accountId     : admin.Id,
+                NumberOfSeats : seats,
+                EstimatedTime : TimeSpan.Zero));
+            bus.AssignDriverId(drivers[i].Id);
             buses.Add(bus);
         }
         await dbContext.Buses.AddRangeAsync(buses, cancellationToken);

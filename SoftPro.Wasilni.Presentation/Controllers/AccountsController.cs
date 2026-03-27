@@ -18,7 +18,7 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 public class AccountsController(IAccountService accountService) : BaseController
 {
     [HttpPost("sign-up")]
-    public async Task<MutateResponse> RegisterAsync([FromBody] SignupPassengerRequest registerRequest, CancellationToken cancellationToken)
+    public async Task<IdResponse> RegisterAsync([FromBody] SignupPassengerRequest registerRequest, CancellationToken cancellationToken)
     {
         int id = await accountService.SignUpAsync(registerRequest.ToModel(), cancellationToken);
         return new(id);
@@ -55,7 +55,7 @@ public class AccountsController(IAccountService accountService) : BaseController
     }
 
     [HttpPost("send-code")]
-    public async Task<MutateResponse> SendCodeAsync([FromBody]SendCodeRequest request , CancellationToken cancellationToken)
+    public async Task<IdResponse> SendCodeAsync([FromBody]SendCodeRequest request , CancellationToken cancellationToken)
     {
         int id = await accountService.SendCodeAsync(request.Phonenumber, cancellationToken);
         return new(id);
@@ -70,7 +70,7 @@ public class AccountsController(IAccountService accountService) : BaseController
 
     [HttpPatch("change-password")]
     [Authorize]
-    public async Task<MutateResponse> ChangePasswordAsync([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    public async Task<IdResponse> ChangePasswordAsync([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
     {
         int id = await accountService.ChangePasswordAsync(User.GetId(), request.OldPassword,request.NewPassword, cancellationToken);
         return new(id);
@@ -78,7 +78,7 @@ public class AccountsController(IAccountService accountService) : BaseController
 
     [HttpPatch("update-profile")]
     [Authorize]
-    public async Task<MutateResponse> UpdateProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
+    public async Task<IdResponse> UpdateProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
     {
         int id = await accountService.UpdateProfileAsync(User.GetId(), request.Username, cancellationToken);
         return new(id);

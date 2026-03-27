@@ -37,7 +37,7 @@ public class LineService(IUnitOfWork unitOfWork) : ILineService
         return id;
     }
 
-    public async Task<GetLineModel> UpdateLine(GetLineModel model, CancellationToken cancellationToken)
+    public async Task<int> UpdateLine(GetLineModel model, CancellationToken cancellationToken)
     {
         LineEntity? line = await unitOfWork.LineRepository.GetByIdAsync(model.Id, cancellationToken);
 
@@ -47,7 +47,7 @@ public class LineService(IUnitOfWork unitOfWork) : ILineService
 
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return new(line.Id, line.Name);
+        return line.Id;
     }
 
     public Task<Page<GetLineModel>> GetLinesAsync(GetLinesFilterModel filter, CancellationToken cancellationToken)

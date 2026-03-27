@@ -1,3 +1,3 @@
 ﻿namespace SoftPro.Wasilni.Presentation.Models.Response;
 
-public record MutateResponse(int Id);
+public record IdResponse(int Id);

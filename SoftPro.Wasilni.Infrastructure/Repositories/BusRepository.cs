@@ -138,4 +138,21 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
         => dbContext.Buses
             .Include(b => b.LineEntity)
             .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+
+    public Task<BusEntity?> GetByDriverIdAsync(int driverId, CancellationToken cancellationToken)
+        => dbContext.Buses
+            .Include(b => b.LineEntity)
+            .FirstOrDefaultAsync(b => b.DriverId == driverId, cancellationToken);
+
+    public Task<List<BusEntity>> GetActiveBusesAsync(int? lineId, CancellationToken cancellationToken)
+    {
+        IQueryable<BusEntity> query = dbContext.Buses
+            .Include(b => b.LineEntity)
+            .Where(b => b.Status == Domain.Enums.BusStatus.Active);
+
+        if (lineId.HasValue)
+            query = query.Where(b => b.LineId == lineId.Value);
+
+        return query.ToListAsync(cancellationToken);
+    }
 }

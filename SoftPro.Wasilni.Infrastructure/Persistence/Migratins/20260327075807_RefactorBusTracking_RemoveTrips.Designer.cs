@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SoftPro.Wasilni.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
+namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327075807_RefactorBusTracking_RemoveTrips")]
+    partial class RefactorBusTracking_RemoveTrips
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,6 +94,9 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BusId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -99,9 +105,6 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 
                     b.Property<double>("Latitude")
                         .HasColumnType("float");
-
-                    b.Property<int>("LineId")
-                        .HasColumnType("int");
 
                     b.Property<double>("Longitude")
                         .HasColumnType("float");
@@ -114,7 +117,7 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LineId");
+                    b.HasIndex("BusId");
 
                     b.HasIndex("PassengerId");
 
@@ -222,9 +225,9 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("SoftPro.Wasilni.Domain.Entities.BookingEntity", b =>
                 {
-                    b.HasOne("SoftPro.Wasilni.Domain.Entities.LineEntity", "Line")
+                    b.HasOne("SoftPro.Wasilni.Domain.Entities.BusEntity", "Bus")
                         .WithMany()
-                        .HasForeignKey("LineId")
+                        .HasForeignKey("BusId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -234,7 +237,7 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Line");
+                    b.Navigation("Bus");
 
                     b.Navigation("Passenger");
                 });

@@ -8,9 +8,9 @@ public class BookingEntityConfiguration : IEntityTypeConfiguration<BookingEntity
 {
     public void Configure(EntityTypeBuilder<BookingEntity> builder)
     {
-        builder.HasOne(b => b.Trip)
+        builder.HasOne(b => b.Line)
                .WithMany()
-               .HasForeignKey(b => b.TripId)
+               .HasForeignKey(b => b.LineId)
                .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(b => b.Passenger)

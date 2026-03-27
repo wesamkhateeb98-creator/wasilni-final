@@ -8,11 +8,6 @@ public class AdjustAnonymousHubRequestValidator : AbstractValidator<AdjustAnonym
 {
     public AdjustAnonymousHubRequestValidator()
     {
-        RuleFor(x => x.TripId)
-            .GreaterThan(0)
-            .WithName(Title.TripId)
-            .WithMessage(Phrases.InvalidTripId);
-
         RuleFor(x => x.Delta)
             .Must(d => d == 1 || d == -1)
             .WithName(Title.Delta)
