@@ -146,9 +146,10 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         }
     }
 
-    public async Task<int> UpdateLocationAsync(int driverId, double latitude, double longitude, CancellationToken cancellationToken)
+    public async Task<(int BusId, int LineId)> UpdateLocationAsync(int driverId, double latitude, double longitude, CancellationToken cancellationToken)
     {
-        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId))
+        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId) ||
+            !cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int lineId))
         {
             BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
@@ -156,13 +157,14 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (bus.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            busId = bus.Id;
+            busId  = bus.Id;
+            lineId = bus.LineId;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
-            cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
+            cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
         }
 
         cache.Set(BusCacheKeys.Location(busId), new BusLocationModel(latitude, longitude, DateTime.UtcNow));
-        return busId;
+        return (busId, lineId);
     }
 
     public async Task<(int BusId, int Count)> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken)

@@ -17,7 +17,7 @@ public interface IBusService
 
     // ─── Driver: Bus state ────────────────────────────────────────────────────
     Task<GetActiveBusModel>      ToggleStatusAsync(int driverId, CancellationToken cancellationToken);
-    Task<int>                    UpdateLocationAsync(int driverId, double latitude, double longitude, CancellationToken cancellationToken);
+    Task<(int BusId, int LineId)> UpdateLocationAsync(int driverId, double latitude, double longitude, CancellationToken cancellationToken);
     Task<(int BusId, int Count)> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken);
     Task<int>                    ConfirmRiderAsync(int driverId, CancellationToken cancellationToken);      // anonymous rider
     Task<GetActiveBusModel?>     GetMyActiveBusAsync(int driverId, CancellationToken cancellationToken);
