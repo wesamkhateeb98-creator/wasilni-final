@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wasilni — Admin Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d1117;
+      --surf:    #161b22;
+      --surf2:   #21262d;
+      --border:  #30363d;
+      --text:    #c9d1d9;
+      --muted:   #8b949e;
+      --sky:     #58a6ff;
+      --green:   #3fb950;
+      --yellow:  #d29922;
+      --red:     #f85149;
+      --purple:  #bc8cff;
+      --orange:  #f0883e;
+      --gold:    #e3b341;
+    }
+
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; }
+
+    h1 { text-align: center; font-size: 1.35rem; color: var(--orange); margin-bottom: 14px; letter-spacing: 1px; }
+
+    /* ── Status bar ──────────────────────────────────────────────────────────── */
+    .sbar { display: flex; align-items: center; gap: 10px; max-width: 1400px; margin: 0 auto 14px; padding: 8px 14px; background: var(--surf); border: 1px solid var(--border); border-radius: 8px; flex-wrap: wrap; }
+    .dot  { width: 9px; height: 9px; border-radius: 50%; background: var(--red); flex-shrink: 0; transition: background .3s; }
+    .dot.connected  { background: var(--green); }
+    .dot.connecting { background: var(--yellow); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    #st-text { font-size: .8rem; color: var(--muted); }
+    .admin-badge { padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700; background: #2d1900; border: 1px solid var(--orange); color: var(--orange); display: none; }
+    .admin-badge.visible { display: inline-block; }
+    #tok-disp { margin-left: auto; font-size: .68rem; color: #484f58; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Layout ─────────────────────────────────────────────────────────────── */
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 14px; max-width: 1400px; margin: 0 auto; align-items: start; }
+    @media(max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+    .rpanel { display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── Card ───────────────────────────────────────────────────────────────── */
+    .card { background: var(--surf); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .card h2 { font-size: .72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+
+    /* ── Form ───────────────────────────────────────────────────────────────── */
+    label { display: block; font-size: .72rem; color: var(--muted); margin-bottom: 3px; margin-top: 9px; }
+    label:first-of-type { margin-top: 0; }
+    input, select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 9px; font-size: .82rem; outline: none; transition: border-color .2s; }
+    input:focus, select:focus { border-color: var(--orange); }
+    input[type=number] { -moz-appearance: textfield; }
+
+    /* ── Buttons ────────────────────────────────────────────────────────────── */
+    button { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: 7px; border: none; font-size: .82rem; font-weight: 600; cursor: pointer; transition: opacity .15s, filter .15s, transform .1s; }
+    button:active { transform: scale(.98); }
+    button:disabled { opacity: .3; cursor: not-allowed; }
+    button:not(:disabled):hover { filter: brightness(1.1); }
+    .btn-orange { background: var(--orange); color: #0d1117; }
+    .btn-sky    { background: var(--sky);    color: #0d1117; }
+    .btn-green  { background: var(--green);  color: #0d1117; }
+    .btn-red    { background: var(--red);    color: #fff; }
+    .btn-yellow { background: var(--yellow); color: #0d1117; }
+    .btn-muted  { background: var(--surf2);  color: var(--text); border: 1px solid var(--border); }
+    .btn-purple { background: var(--purple); color: #0d1117; }
+    .btn-gold   { background: var(--gold);   color: #0d1117; }
+    .btn-row    { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 8px; }
+    .btn-row button { margin-top: 0; }
+    .btn-sm { padding: 4px 8px; font-size: .7rem; margin-top: 0; width: auto; border-radius: 5px; }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+    /* ── Seed table ─────────────────────────────────────────────────────────── */
+    .seed-table { width: 100%; border-collapse: collapse; font-size: .7rem; margin-top: 6px; }
+    .seed-table th { color: #484f58; text-align: left; padding: 3px 5px; border-bottom: 1px solid var(--border); }
+    .seed-table td { padding: 4px 5px; border-bottom: 1px solid #161b22; }
+    .seed-table tr.row { cursor: pointer; }
+    .seed-table tr.row:hover td { background: var(--surf2); }
+    .chip { display: inline-block; padding: 1px 7px; border-radius: 20px; font-size: .65rem; font-weight: 700; }
+    .chip-orange { background: #2d1900; border: 1px solid var(--orange); color: var(--orange); }
+    .chip-sky    { background: #0d2136; border: 1px solid var(--sky);    color: var(--sky); }
+    .chip-green  { background: #0e3a1a; border: 1px solid var(--green);  color: var(--green); }
+    .chip-red    { background: #3a1010; border: 1px solid var(--red);    color: var(--red); }
+    .chip-muted  { background: var(--surf2); border: 1px solid var(--border); color: var(--muted); }
+
+    /* ── Live bus table ─────────────────────────────────────────────────────── */
+    .live-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+    .live-table th { color: var(--muted); font-size: .67rem; text-transform: uppercase; letter-spacing: .5px; padding: 5px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+    .live-table td { padding: 7px 8px; border-bottom: 1px solid var(--surf2); vertical-align: middle; }
+    .live-table tr:hover td { background: #1c2128; }
+    .live-table .empty-row td { color: var(--muted); font-style: italic; text-align: center; }
+    .pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+    .pulse-dot.active { background: var(--green); animation: glow 1.5s ease-in-out infinite; }
+    .pulse-dot.inactive { background: var(--red); }
+    @keyframes glow { 0%,100%{box-shadow:0 0 3px var(--green)} 50%{box-shadow:0 0 10px var(--green)} }
+    .gps-coords { font-family: monospace; font-size: .72rem; color: var(--sky); }
+    .flash { animation: flashAnim .6s ease; }
+    @keyframes flashAnim { 0%{background:#1a2d1a} 100%{background:transparent} }
+
+    /* ── Data list ──────────────────────────────────────────────────────────── */
+    .data-list { list-style: none; max-height: 240px; overflow-y: auto; }
+    .data-list li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: .78rem; border: 1px solid var(--border); margin-bottom: 5px; background: var(--surf2); }
+    .data-list li span.lbl { flex: 1; }
+    .data-list li .id-tag { font-size: .65rem; color: var(--muted); font-family: monospace; }
+    .data-list:empty::after { content: 'No data — click refresh'; color: var(--muted); font-size: .75rem; font-style: italic; display: block; padding: 8px; }
+
+    /* ── Event log ──────────────────────────────────────────────────────────── */
+    #event-log { font-family: monospace; font-size: .72rem; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 2px; padding: 6px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
+    .log-entry { padding: 3px 6px; border-radius: 4px; }
+    .log-info   { color: var(--sky); }
+    .log-ok     { color: var(--green); }
+    .log-warn   { color: var(--yellow); }
+    .log-err    { color: var(--red); }
+    .log-event  { color: var(--orange); }
+    .log-time   { color: #484f58; margin-right: 5px; }
+    .log-label  { font-weight: 700; margin-right: 4px; }
+
+    /* ── Stats row ──────────────────────────────────────────────────────────── */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat-box { background: var(--surf2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+    .stat-box .num { font-size: 1.6rem; font-weight: 700; color: var(--orange); }
+    .stat-box .lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+
+    /* tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+    .tab { flex: 1; padding: 5px 0; background: var(--surf2); border: 1px solid var(--border); border-radius: 6px; font-size: .75rem; font-weight: 600; cursor: pointer; transition: all .2s; color: var(--muted); }
+    .tab.active { background: #2d1900; border-color: var(--orange); color: var(--orange); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: var(--surf); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<h1>🛡️ Wasilni — Admin Dashboard</h1>
+
+<!-- Status bar -->
+<div class="sbar">
+  <div class="dot" id="dot"></div>
+  <span id="st-text">Disconnected</span>
+  <span class="admin-badge" id="admin-badge">ADMIN GROUP</span>
+  <span id="tok-disp">No token</span>
+</div>
+
+<div class="grid">
+  <!-- ═══════════════════════════════ LEFT PANEL ═══════════════════════════════ -->
+  <div class="left-panel" style="display:flex;flex-direction:column;gap:14px">
+
+    <!-- Seed data -->
+    <div class="card">
+      <h2>🔑 Seed — Admin Account</h2>
+      <table class="seed-table">
+        <thead><tr><th>Phone</th><th>Password</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr class="row" onclick="fillLogin('0911111111','Admin@123')">
+            <td>0911111111</td><td>Admin@123</td><td><span class="chip chip-orange">Admin</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Login -->
+    <div class="card">
+      <h2>🔐 Login</h2>
+      <label>Phone Number</label>
+      <input id="phone" type="text" value="0911111111" placeholder="+963…"/>
+      <label>Password</label>
+      <input id="password" type="password" value="Admin@123"/>
+      <button class="btn-orange" onclick="login()">Login</button>
+      <hr/>
+      <button class="btn-green" id="btn-connect" onclick="connect()" disabled>Connect SignalR</button>
+      <button class="btn-red"   id="btn-disconnect" onclick="disconnect()" disabled style="display:none">Disconnect</button>
+    </div>
+
+    <!-- Lines CRUD -->
+    <div class="card">
+      <h2>🗺️ Lines</h2>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('lines','list')">List</button>
+        <button class="tab"        onclick="switchTab('lines','add')">Add</button>
+        <button class="tab"        onclick="switchTab('lines','del')">Delete</button>
+      </div>
+
+      <!-- list -->
+      <div id="lines-list" class="tab-content active">
+        <button class="btn-sky" onclick="fetchLines()">↻ Refresh Lines</button>
+        <ul class="data-list" id="lines-data" style="margin-top:8px"></ul>
+      </div>
+
+      <!-- add -->
+      <div id="lines-add" class="tab-content">
+        <label>Line Name</label>
+        <input id="line-name" type="text" placeholder="e.g. Line A"/>
+        <button class="btn-green" onclick="addLine()">Add Line</button>
+      </div>
+
+      <!-- delete -->
+      <div id="lines-del" class="tab-content">
+        <label>Line ID</label>
+        <input id="del-line-id" type="number" placeholder="1"/>
+        <button class="btn-red" onclick="deleteLine()">Delete Line</button>
+      </div>
+    </div>
+
+    <!-- Buses CRUD -->
+    <div class="card">
+      <h2>🚌 Buses</h2>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('buses','list')">List</button>
+        <button class="tab"        onclick="switchTab('buses','add')">Register</button>
+        <button class="tab"        onclick="switchTab('buses','driver')">Driver</button>
+        <button class="tab"        onclick="switchTab('buses','del')">Delete</button>
+      </div>
+
+      <!-- list -->
+      <div id="buses-list" class="tab-content active">
+        <button class="btn-sky" onclick="fetchBuses()">↻ Refresh Buses</button>
+        <ul class="data-list" id="buses-data" style="margin-top:8px"></ul>
+      </div>
+
+      <!-- register -->
+      <div id="buses-add" class="tab-content">
+        <label>Plate</label>
+        <input id="b-plate" type="text" placeholder="ABC-123"/>
+        <label>Color</label>
+        <input id="b-color" type="text" placeholder="Red"/>
+        <label>Line ID</label>
+        <input id="b-line" type="number" placeholder="1"/>
+        <label>Bus Type</label>
+        <select id="b-type">
+          <option value="0">Van (0)</option>
+          <option value="1">Bolman (1)</option>
+          <option value="2">Service (2)</option>
+        </select>
+        <label>Owner Account ID</label>
+        <input id="b-owner" type="number" placeholder="1"/>
+        <label>Seats</label>
+        <input id="b-seats" type="number" placeholder="20"/>
+        <button class="btn-green" onclick="registerBus()">Register Bus</button>
+      </div>
+
+      <!-- driver assign -->
+      <div id="buses-driver" class="tab-content">
+        <label>Bus ID</label>
+        <input id="d-busid" type="number" placeholder="1"/>
+        <label>Driver Account ID</label>
+        <input id="d-driverid" type="number" placeholder="2"/>
+        <div class="btn-row">
+          <button class="btn-sky"   onclick="addDriver()">Assign Driver</button>
+          <button class="btn-red"   onclick="removeDriver()">Remove Driver</button>
+        </div>
+      </div>
+
+      <!-- delete -->
+      <div id="buses-del" class="tab-content">
+        <label>Bus ID</label>
+        <input id="del-bus-id" type="number" placeholder="1"/>
+        <button class="btn-red" onclick="deleteBus()">Delete Bus</button>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="card">
+      <h2>👤 Users</h2>
+      <label>Search by Phone</label>
+      <input id="search-phone" type="text" placeholder="09…"/>
+      <button class="btn-purple" onclick="searchUsers()">Search</button>
+      <ul class="data-list" id="users-data" style="margin-top:8px"></ul>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════ RIGHT PANEL ══════════════════════════════ -->
+  <div class="rpanel">
+
+    <!-- Stats -->
+    <div class="card">
+      <h2>📊 Real-time Overview</h2>
+      <div class="stats">
+        <div class="stat-box">
+          <div class="num" id="stat-active">0</div>
+          <div class="lbl">Active Buses</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="stat-locations">0</div>
+          <div class="lbl">GPS Updates</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="stat-events">0</div>
+          <div class="lbl">Total Events</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live bus tracker -->
+    <div class="card">
+      <h2>🛰️ Live Bus Tracker <span style="color:var(--muted);font-weight:400">(Admin Group)</span></h2>
+      <div style="overflow-x:auto">
+        <table class="live-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Bus ID</th>
+              <th>Plate</th>
+              <th>Line</th>
+              <th>Driver</th>
+              <th>Seats</th>
+              <th>GPS</th>
+              <th>Last Update</th>
+            </tr>
+          </thead>
+          <tbody id="live-tbody">
+            <tr class="empty-row"><td colspan="8">Waiting for SignalR events…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Booking events -->
+    <div class="card">
+      <h2>📋 Booking Events</h2>
+      <table class="live-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Event</th>
+            <th>Booking ID</th>
+            <th>Line</th>
+            <th>Status / Passenger</th>
+          </tr>
+        </thead>
+        <tbody id="booking-tbody">
+          <tr class="empty-row"><td colspan="5">No booking events yet…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Event log -->
+    <div class="card">
+      <h2>📟 Event Log
+        <button class="btn-sm btn-muted" style="margin-left:auto;margin-top:0" onclick="clearLog()">Clear</button>
+      </h2>
+      <div id="event-log"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  /* ─── State ─────────────────────────────────────────────────────────────── */
+  const BASE = '/api/v1.0';
+  let token   = null;
+  let conn    = null;
+  let totalGps    = 0;
+  let totalEvents = 0;
+
+  // busId → { busId, plate, lineId, driverName, seats, lat, lon, updatedAt }
+  const liveBuses = {};
+
+  /* ─── Helpers ───────────────────────────────────────────────────────────── */
+  const $ = id => document.getElementById(id);
+  const now = () => new Date().toLocaleTimeString('en-GB');
+
+  function log(msg, type='info') {
+    totalEvents++;
+    $('stat-events').textContent = totalEvents;
+    const el = document.createElement('div');
+    el.className = `log-entry log-${type}`;
+    el.innerHTML = `<span class="log-time">${now()}</span>${msg}`;
+    $('event-log').prepend(el);
+    if ($('event-log').children.length > 200) $('event-log').lastChild.remove();
+  }
+
+  function api(method, path, body) {
+    return fetch(BASE + path, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: body ? JSON.stringify(body) : undefined
+    }).then(async r => {
+      const text = await r.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = text; }
+      if (!r.ok) throw new Error(typeof data === 'object' ? (data.message ?? JSON.stringify(data)) : text);
+      return data;
+    });
+  }
+
+  function fillLogin(phone, pw) {
+    $('phone').value = phone;
+    $('password').value = pw;
+  }
+
+  function switchTab(group, tab) {
+    const prefix = group === 'lines' ? 'lines' : 'buses';
+    document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+      if (el.classList.contains('tab-content')) el.classList.remove('active');
+    });
+    $(`${prefix}-${tab}`).classList.add('active');
+    // update tab buttons
+    const card = $(`${prefix}-${tab}`).closest('.card');
+    card.querySelectorAll('.tab').forEach((t,i) => {
+      const tabIds = prefix === 'lines' ? ['list','add','del'] : ['list','add','driver','del'];
+      t.classList.toggle('active', tabIds[i] === tab);
+    });
+  }
+
+  /* ─── Auth ──────────────────────────────────────────────────────────────── */
+  async function login() {
+    try {
+      log('Logging in…', 'info');
+      const data = await api('POST', '/accounts/login', {
+        phoneNumber: $('phone').value.trim(),
+        password:    $('password').value
+      });
+      token = data.accessToken ?? data.token ?? data;
+      $('tok-disp').textContent = token;
+      log(`<span class="log-label">✓ Login OK</span>`, 'ok');
+      $('btn-connect').disabled = false;
+    } catch (e) {
+      log(`<span class="log-label">✗ Login:</span> ${e.message}`, 'err');
+    }
+  }
+
+  /* ─── SignalR ───────────────────────────────────────────────────────────── */
+  async function connect() {
+    conn = new signalR.HubConnectionBuilder()
+      .withUrl('/hubs/tracking', { accessTokenFactory: () => token })
+      .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+
+    setDot('connecting');
+
+    conn.onreconnecting(() => { setDot('connecting'); log('Reconnecting…', 'warn'); });
+    conn.onreconnected(() => {
+      setDot('connected');
+      log('Reconnected — rejoining admin group…', 'warn');
+      conn.invoke('JoinAdminGroup').catch(e => log(`JoinAdminGroup: ${e.message}`, 'err'));
+    });
+    conn.onclose(() => { setDot('disconnected'); log('Connection closed', 'warn'); });
+
+    /* ── Events ── */
+    conn.on('OnBusActivated', bus => {
+      log(`<span class="log-label log-event">OnBusActivated</span> busId=${bus.busId} plate=${bus.plate} line=${bus.lineId}`, 'event');
+      upsertLiveBus({
+        busId: bus.busId, plate: bus.plate, lineId: bus.lineId,
+        driverName: bus.driverName ?? '—', seats: bus.numberOfSeats ?? '—',
+        lat: null, lon: null, updatedAt: null, active: true
+      });
+    });
+
+    conn.on('OnBusDeactivated', data => {
+      log(`<span class="log-label log-event">OnBusDeactivated</span> busId=${data.busId}`, 'event');
+      markBusInactive(data.busId);
+    });
+
+    conn.on('OnLocationUpdated', data => {
+      totalGps++;
+      $('stat-locations').textContent = totalGps;
+      log(`<span class="log-label log-event">OnLocationUpdated</span> busId=${data.busId} lat=${data.latitude?.toFixed(5)} lon=${data.longitude?.toFixed(5)}`, 'event');
+      updateBusLocation(data.busId, data.latitude, data.longitude);
+    });
+
+    conn.on('OnAnonymousCountUpdated', data => {
+      log(`<span class="log-label log-event">OnAnonymousCountUpdated</span> busId=${data.busId} count=${data.count}`, 'event');
+    });
+
+    conn.on('OnBookingAdded', booking => {
+      log(`<span class="log-label log-event">OnBookingAdded</span> bookingId=${booking.bookingId ?? booking.id} lineId=${booking.lineId}`, 'event');
+      appendBookingEvent('Added', booking.bookingId ?? booking.id, booking.lineId, booking.passengerId ?? '—');
+    });
+
+    conn.on('OnBookingStatusChanged', data => {
+      log(`<span class="log-label log-event">OnBookingStatusChanged</span> bookingId=${data.bookingId} status=${data.status}`, 'event');
+      appendBookingEvent(data.status, data.bookingId, '—', '—');
+    });
+
+    conn.on('OnBookingCancelled', data => {
+      log(`<span class="log-label log-event">OnBookingCancelled</span> bookingId=${data.bookingId}`, 'event');
+      appendBookingEvent('Cancelled', data.bookingId, '—', '—');
+    });
+
+    try {
+      await conn.start();
+      setDot('connected');
+      log('<span class="log-label">✓ Connected</span>', 'ok');
+      await conn.invoke('JoinAdminGroup');
+      log('<span class="log-label">✓ Joined Admin group</span> — receiving all events', 'ok');
+      $('admin-badge').classList.add('visible');
+      $('btn-connect').style.display = 'none';
+      $('btn-disconnect').style.display = 'block';
+    } catch (e) {
+      setDot('disconnected');
+      log(`<span class="log-label">✗ Connect:</span> ${e.message}`, 'err');
+    }
+  }
+
+  async function disconnect() {
+    if (conn) { await conn.stop(); conn = null; }
+    setDot('disconnected');
+    $('admin-badge').classList.remove('visible');
+    $('btn-connect').style.display = 'block';
+    $('btn-disconnect').style.display = 'none';
+    log('Disconnected manually', 'warn');
+  }
+
+  function setDot(state) {
+    const dot = $('dot');
+    dot.className = 'dot';
+    if (state === 'connected')   { dot.classList.add('connected');  $('st-text').textContent = 'Connected'; }
+    if (state === 'connecting')  { dot.classList.add('connecting'); $('st-text').textContent = 'Connecting…'; }
+    if (state === 'disconnected'){ $('st-text').textContent = 'Disconnected'; }
+  }
+
+  /* ─── Live bus table ────────────────────────────────────────────────────── */
+  function upsertLiveBus(bus) {
+    liveBuses[bus.busId] = { ...liveBuses[bus.busId], ...bus };
+    renderLiveTable();
+    // update active count
+    $('stat-active').textContent = Object.values(liveBuses).filter(b => b.active).length;
+  }
+
+  function markBusInactive(busId) {
+    if (liveBuses[busId]) { liveBuses[busId].active = false; liveBuses[busId].updatedAt = now(); }
+    renderLiveTable();
+    $('stat-active').textContent = Object.values(liveBuses).filter(b => b.active).length;
+  }
+
+  function updateBusLocation(busId, lat, lon) {
+    if (!liveBuses[busId]) liveBuses[busId] = { busId, plate: '?', lineId: '?', driverName: '?', seats: '?', active: true };
+    liveBuses[busId].lat = lat;
+    liveBuses[busId].lon = lon;
+    liveBuses[busId].updatedAt = now();
+    renderLiveTable();
+    // flash the row
+    setTimeout(() => {
+      const row = document.querySelector(`tr[data-bus="${busId}"]`);
+      if (row) { row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); }
+    }, 10);
+  }
+
+  function renderLiveTable() {
+    const tbody = $('live-tbody');
+    const buses = Object.values(liveBuses);
+    if (!buses.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Waiting for SignalR events…</td></tr>';
+      return;
+    }
+    // sort: active first, then by busId
+    buses.sort((a,b) => (b.active - a.active) || (a.busId - b.busId));
+    tbody.innerHTML = buses.map(b => `
+      <tr data-bus="${b.busId}">
+        <td><span class="pulse-dot ${b.active ? 'active' : 'inactive'}"></span></td>
+        <td><code>${b.busId}</code></td>
+        <td><strong>${b.plate ?? '—'}</strong></td>
+        <td>${b.lineId ?? '—'}</td>
+        <td style="color:var(--muted)">${b.driverName ?? '—'}</td>
+        <td style="color:var(--muted)">${b.seats ?? '—'}</td>
+        <td class="gps-coords">${b.lat != null ? `${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}` : '<span style="color:var(--muted)">—</span>'}</td>
+        <td style="color:var(--muted);font-size:.68rem">${b.updatedAt ?? '—'}</td>
+      </tr>`).join('');
+  }
+
+  /* ─── Booking events table ──────────────────────────────────────────────── */
+  let bookingRowCount = 0;
+  function appendBookingEvent(event, bookingId, lineId, extra) {
+    const tbody = $('booking-tbody');
+    if (tbody.querySelector('.empty-row')) tbody.innerHTML = '';
+    bookingRowCount++;
+    const colorMap = {
+      'Added':    'chip-sky',
+      'PickedUp': 'chip-green',
+      'Cancelled':'chip-red',
+    };
+    const chip = colorMap[event] ?? 'chip-muted';
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td style="color:var(--muted);font-size:.68rem">${now()}</td>
+      <td><span class="chip ${chip}">${event}</span></td>
+      <td><code>${bookingId}</code></td>
+      <td>${lineId}</td>
+      <td style="color:var(--muted)">${extra}</td>`;
+    tbody.prepend(row);
+    if (bookingRowCount > 50) tbody.lastElementChild?.remove();
+  }
+
+  /* ─── Lines API ─────────────────────────────────────────────────────────── */
+  async function fetchLines() {
+    try {
+      const data = await api('GET', '/lines?pageNumber=1&pageSize=50');
+      const list = data.items ?? data.data ?? data;
+      const ul = $('lines-data');
+      ul.innerHTML = '';
+      (Array.isArray(list) ? list : []).forEach(l => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="id-tag">#${l.id}</span> <span class="lbl">${l.name}</span>
+          <button class="btn-sm btn-red" onclick="quickDeleteLine(${l.id})">✕</button>`;
+        ul.appendChild(li);
+      });
+      if (!ul.children.length) ul.innerHTML = '<li style="color:var(--muted)">No lines found</li>';
+      log(`✓ Loaded ${(Array.isArray(list) ? list : []).length} lines`, 'ok');
+    } catch(e) { log(`✗ Lines: ${e.message}`, 'err'); }
+  }
+
+  async function addLine() {
+    const name = $('line-name').value.trim();
+    if (!name) return;
+    try {
+      const r = await api('POST', '/lines', { name });
+      log(`✓ Line added id=${r.id}`, 'ok');
+      $('line-name').value = '';
+      fetchLines();
+    } catch(e) { log(`✗ AddLine: ${e.message}`, 'err'); }
+  }
+
+  async function deleteLine() {
+    const id = $('del-line-id').value;
+    if (!id) return;
+    try {
+      await api('DELETE', `/lines/${id}`);
+      log(`✓ Line #${id} deleted`, 'ok');
+      fetchLines();
+    } catch(e) { log(`✗ DeleteLine: ${e.message}`, 'err'); }
+  }
+
+  async function quickDeleteLine(id) {
+    try {
+      await api('DELETE', `/lines/${id}`);
+      log(`✓ Line #${id} deleted`, 'ok');
+      fetchLines();
+    } catch(e) { log(`✗ DeleteLine: ${e.message}`, 'err'); }
+  }
+
+  /* ─── Buses API ─────────────────────────────────────────────────────────── */
+  async function fetchBuses() {
+    try {
+      const data = await api('GET', '/buses?pageNumber=1&pageSize=50');
+      const list = data.items ?? data.data ?? data;
+      const ul = $('buses-data');
+      ul.innerHTML = '';
+      (Array.isArray(list) ? list : []).forEach(b => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span class="id-tag">#${b.id}</span>
+          <span class="lbl"><strong>${b.plate}</strong> — ${b.color} — Line ${b.lineId}
+            ${b.driverName ? `<span style="color:var(--green);font-size:.68rem"> 🧑 ${b.driverName}</span>` : '<span style="color:var(--muted);font-size:.68rem"> No driver</span>'}
+          </span>
+          <button class="btn-sm btn-red" onclick="quickDeleteBus(${b.id})">✕</button>`;
+        ul.appendChild(li);
+      });
+      if (!ul.children.length) ul.innerHTML = '<li style="color:var(--muted)">No buses found</li>';
+      log(`✓ Loaded ${(Array.isArray(list) ? list : []).length} buses`, 'ok');
+    } catch(e) { log(`✗ Buses: ${e.message}`, 'err'); }
+  }
+
+  async function registerBus() {
+    try {
+      const r = await api('POST', '/buses', {
+        plate:         $('b-plate').value.trim(),
+        color:         $('b-color').value.trim(),
+        lineId:        +$('b-line').value,
+        type:          +$('b-type').value,
+        accountId:     +$('b-owner').value,
+        numberOfSeats: +$('b-seats').value,
+        estimatedTime: '00:30:00'
+      });
+      log(`✓ Bus registered id=${r.id}`, 'ok');
+      fetchBuses();
+    } catch(e) { log(`✗ RegisterBus: ${e.message}`, 'err'); }
+  }
+
+  async function addDriver() {
+    try {
+      const r = await api('POST', '/buses/add-driver', {
+        busId:    +$('d-busid').value,
+        driverId: +$('d-driverid').value
+      });
+      log(`✓ Driver assigned busId=${$('d-busid').value} driverId=${$('d-driverid').value}`, 'ok');
+      fetchBuses();
+    } catch(e) { log(`✗ AddDriver: ${e.message}`, 'err'); }
+  }
+
+  async function removeDriver() {
+    try {
+      await api('DELETE', '/buses/delete-driver', {
+        busId:    +$('d-busid').value,
+        driverId: +$('d-driverid').value
+      });
+      log(`✓ Driver removed from busId=${$('d-busid').value}`, 'ok');
+      fetchBuses();
+    } catch(e) { log(`✗ RemoveDriver: ${e.message}`, 'err'); }
+  }
+
+  async function deleteBus() {
+    try {
+      await api('DELETE', `/buses/${$('del-bus-id').value}`);
+      log(`✓ Bus #${$('del-bus-id').value} deleted`, 'ok');
+      fetchBuses();
+    } catch(e) { log(`✗ DeleteBus: ${e.message}`, 'err'); }
+  }
+
+  async function quickDeleteBus(id) {
+    try {
+      await api('DELETE', `/buses/${id}`);
+      log(`✓ Bus #${id} deleted`, 'ok');
+      fetchBuses();
+    } catch(e) { log(`✗ DeleteBus: ${e.message}`, 'err'); }
+  }
+
+  /* ─── Users API ─────────────────────────────────────────────────────────── */
+  async function searchUsers() {
+    const phone = $('search-phone').value.trim();
+    try {
+      const data = await api('GET', `/accounts/search/by-phonenumber?phonenumber=${encodeURIComponent(phone)}&pageNumber=1&pageSize=20`);
+      const list = data.items ?? data.data ?? data;
+      const ul = $('users-data');
+      ul.innerHTML = '';
+      (Array.isArray(list) ? list : []).forEach(u => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="id-tag">#${u.id}</span>
+          <span class="lbl">${u.name ?? u.username ?? '—'} <span style="color:var(--muted)">${u.phoneNumber ?? ''}</span></span>
+          <span class="chip ${u.role === 1 ? 'chip-orange' : 'chip-sky'}">${u.role === 1 ? 'Admin' : 'User'}</span>`;
+        ul.appendChild(li);
+      });
+      if (!ul.children.length) ul.innerHTML = '<li style="color:var(--muted)">No users found</li>';
+      log(`✓ Found ${(Array.isArray(list) ? list : []).length} users`, 'ok');
+    } catch(e) { log(`✗ SearchUsers: ${e.message}`, 'err'); }
+  }
+
+  /* ─── Misc ──────────────────────────────────────────────────────────────── */
+  function clearLog() { $('event-log').innerHTML = ''; }
+
+  /* ─── Init log ──────────────────────────────────────────────────────────── */
+  log('Admin dashboard ready — login to get started', 'info');
+</script>
+</body>
+</html>
