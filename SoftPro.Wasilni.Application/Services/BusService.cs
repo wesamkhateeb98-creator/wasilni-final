@@ -272,13 +272,30 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
     }
 
     public async Task<(int BookingId, int LineId)> MarkNoShowAsync(
-        int bookingId, CancellationToken cancellationToken)
+        int bookingId, int driverId, CancellationToken cancellationToken)
     {
         BookingEntity booking = await unitOfWork.BookingRepository.GetByIdAsync(bookingId, cancellationToken)
             ?? throw new NotFoundException(Phrases.BookingNotFound);
 
         if (booking.Status != BookingStatus.Waiting)
             throw new FailedPreconditionException(Phrases.AlreadyBooked);
+
+        // Verify the driver's bus is on the same line as the booking
+        if (!cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int driverLineId))
+        {
+            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
+                ?? throw new NotFoundException(Phrases.BusNotFound);
+
+            if (bus.Status != BusStatus.Active)
+                throw new FailedPreconditionException(Phrases.BusNotOnRoad);
+
+            driverLineId = bus.LineId;
+            cache.Set(BusCacheKeys.DriverBus(driverId), bus.Id);
+            cache.Set(BusCacheKeys.DriverLine(driverId), driverLineId);
+        }
+
+        if (booking.LineId != driverLineId)
+            throw new ForbiddenException(Phrases.Forbidden);
 
         booking.Cancel();
         await unitOfWork.CompleteAsync(cancellationToken);
@@ -302,6 +319,9 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
     public async Task<int> AddBookingAsync(
         int lineId, int passengerId, double latitude, double longitude, CancellationToken cancellationToken)
     {
+        if (!await unitOfWork.LineRepository.AnyAsync(lineId, cancellationToken))
+            throw new NotFoundException(Phrases.LineNotFound);
+
         if (await unitOfWork.BookingRepository.HasActiveBookingOnLineAsync(passengerId, lineId, cancellationToken))
             throw new AlreadyExistsException(Phrases.AlreadyBooked);
 

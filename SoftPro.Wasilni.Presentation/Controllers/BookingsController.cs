@@ -75,8 +75,9 @@ public class BookingsController(
         [FromRoute] int id,
         CancellationToken cancellationToken)
     {
+        int driverId = User.GetId();
         var (bookingId, lineId) =
-            await busService.MarkNoShowAsync(id, cancellationToken);
+            await busService.MarkNoShowAsync(id, driverId, cancellationToken);
 
         await hubContext.Clients
             .Group(TrackingGroups.Line(lineId))

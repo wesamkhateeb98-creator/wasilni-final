@@ -28,7 +28,7 @@ public class LineService(IUnitOfWork unitOfWork) : ILineService
     public async Task<int> DeleteLine(int id, CancellationToken cancellationToken)
     {
         LineEntity? oldLine = await unitOfWork.LineRepository.GetByIdAsync(id, cancellationToken)
-            ?? throw new AlreadyExistsException(Phrases.LineNotFound);
+            ?? throw new NotFoundException(Phrases.LineNotFound);
 
         unitOfWork.LineRepository.Delete(oldLine, cancellationToken);
 

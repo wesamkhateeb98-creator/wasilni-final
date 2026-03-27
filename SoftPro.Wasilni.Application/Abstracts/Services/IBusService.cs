@@ -30,7 +30,7 @@ public interface IBusService
     Task<(int BookingId, int LineId)> ConfirmBookingAsync(int bookingId, int driverId, CancellationToken cancellationToken);
 
     /// <summary>Marks a booking as Cancelled (passenger didn't board).</summary>
-    Task<(int BookingId, int LineId)> MarkNoShowAsync(int bookingId, CancellationToken cancellationToken);
+    Task<(int BookingId, int LineId)> MarkNoShowAsync(int bookingId, int driverId, CancellationToken cancellationToken);
 
     // ─── Passenger ────────────────────────────────────────────────────────────
     Task<List<GetActiveBusModel>> GetActiveBusesAsync(int? lineId, CancellationToken cancellationToken);

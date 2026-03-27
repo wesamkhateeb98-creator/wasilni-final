@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wasilni — Passenger Test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d1117;
+      --surf:    #161b22;
+      --surf2:   #21262d;
+      --border:  #30363d;
+      --text:    #c9d1d9;
+      --muted:   #8b949e;
+      --sky:     #58a6ff;
+      --green:   #3fb950;
+      --yellow:  #d29922;
+      --red:     #f85149;
+      --purple:  #bc8cff;
+      --orange:  #f0883e;
+      --teal:    #39d353;
+    }
+
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; }
+
+    h1 { text-align: center; font-size: 1.3rem; color: var(--purple); margin-bottom: 14px; letter-spacing: 1px; }
+
+    /* ── Status bar ─────────────────────────────────────────────────────────── */
+    .sbar { display: flex; align-items: center; gap: 10px; max-width: 1300px; margin: 0 auto 14px; padding: 8px 14px; background: var(--surf); border: 1px solid var(--border); border-radius: 8px; flex-wrap: wrap; }
+    .dot  { width: 9px; height: 9px; border-radius: 50%; background: var(--red); flex-shrink: 0; transition: background .3s; }
+    .dot.connected  { background: var(--green); }
+    .dot.connecting { background: var(--yellow); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    #st-text { font-size: .8rem; color: var(--muted); }
+    #tok-disp { margin-left: auto; font-size: .68rem; color: #484f58; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Booking pill */
+    .bk-pill { display: none; align-items: center; gap: 8px; padding: 3px 12px; border-radius: 20px; font-size: .75rem; font-weight: 700; background: var(--surf2); border: 1px solid var(--border); color: var(--muted); margin-left: 10px; transition: all .3s; }
+    .bk-pill.waiting   { display: flex; border-color: var(--sky);    background: #0d2136; color: var(--sky); }
+    .bk-pill.picked-up { display: flex; border-color: var(--green);  background: #0e3a1a; color: var(--green); }
+    .bk-pill.cancelled { display: flex; border-color: var(--red);    background: #3a1010; color: var(--red); }
+
+    /* ── Layout ─────────────────────────────────────────────────────────────── */
+    .grid { display: grid; grid-template-columns: 330px 1fr; gap: 14px; max-width: 1300px; margin: 0 auto; align-items: start; }
+    @media(max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    .rpanel { display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── Card ───────────────────────────────────────────────────────────────── */
+    .card { background: var(--surf); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .card h2 { font-size: .72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+
+    /* ── Form ───────────────────────────────────────────────────────────────── */
+    label { display: block; font-size: .72rem; color: var(--muted); margin-bottom: 3px; margin-top: 9px; }
+    label:first-of-type { margin-top: 0; }
+    input, select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 9px; font-size: .82rem; outline: none; transition: border-color .2s; }
+    input:focus, select:focus { border-color: var(--purple); }
+
+    /* ── Buttons ────────────────────────────────────────────────────────────── */
+    button { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: 7px; border: none; font-size: .82rem; font-weight: 600; cursor: pointer; transition: filter .15s, transform .1s; }
+    button:active { transform: scale(.98); }
+    button:disabled { opacity: .3; cursor: not-allowed; }
+    button:not(:disabled):hover { filter: brightness(1.12); }
+    .btn-purple { background: var(--purple); color: #0d1117; }
+    .btn-sky    { background: var(--sky);    color: #0d1117; }
+    .btn-green  { background: var(--green);  color: #0d1117; }
+    .btn-red    { background: var(--red);    color: #fff; }
+    .btn-muted  { background: var(--surf2);  color: var(--text); border: 1px solid var(--border); }
+    .btn-orange { background: var(--orange); color: #0d1117; }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 8px; }
+    .btn-row button { margin-top: 0; }
+    .btn-sm  { padding: 4px 8px; font-size: .72rem; margin-top: 0; width: auto; }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+    /* ── Seed table ─────────────────────────────────────────────────────────── */
+    .tbl { width: 100%; border-collapse: collapse; font-size: .7rem; margin-top: 6px; }
+    .tbl th { color: #484f58; text-align: left; padding: 3px 5px; border-bottom: 1px solid var(--border); }
+    .tbl td { padding: 4px 5px; border-bottom: 1px solid #161b22; }
+    .tbl tr.row { cursor: pointer; }
+    .tbl tr.row:hover td { background: var(--bg); }
+    .tbl tr.sel td { background: #1e1040; color: var(--purple); }
+    .badge { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: .62rem; font-weight: 700; }
+    .bd-line { background: #1a2f55; color: #79b8ff; }
+    .bd-bus  { background: #0e3a1a; color: #56d364; }
+
+    /* ── Lines selector ─────────────────────────────────────────────────────── */
+    .line-cards { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .line-btn { flex: 0 0 auto; padding: 5px 12px; border-radius: 6px; background: var(--surf2); border: 1px solid var(--border); color: var(--text); font-size: .75rem; font-weight: 600; cursor: pointer; transition: all .2s; margin-top: 0; width: auto; }
+    .line-btn.sel { background: #1e1040; border-color: var(--purple); color: var(--purple); }
+    .line-btn:hover:not(.sel) { border-color: #8b949e; }
+
+    /* ── Active buses list ──────────────────────────────────────────────────── */
+    #buses-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; margin-top: 10px; }
+    #buses-empty { text-align: center; color: var(--muted); font-size: .78rem; padding: 28px 0; }
+    .bus-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; transition: border-color .2s; }
+    .bus-card:hover { border-color: #444c56; }
+    .bus-card.active-card { border-color: #1f6feb; }
+    .bc-head  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .bc-plate { font-size: .85rem; font-weight: 700; color: var(--sky); }
+    .bc-status-badge { font-size: .65rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
+    .bc-status-badge.active { background: #0e3a1a; color: var(--green); }
+    .bc-detail { font-size: .73rem; color: var(--muted); line-height: 1.85; }
+    .bc-detail b { color: var(--text); }
+    .bc-loc { font-size: .7rem; color: var(--muted); margin-top: 5px; }
+    .bc-loc span { color: var(--orange); }
+    .bc-actions { margin-top: 8px; }
+    .bc-actions button { margin-top: 0; padding: 5px 10px; font-size: .73rem; }
+    #buses-count { font-size: .7rem; color: var(--muted); margin-left: auto; }
+
+    /* ── Booking card ───────────────────────────────────────────────────────── */
+    #my-booking { display: none; background: #0d1930; border: 1px solid var(--sky); border-radius: 8px; padding: 11px 13px; margin-top: 10px; font-size: .76rem; line-height: 1.9; }
+    #my-booking.picked-up { border-color: var(--green); background: #091a10; }
+    #my-booking.cancelled  { border-color: var(--red);   background: #1a0909; opacity: .7; }
+    #my-booking b { color: var(--text); }
+
+    /* ── Log ────────────────────────────────────────────────────────────────── */
+    .log-wrap { display: flex; flex-direction: column; }
+    #log { min-height: 380px; max-height: 480px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; font-family: 'Consolas', monospace; font-size: .72rem; line-height: 1.75; }
+    .le { padding: 1px 0; }
+    .lt { color: #484f58; }
+    .ln-event  { color: var(--sky);    font-weight: 700; }
+    .ln-sent   { color: var(--yellow); font-weight: 700; }
+    .ln-info   { color: var(--muted);  font-weight: 700; }
+    .ln-error  { color: var(--red);    font-weight: 700; }
+    .ln-api    { color: var(--purple); font-weight: 700; }
+    .ln-book   { color: var(--green);  font-weight: 700; }
+    .ld { color: #7ee787; }
+    .lc { display: flex; gap: 7px; margin-top: 8px; }
+    .lc button { margin-top: 0; flex: 1; width: auto; }
+  </style>
+</head>
+<body>
+
+<h1>🧍 Wasilni — Passenger Test</h1>
+
+<!-- ── Status bar ──────────────────────────────────────────────────────────── -->
+<div class="sbar">
+  <div class="dot" id="dot"></div>
+  <span id="st-text">Disconnected</span>
+  <div class="bk-pill" id="bk-pill">
+    <span id="bk-pill-icon">📌</span>
+    <span id="bk-pill-text">No Booking</span>
+  </div>
+  <span id="tok-disp">No token</span>
+</div>
+
+<div class="grid">
+
+  <!-- ══════════════════ LEFT PANEL ══════════════════════════════════════════ -->
+  <div style="display:flex;flex-direction:column;gap:12px;">
+
+    <!-- ① Seed -->
+    <div class="card">
+      <h2>① Seed Data</h2>
+      <button class="btn-purple" onclick="loadSeed()">🌱 Load / Reset Seed</button>
+      <div id="seed-wrap" style="display:none; margin-top:10px;">
+        <label>Passengers — click to auto-fill</label>
+        <table class="tbl" id="seed-pass">
+          <thead><tr><th>Name</th><th>Phone</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <label style="margin-top:10px;">Available Lines (from drivers)</label>
+        <div class="line-cards" id="seed-lines"></div>
+      </div>
+    </div>
+
+    <!-- ② Login -->
+    <div class="card">
+      <h2>② Login &amp; Connect</h2>
+      <label>Phone</label>
+      <input type="text"     id="phone"    placeholder="09XXXXXXXX"/>
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••" value="Password@123"/>
+      <button class="btn-purple" onclick="login()"      >🔑 Login &amp; Connect</button>
+      <button class="btn-muted"  onclick="disconnect()" id="btn-disc" disabled>⏏ Disconnect</button>
+    </div>
+
+    <!-- ③ Discover Buses -->
+    <div class="card">
+      <h2>③ Discover Active Buses</h2>
+      <label>Line ID</label>
+      <input type="number" id="line-id" placeholder="Select from seed or type" min="1"/>
+      <button class="btn-sky" onclick="getActiveBuses()" id="btn-discover" disabled>🔍 Get Active Buses on Line</button>
+      <button class="btn-muted" onclick="subscribeLine()" id="btn-sub" disabled style="margin-top:5px;">📡 Subscribe to Line (Live Updates)</button>
+    </div>
+
+    <!-- ④ Book -->
+    <div class="card">
+      <h2>④ Book a Seat</h2>
+      <label>Line ID</label>
+      <input type="number" id="bk-line-id" placeholder="Same as above" min="1"/>
+      <label>My Latitude</label>
+      <input type="number" id="bk-lat" value="33.5138" step="0.0001"/>
+      <label>My Longitude</label>
+      <input type="number" id="bk-lng" value="36.2765" step="0.0001"/>
+      <button class="btn-green" onclick="addBooking()"    id="btn-book"   disabled>📌 Book Seat</button>
+      <button class="btn-red"   onclick="cancelBooking()" id="btn-cancel" disabled>✖ Cancel Booking</button>
+
+      <div id="my-booking">
+        <div id="my-bk-content"></div>
+      </div>
+    </div>
+
+    <!-- ⑤ Demo -->
+    <div class="card">
+      <h2>⑤ Auto Demo</h2>
+      <label>Passenger Index (0–N)</label>
+      <input type="number" id="dm-pass-idx" value="0" min="0"/>
+      <label>Delay ms</label>
+      <input type="number" id="dm-delay" value="1600" min="500" step="100"/>
+      <button class="btn-purple" onclick="runDemo()" id="btn-demo">🚀 Run Full Demo</button>
+      <button class="btn-red"    onclick="stopDemo()" id="btn-stop" disabled style="margin-top:5px;">⏹ Stop</button>
+      <div id="dm-prog" style="display:none; margin-top:10px;">
+        <div style="height:5px;background:var(--surf2);border-radius:3px;overflow:hidden;">
+          <div id="dm-fill" style="height:100%;width:0%;background:var(--purple);transition:width .3s;"></div>
+        </div>
+        <div id="dm-lbl" style="font-size:.7rem;color:var(--muted);margin-top:4px;"></div>
+      </div>
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- ══════════════════ RIGHT PANEL ═════════════════════════════════════════ -->
+  <div class="rpanel">
+
+    <!-- Active Buses -->
+    <div class="card">
+      <h2>
+        🚌 Active Buses
+        <span id="buses-count"></span>
+      </h2>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px;">
+        Tap <strong style="color:var(--sky)">Get Active Buses</strong> or subscribe to a line for live updates.
+        Location refreshes via <code style="color:var(--orange)">OnLocationUpdated</code>.
+      </div>
+      <div id="buses-empty">— No active buses yet. Discover or subscribe to a line. —</div>
+      <div id="buses-list"></div>
+    </div>
+
+    <!-- Event Log -->
+    <div class="card log-wrap">
+      <h2>📡 Event Log</h2>
+      <div id="log"></div>
+      <div class="lc">
+        <button class="btn-muted" onclick="clearLog()">🗑 Clear</button>
+        <button class="btn-muted" onclick="copyLog()">📋 Copy</button>
+      </div>
+    </div>
+
+  </div><!-- /right -->
+</div>
+
+<script>
+  'use strict';
+
+  const API = window.location.origin;
+  let conn     = null;
+  let token    = null;
+  let seedData = null;
+  let demoAborted = false;
+
+  // State
+  let activeLineId  = null;          // subscribed line
+  let currentBkId   = null;          // my booking id
+  let currentBkLine = null;          // my booking lineId
+
+  // Map<busId → { id, plate, lineName, lineId, lat, lng, anonCount, activeSince }>
+  const buses = new Map();
+
+  // ── Utils ─────────────────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const fmt = o  => typeof o === 'object' ? JSON.stringify(o, null, 2) : String(o ?? '');
+
+  function log(type, name, data) {
+    const time = new Date().toLocaleTimeString('en-GB');
+    const div  = document.createElement('div');
+    div.className = 'le';
+    div.innerHTML =
+      `<span class="lt">[${time}]</span> ` +
+      `<span class="ln-${type}">${esc(name)}</span> ` +
+      `<span class="ld">${esc(fmt(data))}</span>`;
+    const el = $('log');
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  }
+  function clearLog() { $('log').innerHTML = ''; }
+  function copyLog()  { navigator.clipboard.writeText($('log').innerText).then(() => log('info','System','Copied')); }
+
+  function setStatus(s) {
+    $('dot').className = 'dot ' + s;
+    $('st-text').textContent = s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function setConnected(on) {
+    ['btn-discover','btn-sub','btn-book'].forEach(id => $(id).disabled = !on);
+    $('btn-disc').disabled = !on;
+    if (!on) $('btn-cancel').disabled = true;
+  }
+
+  function updateBkPill(status) {
+    const pill = $('bk-pill');
+    pill.className = 'bk-pill ' + (status ?? '').toLowerCase().replace(' ','-');
+    const icons = { 'Waiting': '📌', 'PickedUp': '✅', 'Cancelled': '✖' };
+    $('bk-pill-icon').textContent = icons[status] ?? '📌';
+    $('bk-pill-text').textContent = status ?? '';
+  }
+
+  // ── Seed ──────────────────────────────────────────────────────────────────
+  async function loadSeed() {
+    log('info','Seed','GET /api/v1.0/seed …');
+    try {
+      const r = await fetch(`${API}/api/v1.0/seed`);
+      if (!r.ok) { log('error','Seed',`HTTP ${r.status}`); return; }
+      seedData = await r.json();
+      log('info','Seed', `✅ ${seedData.summary?.drivers ?? 0} drivers · ${seedData.summary?.passengers ?? 0} passengers`);
+
+      // Passengers table
+      const ptb = document.querySelector('#seed-pass tbody');
+      ptb.innerHTML = '';
+      (seedData.passengers ?? []).forEach(p => {
+        const tr = document.createElement('tr');
+        tr.className = 'row';
+        tr.innerHTML = `<td>${esc(p.name)}</td><td>${esc(p.phone)}</td>`;
+        tr.onclick = () => {
+          document.querySelectorAll('#seed-pass tr.row').forEach(x => x.classList.remove('sel'));
+          tr.classList.add('sel');
+          $('phone').value    = p.phone;
+          $('password').value = 'Password@123';
+          log('info','AutoFill', `Passenger: ${p.name} (${p.phone})`);
+        };
+        ptb.appendChild(tr);
+      });
+
+      // Extract unique lines from drivers
+      const linesMap = new Map();
+      (seedData.drivers ?? []).forEach(d => {
+        if (d.lineId && !linesMap.has(d.lineId))
+          linesMap.set(d.lineId, d.lineName ?? `Line #${d.lineId}`);
+      });
+      const linesDiv = $('seed-lines');
+      linesDiv.innerHTML = '';
+      linesMap.forEach((name, id) => {
+        const btn = document.createElement('button');
+        btn.className   = 'line-btn';
+        btn.textContent = `🛣 #${id} — ${name}`;
+        btn.onclick     = () => {
+          document.querySelectorAll('.line-btn').forEach(b => b.classList.remove('sel'));
+          btn.classList.add('sel');
+          $('line-id').value    = id;
+          $('bk-line-id').value = id;
+          log('info','LineSelect', `Line #${id} — ${name}`);
+        };
+        linesDiv.appendChild(btn);
+      });
+
+      $('seed-wrap').style.display = 'block';
+    } catch (e) { log('error','Seed', e.message); }
+  }
+
+  // ── Login & Connect ────────────────────────────────────────────────────────
+  async function login() {
+    const phone = $('phone').value.trim();
+    const pass  = $('password').value;
+    if (!phone || !pass) { log('error','Login','Phone & password required'); return; }
+    log('info','Login', `${phone} …`);
+    try {
+      const r = await fetch(`${API}/api/v1.0/accounts/login`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ phoneNumber: phone, password: pass })
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(()=>({}));
+        log('error','Login',`HTTP ${r.status} — ${e.title ?? JSON.stringify(e)}`);
+        return;
+      }
+      const d = await r.json();
+      token = d.token ?? d.accessToken ?? d.Token ?? d.AccessToken;
+      if (!token) { log('error','Login','Token not found'); return; }
+      $('tok-disp').textContent = 'Token: ' + token.substring(0, 38) + '…';
+      log('info','Login','✅ Authenticated');
+      await connectHub();
+    } catch (e) { log('error','Login', e.message); }
+  }
+
+  // ── SignalR ────────────────────────────────────────────────────────────────
+  async function connectHub() {
+    setStatus('connecting');
+    conn = new signalR.HubConnectionBuilder()
+      .withUrl(`${API}/hubs/tracking`, { accessTokenFactory: () => token })
+      .withAutomaticReconnect([0, 2000, 5000, 10000])
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+
+    // ── Events ──────────────────────────────────────────────────────────────
+
+    conn.on('OnBusActivated', m => {
+      log('event','OnBusActivated', m);
+      buses.set(m.busId, {
+        id: m.busId, plate: m.plate, lineName: m.lineName, lineId: m.lineId,
+        lat: m.latitude, lng: m.longitude, anonCount: m.anonymousCount,
+        activeSince: m.activeSince, status: 'Active'
+      });
+      renderBuses();
+    });
+
+    conn.on('OnBusDeactivated', m => {
+      log('event','OnBusDeactivated', m);
+      buses.delete(m.busId);
+      renderBuses();
+    });
+
+    conn.on('OnLocationUpdated', m => {
+      log('event','OnLocationUpdated', m);
+      const bus = buses.get(m.busId);
+      if (bus) {
+        bus.lat = m.latitude;
+        bus.lng = m.longitude;
+        renderBuses();
+      }
+    });
+
+    conn.on('OnAnonymousCountUpdated', m => {
+      log('event','OnAnonymousCountUpdated', m);
+      const bus = buses.get(m.busId);
+      if (bus) { bus.anonCount = m.count; renderBuses(); }
+    });
+
+    conn.on('OnBookingAdded', m => {
+      log('event','OnBookingAdded', m);
+    });
+
+    conn.on('OnBookingStatusChanged', m => {
+      log('event','OnBookingStatusChanged', m);
+      // Update MY booking if it's the one that changed
+      if (currentBkId && m.bookingId === currentBkId) {
+        updateMyBooking({ status: m.status });
+        updateBkPill(m.status);
+        if (m.status === 'PickedUp') {
+          log('book','🎉 You were picked up!', `Booking #${m.bookingId}`);
+          $('btn-cancel').disabled = true;
+        } else if (m.status === 'Cancelled') {
+          log('book','Booking cancelled by driver', `Booking #${m.bookingId}`);
+          $('btn-cancel').disabled = true;
+        }
+      }
+    });
+
+    conn.onreconnecting(() => { setStatus('connecting'); log('info','Hub','Reconnecting…'); });
+    conn.onreconnected(() =>  { setStatus('connected');  log('info','Hub','✅ Reconnected'); });
+    conn.onclose(e => {
+      setStatus('disconnected');
+      setConnected(false);
+      log('error','Hub','Closed' + (e ? ': ' + e.message : ''));
+    });
+
+    try {
+      await conn.start();
+      setStatus('connected');
+      setConnected(true);
+      log('info','Hub', `✅ Connected (${conn.connectionId})`);
+    } catch (e) {
+      setStatus('disconnected');
+      log('error','Hub', 'Connect failed: ' + e.message);
+    }
+  }
+
+  async function disconnect() {
+    if (conn) { await conn.stop(); conn = null; }
+    token = null; buses.clear(); renderBuses();
+    setStatus('disconnected'); setConnected(false);
+    $('tok-disp').textContent = 'No token';
+    $('btn-disc').disabled = true;
+    currentBkId = null; currentBkLine = null;
+    $('my-booking').style.display = 'none';
+    updateBkPill(null);
+  }
+
+  // ── Get Active Buses ───────────────────────────────────────────────────────
+  async function getActiveBuses() {
+    const lineId = parseInt($('line-id').value);
+    const url    = lineId
+      ? `/api/v1.0/buses/active?lineId=${lineId}`
+      : '/api/v1.0/buses/active';
+
+    log('api', `GET ${url}`, '…');
+    try {
+      const r = await fetch(API + url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!r.ok) {
+        const e = await r.json().catch(()=>({}));
+        log('error','GetActiveBuses', `HTTP ${r.status} — ${e.title ?? JSON.stringify(e)}`);
+        return;
+      }
+      const list = await r.json();
+      log('api','GetActiveBuses', `✅ ${list.length} bus(es)`);
+      buses.clear();
+      list.forEach(b => buses.set(b.busId, {
+        id: b.busId, plate: b.plate, lineName: b.lineName, lineId: b.lineId,
+        lat: b.latitude, lng: b.longitude, anonCount: b.anonymousCount,
+        activeSince: b.activeSince, status: b.status
+      }));
+      renderBuses();
+    } catch (e) { log('error','GetActiveBuses', e.message); }
+  }
+
+  // ── Subscribe to Line ──────────────────────────────────────────────────────
+  async function subscribeLine() {
+    const lineId = parseInt($('line-id').value);
+    if (!lineId) { log('error','Subscribe','Enter a Line ID'); return; }
+    activeLineId = lineId;
+    log('sent','SubscribeToLine →', { lineId });
+    try {
+      await conn.invoke('SubscribeToLine', lineId);
+      log('info','SubscribeToLine', `✅ Now receiving live events for Line #${lineId}`);
+    } catch (e) { log('error','SubscribeToLine', e.message); }
+  }
+
+  // ── Book ───────────────────────────────────────────────────────────────────
+  async function addBooking() {
+    const lineId = parseInt($('bk-line-id').value);
+    const lat    = parseFloat($('bk-lat').value);
+    const lng    = parseFloat($('bk-lng').value);
+    if (!lineId) { log('error','Book','Line ID required'); return; }
+
+    log('api', `POST /lines/${lineId}/bookings`, { lat, lng });
+    try {
+      const r = await fetch(`${API}/api/v1.0/lines/${lineId}/bookings`, {
+        method:'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ latitude: lat, longitude: lng })
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(()=>({}));
+        log('error','Book', `HTTP ${r.status} — ${e.title ?? JSON.stringify(e)}`);
+        return;
+      }
+      const d = await r.json();
+      currentBkId   = d.id;
+      currentBkLine = lineId;
+      log('book', `✅ Booking created`, `ID: ${d.id} | Line #${lineId}`);
+
+      updateMyBooking({ id: d.id, lineId, lat, lng, status: 'Waiting' });
+      updateBkPill('Waiting');
+      $('btn-book').disabled   = true;
+      $('btn-cancel').disabled = false;
+    } catch (e) { log('error','Book', e.message); }
+  }
+
+  // ── Cancel ─────────────────────────────────────────────────────────────────
+  async function cancelBooking() {
+    if (!currentBkLine) { log('error','Cancel','No active booking'); return; }
+    log('api', `DELETE /lines/${currentBkLine}/bookings`, '…');
+    try {
+      const r = await fetch(`${API}/api/v1.0/lines/${currentBkLine}/bookings`, {
+        method:'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(()=>({}));
+        log('error','Cancel', `HTTP ${r.status} — ${e.title ?? JSON.stringify(e)}`);
+        return;
+      }
+      const d = await r.json();
+      log('book', `✅ Booking cancelled`, `ID: ${d.id}`);
+      currentBkId   = null;
+      currentBkLine = null;
+      updateMyBooking(null);
+      updateBkPill(null);
+      $('btn-book').disabled   = false;
+      $('btn-cancel').disabled = true;
+    } catch (e) { log('error','Cancel', e.message); }
+  }
+
+  // ── Render helpers ─────────────────────────────────────────────────────────
+  function updateMyBooking(bk) {
+    const el = $('my-booking');
+    if (!bk) { el.style.display = 'none'; el.className = ''; return; }
+    el.style.display = 'block';
+    el.className     = bk.status === 'PickedUp'  ? 'picked-up'
+                     : bk.status === 'Cancelled' ? 'cancelled' : '';
+    const icon = bk.status === 'PickedUp' ? '🎉' : bk.status === 'Cancelled' ? '✖' : '📌';
+    $('my-bk-content').innerHTML = `
+      ${icon} <b>Booking #${bk.id ?? currentBkId}</b><br>
+      🛣 Line <b>#${bk.lineId ?? currentBkLine}</b><br>
+      📍 Location: <b>${(bk.lat ?? 0).toFixed(5)}, ${(bk.lng ?? 0).toFixed(5)}</b><br>
+      🔖 Status: <b style="color:${bk.status==='PickedUp'?'var(--green)':bk.status==='Cancelled'?'var(--red)':'var(--sky)'}">${bk.status ?? 'Waiting'}</b>
+    `;
+  }
+
+  function renderBuses() {
+    const list = $('buses-list');
+    list.innerHTML = '';
+
+    const arr = [...buses.values()];
+    $('buses-count').textContent = arr.length ? `(${arr.length})` : '';
+
+    if (!arr.length) {
+      $('buses-empty').style.display = 'block';
+      return;
+    }
+    $('buses-empty').style.display = 'none';
+
+    arr.forEach(b => {
+      const hasLoc = b.lat != null && b.lng != null;
+      const since  = b.activeSince ? new Date(b.activeSince).toLocaleTimeString('en-GB') : '—';
+      const div = document.createElement('div');
+      div.className = `bus-card active-card`;
+      div.id = `bc-${b.id}`;
+      div.innerHTML = `
+        <div class="bc-head">
+          <span class="bc-plate">🚌 ${esc(b.plate)}</span>
+          <span class="bc-status-badge active">● Active</span>
+        </div>
+        <div class="bc-detail">
+          🛣 Line <b>#${b.lineId}</b> — ${esc(b.lineName ?? '')}<br>
+          👥 On board: <b>${b.anonCount ?? 0}</b> anonymous<br>
+          🕐 Active since: <b>${since}</b>
+        </div>
+        <div class="bc-loc">
+          ${hasLoc
+            ? `📍 <span>${b.lat.toFixed(5)}</span>, <span>${b.lng.toFixed(5)}</span>`
+            : `📍 <span style="color:var(--muted)">Location not yet reported</span>`}
+        </div>
+        <div class="bc-actions">
+          <button class="btn-sky" style="font-size:.72rem;padding:5px;"
+            onclick="fillBookFromBus(${b.id},${b.lineId},${b.lat??'null'},${b.lng??'null'})">
+            📌 Book on this bus's line
+          </button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  function fillBookFromBus(busId, lineId, lat, lng) {
+    $('bk-line-id').value = lineId;
+    $('line-id').value    = lineId;
+    // Place passenger slightly near bus
+    if (lat != null) {
+      $('bk-lat').value = (lat + (Math.random() - 0.5) * 0.0003).toFixed(6);
+      $('bk-lng').value = (lng + (Math.random() - 0.5) * 0.0003).toFixed(6);
+    }
+    log('info','QuickFill', `Line #${lineId} | Bus #${busId} — lat/lng set near bus`);
+  }
+
+  // ── Auto Demo ──────────────────────────────────────────────────────────────
+  let demoStep = 0, demoTotal = 0;
+  const wait  = ms => new Promise(r => setTimeout(r, ms));
+
+  function dmProg(lbl) {
+    demoStep++;
+    const pct = Math.round((demoStep / demoTotal) * 100);
+    $('dm-fill').style.width = pct + '%';
+    $('dm-lbl').textContent  = lbl;
+    log('info', `[${demoStep}/${demoTotal}]`, lbl);
+  }
+
+  async function runDemo() {
+    demoAborted = false;
+    $('btn-demo').disabled = true;
+    $('btn-stop').disabled = false;
+    $('dm-prog').style.display = 'block';
+
+    const pIdx  = parseInt($('dm-pass-idx').value ?? 0);
+    const delay = parseInt($('dm-delay').value    ?? 1600);
+
+    // Steps: seed · login · get-buses · subscribe · book · wait · cancel
+    demoTotal = 7; demoStep = 0;
+    const abort = () => demoAborted;
+
+    try {
+      // 1. Seed
+      dmProg('Loading seed data …');
+      await loadSeed();
+      if (abort()) return dmFinish();
+      await wait(delay);
+
+      if (!seedData?.passengers?.length) {
+        log('error','Demo','No passengers in seed'); return dmFinish();
+      }
+
+      const pass   = seedData.passengers[Math.min(pIdx, seedData.passengers.length - 1)];
+      const driver = seedData.drivers?.[0];
+      const lineId = driver?.lineId ?? 1;
+
+      // 2. Login
+      dmProg(`Login: ${pass.name} (${pass.phone})`);
+      $('phone').value    = pass.phone;
+      $('password').value = 'Password@123';
+      await login();
+      if (abort()) return dmFinish();
+      await wait(delay);
+
+      // 3. Select line & get active buses
+      dmProg(`Get active buses on Line #${lineId}`);
+      $('line-id').value    = lineId;
+      $('bk-line-id').value = lineId;
+      await getActiveBuses();
+      if (abort()) return dmFinish();
+      await wait(delay);
+
+      // 4. Subscribe to line
+      dmProg(`Subscribe to Line #${lineId} for live updates`);
+      await subscribeLine();
+      if (abort()) return dmFinish();
+      await wait(delay);
+
+      // 5. Set location near bus (or default)
+      const firstBus = [...buses.values()][0];
+      if (firstBus?.lat != null) {
+        $('bk-lat').value = (firstBus.lat + 0.00010).toFixed(6);
+        $('bk-lng').value = (firstBus.lng + 0.00008).toFixed(6);
+        dmProg(`Set location near Bus #${firstBus.id}`);
+      } else {
+        dmProg('Using default location (bus has no GPS yet)');
+      }
+      if (abort()) return dmFinish();
+      await wait(delay);
+
+      // 6. Book
+      dmProg(`Book seat on Line #${lineId}`);
+      await addBooking();
+      if (abort()) return dmFinish();
+      await wait(delay * 1.5);
+
+      // 7. Cancel
+      dmProg('Cancel the booking');
+      await cancelBooking();
+      await wait(delay / 2);
+
+      log('info','Demo','🎉 Passenger demo completed!');
+
+    } catch (e) {
+      log('error','Demo','Error: ' + e.message);
+    } finally {
+      dmFinish();
+    }
+  }
+
+  function stopDemo() {
+    demoAborted = true;
+    log('info','Demo','⏹ Stopped');
+    dmFinish();
+  }
+
+  function dmFinish() {
+    $('btn-demo').disabled = false;
+    $('btn-stop').disabled = true;
+    $('dm-fill').style.width = '0%';
+    $('dm-lbl').textContent  = '';
+    setTimeout(() => { $('dm-prog').style.display = 'none'; }, 2000);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  renderBuses();
+</script>
+</body>
+</html>
