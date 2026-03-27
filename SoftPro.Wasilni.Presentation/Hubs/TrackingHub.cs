@@ -25,7 +25,10 @@ public class TrackingHub(IBusService busService) : Hub
 
         if (result.Status == BusStatus.Active)
         {
+            // Join bus group (for location updates) and line group (for booking notifications)
             await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Bus(result.BusId), ct);
+            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
+
             await Clients.Group(TrackingGroups.Line(result.LineId)).OnBusActivatedAsync(response, ct);
             await Clients.Group(TrackingGroups.Admin).OnBusActivatedAsync(response, ct);
             await Clients.Caller.OnBusActivatedAsync(response, ct);
@@ -34,7 +37,9 @@ public class TrackingHub(IBusService busService) : Hub
         {
             await Clients.Group(TrackingGroups.Bus(result.BusId)).OnBusDeactivatedAsync(result.BusId, ct);
             await Clients.Group(TrackingGroups.Admin).OnBusDeactivatedAsync(result.BusId, ct);
+
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Bus(result.BusId), ct);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
         }
     }
 

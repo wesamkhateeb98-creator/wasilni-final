@@ -23,4 +23,9 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
                      b.LineId      == lineId      &&
                      b.Status      == BookingStatus.Waiting,
                 cancellationToken);
+
+    public Task<List<BookingEntity>> GetWaitingByLineAsync(int lineId, CancellationToken cancellationToken)
+        => dbContext.Bookings
+            .Where(b => b.LineId == lineId && b.Status == BookingStatus.Waiting)
+            .ToListAsync(cancellationToken);
 }

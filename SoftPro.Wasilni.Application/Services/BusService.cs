@@ -4,6 +4,7 @@ using SoftPro.Wasilni.Application.Abstracts;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
 using SoftPro.Wasilni.Application.Extensions;
+using SoftPro.Wasilni.Application.Helpers;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Exceptions;
@@ -115,7 +116,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         return bus.Id;
     }
 
-    // ─── Driver Tracking ──────────────────────────────────────────────────────
+    // ─── Driver: Bus state ────────────────────────────────────────────────────
 
     public async Task<GetActiveBusModel> ToggleStatusAsync(int driverId, CancellationToken cancellationToken)
     {
@@ -128,6 +129,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             await unitOfWork.CompleteAsync(cancellationToken);
 
             cache.Remove(BusCacheKeys.DriverBus(driverId));
+            cache.Remove(BusCacheKeys.DriverLine(driverId));
             cache.Remove(BusCacheKeys.Location(bus.Id));
 
             return bus.ToModel(null);
@@ -138,6 +140,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             await unitOfWork.CompleteAsync(cancellationToken);
 
             cache.Set(BusCacheKeys.DriverBus(driverId), bus.Id);
+            cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
 
             return bus.ToModel(null);
         }
@@ -155,6 +158,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
             busId = bus.Id;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
+            cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
         }
 
         cache.Set(BusCacheKeys.Location(busId), new BusLocationModel(latitude, longitude, DateTime.UtcNow));
@@ -182,6 +186,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
                 ?? throw new NotFoundException(Phrases.BusNotFound);
             busId = bus.Id;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
+            cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
         }
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -196,8 +201,89 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             return null;
 
         cache.Set(BusCacheKeys.DriverBus(driverId), bus.Id);
+        cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
+
         var location = cache.Get<BusLocationModel>(BusCacheKeys.Location(bus.Id));
         return bus.ToModel(location);
+    }
+
+    // ─── Driver: Bookings ─────────────────────────────────────────────────────
+
+    public async Task<List<GetBookingModel>> GetNearbyBookingsAsync(int driverId, CancellationToken cancellationToken)
+    {
+        // Resolve busId + lineId (prefer cache, fall back to DB once)
+        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId) ||
+            !cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int lineId))
+        {
+            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
+                ?? throw new NotFoundException(Phrases.BusNotFound);
+
+            if (bus.Status != BusStatus.Active)
+                throw new FailedPreconditionException(Phrases.BusNotOnRoad);
+
+            busId  = bus.Id;
+            lineId = bus.LineId;
+            cache.Set(BusCacheKeys.DriverBus(driverId), busId);
+            cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
+        }
+
+        // Bus must have a known location (driver sends GPS via hub)
+        var location = cache.Get<BusLocationModel>(BusCacheKeys.Location(busId));
+        if (location is null)
+            return [];
+
+        // All waiting bookings on this line, filtered by 40 m radius
+        List<BookingEntity> bookings =
+            await unitOfWork.BookingRepository.GetWaitingByLineAsync(lineId, cancellationToken);
+
+        return bookings
+            .Where(b => GeoHelper.Distance(b.Latitude, b.Longitude,
+                                           location.Latitude, location.Longitude) <= 40)
+            .Select(b => b.ToModel())
+            .ToList();
+    }
+
+    public async Task<(int BookingId, int LineId)> ConfirmBookingAsync(
+        int bookingId, int driverId, CancellationToken cancellationToken)
+    {
+        BookingEntity booking = await unitOfWork.BookingRepository.GetByIdAsync(bookingId, cancellationToken)
+            ?? throw new NotFoundException(Phrases.BookingNotFound);
+
+        if (booking.Status != BookingStatus.Waiting)
+            throw new FailedPreconditionException(Phrases.AlreadyBooked);
+
+        // Resolve busId for daily ridership record
+        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId))
+        {
+            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
+                ?? throw new NotFoundException(Phrases.BusNotFound);
+            busId = bus.Id;
+            cache.Set(BusCacheKeys.DriverBus(driverId), busId);
+            cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
+        }
+
+        booking.MarkPickedUp();
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+        await unitOfWork.DailyRidershipRepository.IncrementAsync(busId, today, cancellationToken);
+
+        return (booking.Id, booking.LineId);
+    }
+
+    public async Task<(int BookingId, int LineId)> MarkNoShowAsync(
+        int bookingId, CancellationToken cancellationToken)
+    {
+        BookingEntity booking = await unitOfWork.BookingRepository.GetByIdAsync(bookingId, cancellationToken)
+            ?? throw new NotFoundException(Phrases.BookingNotFound);
+
+        if (booking.Status != BookingStatus.Waiting)
+            throw new FailedPreconditionException(Phrases.AlreadyBooked);
+
+        booking.Cancel();
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return (booking.Id, booking.LineId);
     }
 
     // ─── Passenger ────────────────────────────────────────────────────────────
@@ -213,7 +299,8 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         }).ToList();
     }
 
-    public async Task<GetBookingModel> AddBookingAsync(int lineId, int passengerId, double latitude, double longitude, CancellationToken cancellationToken)
+    public async Task<int> AddBookingAsync(
+        int lineId, int passengerId, double latitude, double longitude, CancellationToken cancellationToken)
     {
         if (await unitOfWork.BookingRepository.HasActiveBookingOnLineAsync(passengerId, lineId, cancellationToken))
             throw new AlreadyExistsException(Phrases.AlreadyBooked);
@@ -222,7 +309,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         await unitOfWork.BookingRepository.AddAsync(booking, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return booking.ToModel();
+        return booking.Id;
     }
 
     public async Task<int> CancelBookingAsync(int lineId, int passengerId, CancellationToken cancellationToken)

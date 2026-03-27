@@ -60,29 +60,36 @@ public class LinesController(
         return new(id);
     }
 
-    // ─── Passenger ────────────────────────────────────────────────────────────
+    // ─── Passenger: Bookings ──────────────────────────────────────────────────
 
+    /// <summary>Passenger creates a booking on this line.</summary>
     [HttpPost("{id}/bookings")]
     [Authorize(Roles = nameof(Role.Passenger))]
-    public async Task<GetBookingResponse> AddBookingAsync(
+    public async Task<IdResponse> AddBookingAsync(
         [FromRoute] IdRequest route,
         [FromBody]  AddBookingRequest request,
         CancellationToken cancellationToken)
     {
         int passengerId = User.GetId();
-
-        GetBookingModel model = await busService.AddBookingAsync(
+        int bookingId   = await busService.AddBookingAsync(
             route.Id, passengerId, request.Latitude, request.Longitude, cancellationToken);
 
-        GetBookingResponse response = model.ToResponse();
+        // Notify all active drivers on this line
+        var notification = new GetBookingResponse(
+            bookingId, route.Id, passengerId,
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            request.Latitude, request.Longitude,
+            BookingStatus.Waiting.ToString(),
+            DateTime.UtcNow);
 
         await hubContext.Clients
             .Group(TrackingGroups.Line(route.Id))
-            .OnBookingAddedAsync(response, cancellationToken);
+            .OnBookingAddedAsync(notification, cancellationToken);
 
-        return response;
+        return new(bookingId);
     }
 
+    /// <summary>Passenger cancels their active booking on this line.</summary>
     [HttpDelete("{id}/bookings")]
     [Authorize(Roles = nameof(Role.Passenger))]
     public async Task<IdResponse> CancelBookingAsync(
@@ -90,12 +97,11 @@ public class LinesController(
         CancellationToken cancellationToken)
     {
         int passengerId = User.GetId();
-
-        int bookingId = await busService.CancelBookingAsync(route.Id, passengerId, cancellationToken);
+        int bookingId   = await busService.CancelBookingAsync(route.Id, passengerId, cancellationToken);
 
         await hubContext.Clients
             .Group(TrackingGroups.Line(route.Id))
-            .OnBookingCancelledAsync(bookingId, cancellationToken);
+            .OnBookingStatusChangedAsync(bookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
 
         return new(bookingId);
     }

@@ -17,6 +17,7 @@ public static class TrackingHubEvents
     private const string AnonymousCountUpdated = "OnAnonymousCountUpdated";
     private const string BookingAdded          = "OnBookingAdded";
     private const string BookingCancelled      = "OnBookingCancelled";
+    private const string BookingStatusChanged  = "OnBookingStatusChanged";
 
     // ─── OnBusActivated ───────────────────────────────────────────────────────
     public static Task OnBusActivatedAsync(
@@ -57,10 +58,23 @@ public static class TrackingHubEvents
         CancellationToken  ct = default)
         => clients.SendAsync(BookingAdded, booking, ct);
 
-    // ─── OnBookingCancelled (driver receives) ─────────────────────────────────
+    // ─── OnBookingCancelled (driver receives, passenger cancels) ──────────────
     public static Task OnBookingCancelledAsync(
         this IClientProxy clients,
         int               bookingId,
         CancellationToken ct = default)
         => clients.SendAsync(BookingCancelled, new { bookingId }, ct);
+
+    // ─── OnBookingStatusChanged (all drivers on line — confirmed / no-show) ───
+    /// <summary>
+    /// Broadcast to all drivers on the same line whenever a booking is
+    /// confirmed (<c>PickedUp</c>) or marked as no-show (<c>Cancelled</c>).
+    /// Clients should remove that booking from their local list.
+    /// </summary>
+    public static Task OnBookingStatusChangedAsync(
+        this IClientProxy clients,
+        int               bookingId,
+        string            status,
+        CancellationToken ct = default)
+        => clients.SendAsync(BookingStatusChanged, new { bookingId, status }, ct);
 }
