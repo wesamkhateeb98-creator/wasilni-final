@@ -11,10 +11,12 @@ namespace SoftPro.Wasilni.Presentation.Hubs.Helpers;
 public static class TrackingHubEvents
 {
     // ─── Event names ──────────────────────────────────────────────────────────
-    private const string TripStarted          = "OnTripStarted";
-    private const string TripEnded            = "OnTripEnded";
-    private const string LocationUpdated      = "OnLocationUpdated";
+    private const string TripStarted           = "OnTripStarted";
+    private const string TripEnded             = "OnTripEnded";
+    private const string LocationUpdated       = "OnLocationUpdated";
     private const string AnonymousCountUpdated = "OnAnonymousCountUpdated";
+    private const string BookingAdded          = "OnBookingAdded";
+    private const string BookingCancelled      = "OnBookingCancelled";
 
     // ─── OnTripStarted ────────────────────────────────────────────────────────
     public static Task OnTripStartedAsync(
@@ -47,4 +49,18 @@ public static class TrackingHubEvents
         int               count,
         CancellationToken ct = default)
         => clients.SendAsync(AnonymousCountUpdated, new { tripId, count }, ct);
+
+    // ─── OnBookingAdded (driver receives) ─────────────────────────────────────
+    public static Task OnBookingAddedAsync(
+        this IClientProxy   clients,
+        GetBookingResponse  booking,
+        CancellationToken   ct = default)
+        => clients.SendAsync(BookingAdded, booking, ct);
+
+    // ─── OnBookingCancelled (driver receives) ─────────────────────────────────
+    public static Task OnBookingCancelledAsync(
+        this IClientProxy clients,
+        int               bookingId,
+        CancellationToken ct = default)
+        => clients.SendAsync(BookingCancelled, new { bookingId }, ct);
 }

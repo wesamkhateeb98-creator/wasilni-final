@@ -7,6 +7,7 @@ using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Models.Trips;
+using SoftPro.Wasilni.Domain.Enums;
 
 namespace SoftPro.Wasilni.Application.Services;
 
@@ -83,6 +84,55 @@ public class TripService(IUnitOfWork unitOfWork, IMemoryCache cache) : ITripServ
 
         var location = cache.Get<BusLocationModel>(TripCacheKeys.Location(trip.Id));
         return trip.ToModel(trip.Bus.Plate, trip.Bus.LineEntity.Name, location);
+    }
+
+    // ─── Passenger Operations ─────────────────────────────────────────────────
+
+    public async Task<List<GetTripModel>> GetActiveTripsAsync(int? lineId, CancellationToken cancellationToken)
+    {
+        List<TripEntity> trips = await unitOfWork.TripRepository.GetActiveTripsAsync(lineId, cancellationToken);
+
+        return trips.Select(t =>
+        {
+            var location = cache.Get<BusLocationModel>(TripCacheKeys.Location(t.Id));
+            return t.ToModel(t.Bus.Plate, t.Bus.LineEntity.Name, location);
+        }).ToList();
+    }
+
+    public async Task<GetBookingModel> AddBookingAsync(int tripId, int passengerId, double latitude, double longitude, CancellationToken cancellationToken)
+    {
+        TripEntity trip = await unitOfWork.TripRepository.GetActiveByIdAsync(tripId, cancellationToken)
+            ?? throw new NotFoundException(Phrases.TripNotFound);
+
+        bool alreadyBooked = await unitOfWork.BookingRepository
+            .HasActiveBookingOnTripAsync(passengerId, tripId, cancellationToken);
+
+        if (alreadyBooked)
+            throw new AlreadyExistsException(Phrases.AlreadyBooked);
+
+        BookingEntity booking = BookingEntity.Create(tripId, passengerId, latitude, longitude);
+        await unitOfWork.BookingRepository.AddAsync(booking, cancellationToken);
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return booking.ToModel();
+    }
+
+    public async Task<int> CancelBookingAsync(int tripId, int passengerId, CancellationToken cancellationToken)
+    {
+        _ = await unitOfWork.TripRepository.GetActiveByIdAsync(tripId, cancellationToken)
+            ?? throw new NotFoundException(Phrases.TripNotFound);
+
+        BookingEntity booking = await unitOfWork.BookingRepository
+            .GetActiveByPassengerAndTripAsync(passengerId, tripId, cancellationToken)
+            ?? throw new NotFoundException(Phrases.BookingNotFound);
+
+        if (booking.PassengerId != passengerId)
+            throw new UnauthorizedException(Phrases.NotYourBooking);
+
+        booking.Cancel();
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return booking.Id;
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -897,5 +897,41 @@ namespace Domain.Resources
                 return ResourceManager.GetString("InvalidDelta", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الحجز غير موجود.
+        /// </summary>
+        public static string BookingNotFound {
+            get {
+                return ResourceManager.GetString("BookingNotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to لديك حجز نشط بالفعل على هذه الرحلة.
+        /// </summary>
+        public static string AlreadyBooked {
+            get {
+                return ResourceManager.GetString("AlreadyBooked", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to هذا الحجز ليس لك.
+        /// </summary>
+        public static string NotYourBooking {
+            get {
+                return ResourceManager.GetString("NotYourBooking", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الرحلة غير نشطة.
+        /// </summary>
+        public static string TripNotActive {
+            get {
+                return ResourceManager.GetString("TripNotActive", resourceCulture);
+            }
+        }
     }
 }

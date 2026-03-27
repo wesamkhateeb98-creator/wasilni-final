@@ -20,4 +20,13 @@ public static class TripEntityExtensions
                location?.Longitude,
                trip.AnonymousCount,
                trip.StartedAt);
+
+    public static GetBookingModel ToModel(this BookingEntity booking)
+        => new(booking.Id,
+               booking.TripId,
+               booking.PassengerId,
+               booking.Latitude,
+               booking.Longitude,
+               booking.Status,
+               booking.CreatedAt);
 }

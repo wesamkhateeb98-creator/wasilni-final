@@ -21,4 +21,17 @@ public class TripRepository(AppDbContext dbContext) : Repository<TripEntity>(dbC
     public Task<TripEntity?> GetActiveByIdAsync(int id, CancellationToken cancellationToken)
         => dbContext.Trips
             .FirstOrDefaultAsync(t => t.Id == id && t.Status == TripStatus.Active, cancellationToken);
+
+    public Task<List<TripEntity>> GetActiveTripsAsync(int? lineId, CancellationToken cancellationToken)
+    {
+        IQueryable<TripEntity> query = dbContext.Trips
+            .Include(t => t.Bus)
+            .ThenInclude(b => b.LineEntity)
+            .Where(t => t.Status == TripStatus.Active);
+
+        if (lineId.HasValue)
+            query = query.Where(t => t.LineId == lineId.Value);
+
+        return query.ToListAsync(cancellationToken);
+    }
 }

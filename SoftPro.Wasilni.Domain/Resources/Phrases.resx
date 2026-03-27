@@ -396,4 +396,16 @@
   <data name="InvalidDelta" xml:space="preserve">
     <value>القيمة يجب أن تكون 1 أو -1 فقط</value>
   </data>
+  <data name="BookingNotFound" xml:space="preserve">
+    <value>الحجز غير موجود</value>
+  </data>
+  <data name="AlreadyBooked" xml:space="preserve">
+    <value>لديك حجز نشط بالفعل على هذه الرحلة</value>
+  </data>
+  <data name="NotYourBooking" xml:space="preserve">
+    <value>هذا الحجز ليس لك</value>
+  </data>
+  <data name="TripNotActive" xml:space="preserve">
+    <value>الرحلة غير نشطة</value>
+  </data>
 </root>

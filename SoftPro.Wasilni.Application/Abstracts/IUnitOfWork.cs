@@ -8,6 +8,7 @@ public interface IUnitOfWork
     IBusRepository BusRepository { get; }
     ILineRepository LineRepository { get; }
     ITripRepository TripRepository { get; }
+    IBookingRepository BookingRepository { get; }
     Task CompleteAsync(CancellationToken cancellationToken);
     Task Transaction(Func<Task> doTransacion, CancellationToken cancellation);
 }

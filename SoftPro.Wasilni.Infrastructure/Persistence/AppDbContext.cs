@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<BusEntity> Buses { get; set; } = null!;
     public DbSet<LineEntity> Lines { get; set; } = null!;
     public DbSet<TripEntity> Trips { get; set; } = null!;
+    public DbSet<BookingEntity> Bookings { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
