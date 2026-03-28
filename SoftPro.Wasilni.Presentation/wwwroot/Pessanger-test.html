@@ -510,6 +510,9 @@
   async function subscribeLine() {
     const lineId = parseInt($('line-id').value);
     if (!lineId) { log('error','Subscribe','Enter a Line ID'); return; }
+    if (!conn || conn.state !== signalR.HubConnectionState.Connected) {
+      log('error','SubscribeToLine','Not connected yet'); return;
+    }
     activeLineId = lineId;
     log('sent','SubscribeToLine →', { lineId });
     try {

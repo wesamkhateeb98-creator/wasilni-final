@@ -526,11 +526,6 @@
       appendBookingEvent(data.status, data.bookingId, '—', '—');
     });
 
-    conn.on('OnBookingCancelled', data => {
-      log(`<span class="log-label log-event">OnBookingCancelled</span> bookingId=${data.bookingId}`, 'event');
-      appendBookingEvent('Cancelled', data.bookingId, '—', '—');
-    });
-
     try {
       await conn.start();
       setDot('connected');
@@ -625,9 +620,14 @@
   }
 
   /* ─── Line subscription ─────────────────────────────────────────────────── */
+  function isConnected() {
+    return conn && conn.state === signalR.HubConnectionState.Connected;
+  }
+
   async function subscribeToLine() {
     const lineId = parseInt($('sub-line-id').value);
-    if (!lineId || !conn) return;
+    if (!lineId) return;
+    if (!isConnected()) { log('✗ SubscribeToLine: Not connected yet', 'err'); return; }
     if (subscribedLines.has(lineId)) { log(`Already subscribed to Line ${lineId}`, 'warn'); return; }
     try {
       await conn.invoke('SubscribeToLine', lineId);
@@ -640,7 +640,8 @@
 
   async function unsubscribeFromLine() {
     const lineId = parseInt($('sub-line-id').value);
-    if (!lineId || !conn) return;
+    if (!lineId) return;
+    if (!isConnected()) { log('✗ UnsubscribeFromLine: Not connected', 'err'); return; }
     try {
       await conn.invoke('UnsubscribeFromLine', lineId);
       subscribedLines.delete(lineId);
@@ -670,7 +671,7 @@
   }
 
   async function quickUnsub(lineId) {
-    if (!conn) return;
+    if (!isConnected()) return;
     try {
       await conn.invoke('UnsubscribeFromLine', lineId);
       subscribedLines.delete(lineId);

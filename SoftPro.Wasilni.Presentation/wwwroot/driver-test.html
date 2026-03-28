@@ -242,19 +242,12 @@
       <button class="btn-yellow" onclick="passengerCancel()" >✖ Login &amp; Cancel Booking</button>
     </div>
 
-    <!-- ⑤ Subscribe (Passenger / Admin) -->
+    <!-- ⑤ Subscribe to Line -->
     <div class="card">
-      <h2>⑤ Subscriptions</h2>
-      <label>Bus ID</label>
-      <input type="number" id="sub-bus-id" placeholder="busId" min="1" />
-      <div class="btn-row">
-        <button class="btn-muted" onclick="subscribeBus()"   id="btn-sub-bus"   disabled>👂 Subscribe Bus</button>
-        <button class="btn-muted" onclick="unsubscribeBus()" id="btn-unsub-bus" disabled>🔕 Unsubscribe</button>
-      </div>
-      <label style="margin-top:8px;">Line ID</label>
+      <h2>⑤ Subscribe to Line</h2>
+      <label>Line ID</label>
       <input type="number" id="sub-line-id" placeholder="lineId" min="1" />
       <button class="btn-muted" onclick="subscribeLine()" id="btn-sub-line" disabled>👂 Subscribe Line</button>
-      <button class="btn-muted" onclick="joinAdmin()"     id="btn-admin"   disabled style="margin-top:6px;">🛡 Join Admin Group</button>
     </div>
 
     <!-- ⑥ Auto Demo -->
@@ -380,7 +373,7 @@
   function setConnected(on) {
     ['btn-toggle','btn-loc','btn-anon-plus','btn-anon-minus',
      'btn-confirm-rider','btn-auto-gps','btn-nearby',
-     'btn-sub-bus','btn-unsub-bus','btn-sub-line','btn-admin'].forEach(id => $(id).disabled = !on);
+     'btn-sub-line'].forEach(id => $(id).disabled = !on);
     $('btn-disconnect').disabled = !on;
   }
 
@@ -514,12 +507,6 @@
       }
     });
 
-    conn.on('OnBookingCancelled', m => {
-      log('event','OnBookingCancelled', m);
-      bookings.delete(m.bookingId);
-      renderBookings();
-    });
-
     conn.onreconnecting(() => { setStatus('connecting'); log('info','Hub','Reconnecting…'); });
     conn.onreconnected(() => { setStatus('connected');  log('info','Hub','✅ Reconnected'); });
     conn.onclose(e => {
@@ -607,34 +594,12 @@
     } catch (e) { log('error','ConfirmRider ✗', parseHubErr(e)); }
   }
 
-  async function subscribeBus() {
-    const id = parseInt($('sub-bus-id').value);
-    if (!id) { log('error','Sub','Enter Bus ID'); return; }
-    log('sent','SubscribeToBus →', { busId: id });
-    try { await conn.invoke('SubscribeToBus', id); log('info','SubscribeToBus','✅'); }
-    catch (e) { log('error','SubscribeToBus ✗', parseHubErr(e)); }
-  }
-
-  async function unsubscribeBus() {
-    const id = parseInt($('sub-bus-id').value);
-    if (!id) { log('error','Sub','Enter Bus ID'); return; }
-    log('sent','UnsubscribeFromBus →', { busId: id });
-    try { await conn.invoke('UnsubscribeFromBus', id); log('info','UnsubscribeFromBus','✅'); }
-    catch (e) { log('error','UnsubscribeFromBus ✗', parseHubErr(e)); }
-  }
-
   async function subscribeLine() {
     const id = parseInt($('sub-line-id').value);
     if (!id) { log('error','Sub','Enter Line ID'); return; }
     log('sent','SubscribeToLine →', { lineId: id });
     try { await conn.invoke('SubscribeToLine', id); log('info','SubscribeToLine','✅'); }
     catch (e) { log('error','SubscribeToLine ✗', parseHubErr(e)); }
-  }
-
-  async function joinAdmin() {
-    log('sent','JoinAdminGroup →', '(no params)');
-    try { await conn.invoke('JoinAdminGroup'); log('info','JoinAdminGroup','✅'); }
-    catch (e) { log('error','JoinAdminGroup ✗', parseHubErr(e)); }
   }
 
   // ── Driver REST: nearby bookings ────────────────────────────────────────────
