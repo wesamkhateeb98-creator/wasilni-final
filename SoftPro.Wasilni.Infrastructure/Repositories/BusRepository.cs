@@ -42,7 +42,7 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
         List<GetBusesModel> result = await query
              .Select(x => new GetBusesModel(
                     x.Id,
-                    new UsernameModel(x.OwnId, x.Own.Name),
+                    x.OwnId.HasValue ? new UsernameModel(x.OwnId.Value, x.Own!.Name) : null,
                     x.Plate,
                     x.Color,
                     x.Type,

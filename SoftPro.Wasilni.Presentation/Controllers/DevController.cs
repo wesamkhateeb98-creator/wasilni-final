@@ -88,14 +88,11 @@ public class DevController(AppDbContext dbContext) : BaseController
         for (int i = 0; i < 5; i++)
         {
             var (plate, color, type, seats) = BusSpecs[i];
-            var bus = BusEntity.Create(new RegisterBusModel(
-                Plate         : plate,
-                Color         : color,
-                lineId        : line.Id,
-                Type          : type,
-                accountId     : admin.Id,
-                NumberOfSeats : seats,
-                EstimatedTime : TimeSpan.Zero));
+            var bus = BusEntity.Create(new AddBusModel(
+                Plate  : plate,
+                Color  : color,
+                LineId : line.Id,
+                Type   : type));
             bus.AssignDriverId(drivers[i].Id);
             buses.Add(bus);
         }

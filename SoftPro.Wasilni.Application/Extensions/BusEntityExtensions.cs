@@ -9,8 +9,8 @@ public static class BusEntityExtensions
     public static GetActiveBusModel ToModel(this BusEntity bus, BusLocationModel? location)
         => new(bus.Id,
                bus.Plate,
-               bus.LineId,
-               bus.LineEntity.Name,
+               bus.LineId!.Value,
+               bus.LineEntity!.Name,
                bus.Status,
                location?.Latitude,
                location?.Longitude,

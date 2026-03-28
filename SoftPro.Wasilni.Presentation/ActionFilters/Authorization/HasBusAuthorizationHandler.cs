@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 
-public class HasBusAuthorizationHandler(IMemoryCache cache, IServiceScopeFactory scopeFactory, IUnitOfWork unitOfWork)
+public class HasBusAuthorizationHandler(IMemoryCache cache, IUnitOfWork unitOfWork)
     : AuthorizationHandler<HasBusRequirement>
 {
     protected override async Task HandleRequirementAsync(

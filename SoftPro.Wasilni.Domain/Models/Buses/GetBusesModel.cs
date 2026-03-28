@@ -4,11 +4,11 @@ namespace SoftPro.Wasilni.Domain.Models.Buses;
 
 public record GetBusesModel(
     int BusId,
-    UsernameModel Owner,
+    UsernameModel? Owner,
     string Plate,
     string Color,
     BusType Type,
-    int LineId,
+    int? LineId,
     UsernameModel? Driver
     );
 

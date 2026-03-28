@@ -9,11 +9,11 @@ public interface IBusService
     // ─── Admin CRUD ───────────────────────────────────────────────────────────
     Task<Page<GetBusesModel>>         GetBusesAsync(GetBusModel inputModel, CancellationToken cancellationToken);
     Task<Page<GetBusesForAdminModel>> GetBusesForAdminAsync(GetBusForAdminModel inputModel, CancellationToken cancellationToken);
-    Task<int> RegisterAsync(RegisterBusModel registerModel, CancellationToken cancellationToken);
+    Task<int> AddAsync(AddBusModel model, CancellationToken cancellationToken);
     Task<int> UpdateAsync(int id, UpdateBusModel model, CancellationToken cancellationToken);
     Task<int> DeleteAsync(int id, CancellationToken cancellationToken);
-    Task<int> AddDriver(AddDriverOnBusModel model, CancellationToken cancellationToken);
-    Task<int> DeleteDriver(DeleteDriverFromBusModel model, CancellationToken cancellationToken);
+    Task<int> AddDriverAsync(int busId, int driverId, CancellationToken cancellationToken);
+    Task<int> DeleteDriverAsync(int busId, CancellationToken cancellationToken);
 
     // ─── Driver: Bus state ────────────────────────────────────────────────────
     Task<GetActiveBusModel>               ToggleStatusAsync(int driverId, CancellationToken cancellationToken);

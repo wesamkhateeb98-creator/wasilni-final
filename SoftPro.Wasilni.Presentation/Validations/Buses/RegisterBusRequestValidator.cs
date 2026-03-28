@@ -1,4 +1,4 @@
-﻿using Domain.Resources;
+using Domain.Resources;
 using FluentValidation;
 using SoftPro.Wasilni.Presentation;
 using SoftPro.Wasilni.Presentation.Models.Request.Bus;
@@ -6,9 +6,9 @@ using System.Text.RegularExpressions;
 
 namespace SoftPro.Wasilni.Presentation.Validations.Buses;
 
-public class RegisterBusRequestValidator : AbstractValidator<RegisterBusRequest>
+public class AddBusRequestValidator : AbstractValidator<AddBusRequest>
 {
-    public RegisterBusRequestValidator()
+    public AddBusRequestValidator()
     {
         RuleFor(x => x.Plate)
             .Must(x => Regex.IsMatch(x, PresentationConsts.plateExpression))
@@ -22,18 +22,8 @@ public class RegisterBusRequestValidator : AbstractValidator<RegisterBusRequest>
 
         RuleFor(x => x.LineId)
             .GreaterThan(0)
+            .When(x => x.LineId.HasValue)
             .WithName(Title.LineId)
             .WithMessage(Phrases.InvalidLineId);
-
-        RuleFor(x => x.AccountId)
-            .GreaterThan(0)
-            .WithName(Title.AccountId)
-            .WithMessage(Phrases.InvalidAccountId);
-
-        RuleFor(x => x.EstimatedTime)
-            .InclusiveBetween(TimeSpan.Zero, new TimeSpan(23, 59, 59))
-            .WithName(Title.EstimatedTime)
-            .WithMessage(Phrases.InvalidEstimatedTime);
     }
-
 }

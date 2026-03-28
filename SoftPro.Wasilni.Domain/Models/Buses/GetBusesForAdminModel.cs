@@ -8,6 +8,6 @@ public record GetBusesForAdminModel(
     string Color,
     BusType Type,
     int NumberOfSeats,
-    int LineId,
+    int? LineId,
     UsernameModel? Driver
     );

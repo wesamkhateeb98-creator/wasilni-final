@@ -5,11 +5,11 @@ namespace SoftPro.Wasilni.Presentation.Models.Response.Bus;
 
 public record GetBusesResponse(
     int BusId,
-    UsernameModel Owner,
+    UsernameModel? Owner,
     string Plate,
     string Color,
     BusType Type,
-    int LineId,
+    int? LineId,
     UsernameModel? Driver
     );
 

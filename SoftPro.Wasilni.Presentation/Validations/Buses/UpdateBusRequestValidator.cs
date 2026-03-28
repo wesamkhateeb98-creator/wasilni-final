@@ -22,12 +22,8 @@ public class UpdateBusRequestValidator : AbstractValidator<UpdateBusRequest>
 
         RuleFor(x => x.LineId)
             .GreaterThan(0)
+            .When(x => x.LineId.HasValue)
             .WithName(Title.LineId)
             .WithMessage(Phrases.InvalidLineId);
-
-        RuleFor(x => x.EstimatedTime)
-            .InclusiveBetween(TimeSpan.Zero, new TimeSpan(23, 59, 59))
-            .WithName(Title.EstimatedTime)
-            .WithMessage(Phrases.InvalidEstimatedTime);
     }
 }

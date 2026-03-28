@@ -10,6 +10,6 @@ public record GetBusesForAdminResponse(
     string Color,
     BusType Type,
     int NumberOfSeats,
-    int LineId,
+    int? LineId,
     UsernameModel? Driver
     );

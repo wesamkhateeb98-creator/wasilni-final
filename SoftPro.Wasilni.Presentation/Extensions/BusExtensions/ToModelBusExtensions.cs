@@ -8,26 +8,11 @@ namespace SoftPro.Wasilni.Presentation.Extensions.BusExtensions;
 
 public static class ToModelBusExtensions
 {
-    public static RegisterBusModel ToModel(this RegisterBusRequest request)
-        => new(
-            request.Plate,
-            request.Color,
-            request.LineId,
-            request.Type,
-            request.AccountId,
-            request.NumberOfSeats,
-            request.EstimatedTime
-        );
+    public static AddBusModel ToModel(this AddBusRequest request)
+        => new(request.Plate, request.Color, request.LineId, request.Type);
 
     public static UpdateBusModel ToModel(this UpdateBusRequest request)
-        => new(
-            request.Plate,
-            request.Color,
-            request.LineId,
-            request.Type,
-            request.NumberOfSeats,
-            request.EstimatedTime
-        );
+        => new(request.Plate, request.Color, request.LineId, request.Type);
 
     public static GetBusModel ToInput(this GetBusesRequest request, int id)
         => new(id, request.PageNumber, request.PageSize, request.Filter);
@@ -78,17 +63,6 @@ public static class ToModelBusExtensions
             model.Id,
             model.Name
             );
-    public static AddDriverOnBusModel ToModel(this AddDriverOnBusRequest request)
-        => new(
-            request.BusId,
-            request.DriverId
-               );
-    public static DeleteDriverFromBusModel ToModel(this DeleteDriverromBusRequest request)
-        => new(
-            request.BusId,
-            request.DriverId
-               );
-
     public static Page<GetBusRequestsForDriverResponse> ToResponse(this Page<GetBusRequestsForDriverModel> model)
         => new
         (

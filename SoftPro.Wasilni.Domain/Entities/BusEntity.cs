@@ -7,41 +7,37 @@ public class BusEntity : IEntity
 {
     public string    Plate          { get; private set; } = null!;
     public string    Color          { get; private set; } = null!;
-    public int       LineId         { get; private set; }
+    public int?      LineId         { get; private set; }
     public BusType   Type           { get; private set; }
     public int       NumberOfSeats  { get; private set; }
-    public int       OwnId          { get; private set; }
+    public int?      OwnId          { get; private set; }
     public int?      DriverId       { get; private set; }
     public BusStatus Status         { get; private set; } = BusStatus.Inactive;
     public DateTime? ActiveSince    { get; private set; }
     public int       AnonymousCount { get; private set; }
 
-    public LineEntity    LineEntity { get; private set; } = null!;
-    public AccountEntity Own       { get; private set; } = null!;
-    public AccountEntity Driver    { get; private set; } = null!;
+    public LineEntity?    LineEntity { get; private set; }
+    public AccountEntity? Own       { get; private set; }
+    public AccountEntity? Driver    { get; private set; }
 
     private BusEntity() { }
 
-    public static BusEntity Create(RegisterBusModel model)
+    public static BusEntity Create(AddBusModel model)
         => new()
         {
-            Plate         = model.Plate,
-            Color         = model.Color,
-            LineId        = model.lineId,
-            Type          = model.Type,
-            NumberOfSeats = model.NumberOfSeats,
-            OwnId         = model.accountId,
-            DriverId      = null,
-            Status        = BusStatus.Inactive,
+            Plate  = model.Plate,
+            Color  = model.Color,
+            LineId = model.LineId,
+            Type   = model.Type,
+            Status = BusStatus.Inactive,
         };
 
     public void Update(UpdateBusModel model)
     {
-        Plate         = model.Plate;
-        Color         = model.Color;
-        LineId        = model.LineId;
-        Type          = model.Type;
-        NumberOfSeats = model.NumberOfSeats;
+        Plate  = model.Plate;
+        Color  = model.Color;
+        LineId = model.LineId;
+        Type   = model.Type;
     }
 
     public void AssignDriverId(int id) => DriverId = id;

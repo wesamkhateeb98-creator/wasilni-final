@@ -4,6 +4,7 @@ using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Buses;
+using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.BusExtensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
@@ -18,13 +19,11 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 [Route(BaseUrl)]
 public class BusesController(IBusService busService) : BaseController
 {
-    // ─── Admin CRUD ───────────────────────────────────────────────────────────
-
     [HttpPost]
     [Authorize(Roles = nameof(Role.Admin))]
-    public async Task<IdResponse> RegisterAsync([FromBody] RegisterBusRequest request, CancellationToken cancellationToken)
+    public async Task<IdResponse> AddAsync([FromBody] AddBusRequest request, CancellationToken cancellationToken)
     {
-        int id = await busService.RegisterAsync(request.ToModel(), cancellationToken);
+        int id = await busService.AddAsync(request.ToModel(), cancellationToken);
         return new(id);
     }
 
@@ -52,26 +51,25 @@ public class BusesController(IBusService busService) : BaseController
         return new(id);
     }
 
-    [HttpPost("add-driver")]
+    [HttpPatch("{id}/driver")]
     [Authorize(Roles = nameof(Role.Admin))]
-    public async Task<IdResponse> AddDriver([FromBody] AddDriverOnBusRequest request, CancellationToken cancellationToken)
+    public async Task<IdResponse> AddDriverAsync([FromRoute] IdRequest route, [FromBody] AddDriverOnBusRequest request, CancellationToken cancellationToken)
     {
-        int id = await busService.AddDriver(request.ToModel(), cancellationToken);
+        int id = await busService.AddDriverAsync(route.Id, request.DriverId, cancellationToken);
         return new(id);
     }
 
-    [HttpDelete("delete-driver")]
+    [HttpDelete("{id}/driver")]
     [Authorize(Roles = nameof(Role.Admin))]
-    public async Task<IdResponse> DeleteDriver([FromBody] DeleteDriverromBusRequest request, CancellationToken cancellationToken)
+    public async Task<IdResponse> DeleteDriverAsync([FromRoute] IdRequest route, CancellationToken cancellationToken)
     {
-        int id = await busService.DeleteDriver(request.ToModel(), cancellationToken);
+        int id = await busService.DeleteDriverAsync(route.Id, cancellationToken);
         return new(id);
     }
-
-    // ─── Driver ───────────────────────────────────────────────────────────────
 
     [HttpGet("my-active")]
     [Authorize]
+    [HasBus]
     public async Task<GetActiveBusResponse?> GetMyActiveBusAsync(CancellationToken cancellationToken)
     {
         int driverId = User.GetId();
@@ -79,7 +77,6 @@ public class BusesController(IBusService busService) : BaseController
         return model?.ToResponse();
     }
 
-    // ─── Passenger ────────────────────────────────────────────────────────────
 
     [HttpGet("active")]
     [Authorize(Roles = nameof(Role.Passenger))]

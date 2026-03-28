@@ -24,18 +24,15 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
     public Task<Page<GetBusesForAdminModel>> GetBusesForAdminAsync(GetBusForAdminModel inputModel, CancellationToken cancellationToken)
         => unitOfWork.BusRepository.GetAllBusesForAdminAsync(inputModel, cancellationToken);
 
-    public async Task<int> RegisterAsync(RegisterBusModel registerModel, CancellationToken cancellationToken)
+    public async Task<int> AddAsync(AddBusModel model, CancellationToken cancellationToken)
     {
-        AccountEntity? account = await unitOfWork.AccountRepository.GetByIdAsync(registerModel.accountId, cancellationToken)
-            ?? throw new NotFoundException(Phrases.AccountNotRegistered);
-
-        if (await unitOfWork.BusRepository.ExistsPlateAsync(registerModel.Plate, cancellationToken))
+        if (await unitOfWork.BusRepository.ExistsPlateAsync(model.Plate, cancellationToken))
             throw new AlreadyExistsException(Phrases.PlateAlreadyExists);
 
-        if (!await unitOfWork.LineRepository.AnyAsync(registerModel.lineId, cancellationToken))
+        if (model.LineId.HasValue && !await unitOfWork.LineRepository.AnyAsync(model.LineId.Value, cancellationToken))
             throw new FailedPreconditionException(Phrases.LineNotFound);
 
-        BusEntity bus = BusEntity.Create(registerModel);
+        BusEntity bus = BusEntity.Create(model);
         await unitOfWork.BusRepository.AddAsync(bus, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
         return bus.Id;
@@ -50,8 +47,8 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (await unitOfWork.BusRepository.ExistsPlateExceptAsync(model.Plate, id, cancellationToken))
                 throw new AlreadyExistsException(Phrases.PlateAlreadyExists);
 
-        if (bus.LineId != model.LineId)
-            if (!await unitOfWork.LineRepository.AnyAsync(model.LineId, cancellationToken))
+        if (model.LineId.HasValue && bus.LineId != model.LineId)
+            if (!await unitOfWork.LineRepository.AnyAsync(model.LineId.Value, cancellationToken))
                 throw new FailedPreconditionException(Phrases.LineNotFound);
 
         bus.Update(model);
@@ -73,33 +70,30 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         return bus.Id;
     }
 
-    public async Task<int> AddDriver(AddDriverOnBusModel model, CancellationToken cancellationToken)
+    public async Task<int> AddDriverAsync(int busId, int driverId, CancellationToken cancellationToken)
     {
-        BusEntity bus = await unitOfWork.BusRepository.GetByIdAsync(model.BusId, cancellationToken)
+        BusEntity bus = await unitOfWork.BusRepository.GetByIdAsync(busId, cancellationToken)
             ?? throw new NotFoundException(Phrases.BusNotFound);
 
         if (bus.DriverId is not null)
             throw new FailedPreconditionException(Phrases.AssignedOtherDriver);
 
-        if (await unitOfWork.AccountRepository.GetByIdAsync(model.DriverId, cancellationToken) is null)
+        if (await unitOfWork.AccountRepository.GetByIdAsync(driverId, cancellationToken) is null)
             throw new NotFoundException(Phrases.DriverNotFound);
 
-        bus.AssignDriverId(model.DriverId);
+        bus.AssignDriverId(driverId);
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return bus.Id;
     }
 
-    public async Task<int> DeleteDriver(DeleteDriverFromBusModel model, CancellationToken cancellationToken)
+    public async Task<int> DeleteDriverAsync(int busId, CancellationToken cancellationToken)
     {
-        BusEntity bus = await unitOfWork.BusRepository.GetByIdAsync(model.BusId, cancellationToken)
+        BusEntity bus = await unitOfWork.BusRepository.GetByIdAsync(busId, cancellationToken)
             ?? throw new NotFoundException(Phrases.BusNotFound);
 
         if (bus.DriverId is null)
             throw new FailedPreconditionException(Phrases.DriverNotFound);
-
-        AccountEntity account = await unitOfWork.AccountRepository.GetByIdAsync(model.DriverId, cancellationToken)
-            ?? throw new NotFoundException(Phrases.DriverNotFound);
 
         bus.UnassignDriver();
         await unitOfWork.CompleteAsync(cancellationToken);
@@ -127,6 +121,9 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         }
         else
         {
+            if (bus.LineId is null)
+                throw new FailedPreconditionException(Phrases.LineNotFound);
+
             bus.Activate();
             await unitOfWork.CompleteAsync(cancellationToken);
 
@@ -149,7 +146,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
             busId  = bus.Id;
-            lineId = bus.LineId;
+            lineId = bus.LineId!.Value;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
             cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
         }
@@ -170,7 +167,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
             busId  = cached.Id;
-            lineId = cached.LineId;
+            lineId = cached.LineId!.Value;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
             cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
         }
@@ -227,7 +224,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
             busId  = bus.Id;
-            lineId = bus.LineId;
+            lineId = bus.LineId!.Value;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
             cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
         }
@@ -294,7 +291,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (bus.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            driverLineId = bus.LineId;
+            driverLineId = bus.LineId!.Value;
             cache.Set(BusCacheKeys.DriverBus(driverId), bus.Id);
             cache.Set(BusCacheKeys.DriverLine(driverId), driverLineId);
         }
