@@ -1,12 +1,11 @@
-using Domain.Resources;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
 using SoftPro.Wasilni.Domain.Enums;
-using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Models.Buses;
+using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
 using SoftPro.Wasilni.Presentation.Hubs.Helpers;
@@ -34,9 +33,10 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     // ─── Driver: Toggle bus on/off route ─────────────────────────────────────
 
+    [HasBus]
     public async Task ToggleStatus()
     {
-        var ct       = Context.ConnectionAborted;
+        var ct = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
         GetActiveBusModel result = await busService.ToggleStatusAsync(driverId, ct);
@@ -61,9 +61,10 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     // ─── Driver: Send GPS location ────────────────────────────────────────────
 
+    [HasBus]
     public async Task UpdateLocation(UpdateLocationHubRequest request)
     {
-        var ct       = Context.ConnectionAborted;
+        var ct = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
         var (busId, lineId) = await busService.UpdateLocationAsync(driverId, request.Latitude, request.Longitude, ct);
@@ -77,9 +78,10 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     // ─── Driver: Adjust anonymous passenger count ─────────────────────────────
 
+    [HasBus]
     public async Task AdjustAnonymousPassenger(AdjustAnonymousHubRequest request)
     {
-        var ct       = Context.ConnectionAborted;
+        var ct = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
         var (busId, lineId, count) = await busService.AdjustAnonymousAsync(driverId, request.Delta, ct);
@@ -93,9 +95,10 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     // ─── Driver: Confirm a passenger boarded ─────────────────────────────────
 
+    [HasBus]
     public async Task ConfirmRider()
     {
-        var ct       = Context.ConnectionAborted;
+        var ct = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
         await busService.ConfirmRiderAsync(driverId, ct);
@@ -111,11 +114,7 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     // ─── Admin: Join admin group ──────────────────────────────────────────────
 
+    [Authorize(Roles = nameof(Role.Admin))]
     public Task JoinAdminGroup()
-    {
-        if (Context.User!.GetRole() != Role.Admin)
-            throw new ForbiddenException(Phrases.Forbidden);
-
-        return Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Admin, Context.ConnectionAborted);
-    }
+        => Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Admin, Context.ConnectionAborted);
 }

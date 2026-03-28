@@ -1,13 +1,16 @@
 ﻿using FirebaseAdmin;
 using FluentValidation;
 using Google.Apis.Auth.OAuth2;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Options;
+using SoftPro.Wasilni.Presentation.Authorization;
 using System.Text;
+using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 
 namespace SoftPro.Wasilni.Presentation.Extensions;
 
@@ -104,16 +107,16 @@ public static class RegistrationExtensions
                     }
                 };
             });
-        services.AddAuthorization(
-            options =>
-            {
-                foreach (var role in Enum.GetValues<Role>().Select(x => x.ToString()))
-                {
-                    options.AddPolicy(role, policy => policy.RequireRole(role));
+        services.AddAuthorization(options =>
+        {
+            foreach (var role in Enum.GetValues<Role>().Select(x => x.ToString()))
+                options.AddPolicy(role, policy => policy.RequireRole(role));
 
-                }
+            options.AddPolicy(HasBusAttribute.PolicyName,
+                policy => policy.Requirements.Add(new HasBusRequirement()));
+        });
 
-            });
+        services.AddSingleton<IAuthorizationHandler, HasBusAuthorizationHandler>();
         return services;
     }
 

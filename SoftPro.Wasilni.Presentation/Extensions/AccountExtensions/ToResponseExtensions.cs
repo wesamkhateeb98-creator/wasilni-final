@@ -33,7 +33,6 @@ public static class ToResponseExtensions
             loginModelExtended.Token,
             loginModelExtended.ExpirationDate,
             loginModelExtended.Role,
-            loginModelExtended.Permission,
             loginModelExtended.RefreshToken,
             loginModelExtended.FCMToken
             );

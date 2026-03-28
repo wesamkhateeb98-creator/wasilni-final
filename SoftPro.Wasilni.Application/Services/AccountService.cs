@@ -41,7 +41,7 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 
         var (token, expirationDate) = AuthHelper.GenerateToken(claims, jwtOption.Value);
 
-        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.Permission, account.RefreshToken, account.FCMToken);
+        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.FCMToken);
     }
 
     public async Task<int> SignUpAsync(RegisterModel registerModel, CancellationToken cancellationToken)
@@ -151,7 +151,7 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 
         var (token, expirationDate) = AuthHelper.GenerateToken(claims, jwtOption.Value);
 
-        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.Permission, account.RefreshToken, account.FCMToken);
+        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.FCMToken);
     }
 
     public async Task<int> ChangePasswordAsync(int id, string oldPassword, string newPassword, CancellationToken cancellationToken)
@@ -209,6 +209,6 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.Permission, account.RefreshToken, account.FCMToken);
+        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.FCMToken);
     }
 }

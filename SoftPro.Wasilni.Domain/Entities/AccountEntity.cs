@@ -16,7 +16,6 @@ public class AccountEntity : IEntity
     public DateTime? CodeExpiration { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public Role Role { get; private set; }
-    public Permission Permission { get; private set; }
     public string RefreshToken { get; private set; }
     public DateTime RefreshTokenExpiresAt { get; private set; }
 
@@ -32,7 +31,6 @@ public class AccountEntity : IEntity
         int sendCodeCount,
         DateTime createdAt,
         Role role,
-        Permission permission,
         bool confirmed,
         string refreshToken,
         DateTime refreshTokenExpiresAt,
@@ -50,7 +48,6 @@ public class AccountEntity : IEntity
         Confirmed = confirmed;
         RefreshToken = refreshToken;
         RefreshTokenExpiresAt = refreshTokenExpiresAt;
-        Permission = permission;
         FCMToken = fCMToken;
     }
 
@@ -65,7 +62,6 @@ public class AccountEntity : IEntity
             3,
             DateTime.UtcNow.AddHours(3),
             registerModel.Role,
-            Permission.None,
             false,
             refreshToken,
             DateTime.UtcNow.AddDays(RefreshTokenDurationDays),
@@ -103,9 +99,6 @@ public class AccountEntity : IEntity
         RefreshToken = refreshToken;
         RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(RefreshTokenDurationDays);
     }
-
-    public void ChangePermission(Permission permission)
-        => Permission = permission;
 
     public void SetFCMToken(string fCMToken)
         => FCMToken=fCMToken;

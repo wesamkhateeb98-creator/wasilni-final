@@ -59,7 +59,7 @@ public class DevController(AppDbContext dbContext) : BaseController
         await dbContext.SaveChangesAsync(cancellationToken);
 
         // ── 3. Admin ──────────────────────────────────────────────────────────
-        var admin = CreateAccount("Admin", "0900000000", AdminPassword, Role.Admin, Permission.None);
+        var admin = CreateAccount("Admin", "0900000000", AdminPassword, Role.Admin);
         await dbContext.Accounts.AddAsync(admin, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -67,7 +67,7 @@ public class DevController(AppDbContext dbContext) : BaseController
         var drivers = new List<AccountEntity>();
         for (int i = 0; i < 5; i++)
         {
-            var driver = CreateAccount(DriverNames[i], DriverPhones[i], DefaultPassword, Role.Passenger, Permission.BusDriving);
+            var driver = CreateAccount(DriverNames[i], DriverPhones[i], DefaultPassword, Role.Passenger);
             drivers.Add(driver);
         }
         await dbContext.Accounts.AddRangeAsync(drivers, cancellationToken);
@@ -77,7 +77,7 @@ public class DevController(AppDbContext dbContext) : BaseController
         var passengers = new List<AccountEntity>();
         for (int i = 0; i < 15; i++)
         {
-            var p = CreateAccount(PassengerNames[i], $"0912{i + 1:D6}", DefaultPassword, Role.Passenger, Permission.None);
+            var p = CreateAccount(PassengerNames[i], $"0912{i + 1:D6}", DefaultPassword, Role.Passenger);
             passengers.Add(p);
         }
         await dbContext.Accounts.AddRangeAsync(passengers, cancellationToken);
@@ -135,7 +135,6 @@ public class DevController(AppDbContext dbContext) : BaseController
                 name       = d.Name,
                 phone      = d.PhoneNumber,
                 password   = DefaultPassword,
-                permission = d.Permission.ToString(),
                 busId      = buses[i].Id,
                 busPlate   = buses[i].Plate,
                 lineId     = buses[i].LineId
@@ -166,20 +165,15 @@ public class DevController(AppDbContext dbContext) : BaseController
 
     // ─── Helper ───────────────────────────────────────────────────────────────
 
-    private static AccountEntity CreateAccount(
-        string     name,
-        string     phone,
-        string     password,
-        Role       role,
-        Permission permission)
+    private static AccountEntity CreateAccount(string name, string phone, string password, Role role)
     {
         byte[] salt = AuthHelper.GenerateSalt();
         var model   = new RegisterModel(
-            Username  : name,
+            Username   : name,
             Phonenumber: phone,
-            Password  : password,
-            FCMToken  : DevFcm,
-            Role      : role);
+            Password   : password,
+            FCMToken   : DevFcm,
+            Role       : role);
 
         var account = AccountEntity.Create(
             model,
@@ -189,7 +183,6 @@ public class DevController(AppDbContext dbContext) : BaseController
             "000000");
 
         account.ConfirmAccount();
-        account.ChangePermission(permission);
         return account;
     }
 }

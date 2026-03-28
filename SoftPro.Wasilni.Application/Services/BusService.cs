@@ -37,7 +37,6 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
         BusEntity bus = BusEntity.Create(registerModel);
         await unitOfWork.BusRepository.AddAsync(bus, cancellationToken);
-        account.ChangePermission(Permission.ControlBus);
         await unitOfWork.CompleteAsync(cancellationToken);
         return bus.Id;
     }
@@ -82,13 +81,9 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         if (bus.DriverId is not null)
             throw new FailedPreconditionException(Phrases.AssignedOtherDriver);
 
-        AccountEntity account = await unitOfWork.AccountRepository.GetByIdAsync(model.DriverId, cancellationToken)
-            ?? throw new NotFoundException(Phrases.DriverNotFound);
+        if (await unitOfWork.AccountRepository.GetByIdAsync(model.DriverId, cancellationToken) is null)
+            throw new NotFoundException(Phrases.DriverNotFound);
 
-        if (account.Permission == Permission.BusDriving)
-            throw new FailedPreconditionException(Phrases.DriverAlreadyExists);
-
-        account.ChangePermission(Permission.BusDriving);
         bus.AssignDriverId(model.DriverId);
         await unitOfWork.CompleteAsync(cancellationToken);
 
@@ -106,10 +101,6 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         AccountEntity account = await unitOfWork.AccountRepository.GetByIdAsync(model.DriverId, cancellationToken)
             ?? throw new NotFoundException(Phrases.DriverNotFound);
 
-        if (account.Permission != Permission.BusDriving)
-            throw new FailedPreconditionException(Phrases.DriverNotFound);
-
-        account.ChangePermission(Permission.None);
         bus.UnassignDriver();
         await unitOfWork.CompleteAsync(cancellationToken);
 
