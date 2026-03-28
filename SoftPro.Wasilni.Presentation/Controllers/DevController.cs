@@ -137,7 +137,8 @@ public class DevController(AppDbContext dbContext) : BaseController
                 password   = DefaultPassword,
                 permission = d.Permission.ToString(),
                 busId      = buses[i].Id,
-                busPlate   = buses[i].Plate
+                busPlate   = buses[i].Plate,
+                lineId     = buses[i].LineId
             }),
 
             passengers = passengers.Select(p => new
