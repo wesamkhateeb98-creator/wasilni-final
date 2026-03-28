@@ -54,7 +54,7 @@ public class DevController(AppDbContext dbContext) : BaseController
         await dbContext.Lines.ExecuteDeleteAsync(cancellationToken);
 
         // ── 2. Line ───────────────────────────────────────────────────────────
-        var line = LineEntity.Create(new AddLineModel("Main Line"));
+        var line = LineEntity.Create(new AddLineModel("Main Line", []));
         await dbContext.Lines.AddAsync(line, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 

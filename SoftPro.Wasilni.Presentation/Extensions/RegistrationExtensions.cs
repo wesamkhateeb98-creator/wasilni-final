@@ -8,7 +8,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Options;
-using SoftPro.Wasilni.Presentation.Authorization;
 using System.Text;
 using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 

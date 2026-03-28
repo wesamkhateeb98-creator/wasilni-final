@@ -8,6 +8,8 @@ using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
 using SoftPro.Wasilni.Presentation.Hubs;
 using SoftPro.Wasilni.Presentation.Hubs.Helpers;
+using SoftPro.Wasilni.Presentation.Models.Request.Generic;
+using SoftPro.Wasilni.Presentation.Models.Request.Trip;
 using SoftPro.Wasilni.Presentation.Models.Response;
 using SoftPro.Wasilni.Presentation.Models.Response.Trip;
 
@@ -16,7 +18,7 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 [ApiController]
 [Route("api/v1.0/bookings")]
 public class BookingsController(
-    IBusService              busService,
+    IBusService busService,
     IHubContext<TrackingHub> hubContext) : BaseController
 {
     // ═══════════════════════════════════════════════════════════════════════════
@@ -84,5 +86,51 @@ public class BookingsController(
             .OnBookingStatusChangedAsync(bookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
 
         return new IdResponse(bookingId);
+    }
+
+    // ─── Passenger: Bookings ──────────────────────────────────────────────────
+
+    /// <summary>Passenger creates a booking on this line.</summary>
+    [HttpPost("{id}/bookings")]
+    [Authorize(Roles = nameof(Role.Passenger))]
+    public async Task<IdResponse> AddBookingAsync(
+        [FromRoute] IdRequest route,
+        [FromBody] AddBookingRequest request,
+        CancellationToken cancellationToken)
+    {
+        int passengerId = User.GetId();
+        int bookingId = await busService.AddBookingAsync(
+            route.Id, passengerId, request.Latitude, request.Longitude, cancellationToken);
+
+        // Notify all active drivers on this line
+        var notification = new GetBookingResponse(
+            bookingId, route.Id, passengerId,
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            request.Latitude, request.Longitude,
+            BookingStatus.Waiting.ToString(),
+            DateTime.UtcNow);
+
+        await hubContext.Clients
+            .Group(TrackingGroups.Line(route.Id))
+            .OnBookingAddedAsync(notification, cancellationToken);
+
+        return new(bookingId);
+    }
+
+    /// <summary>Passenger cancels their active booking on this line.</summary>
+    [HttpDelete("{id}/bookings")]
+    [Authorize(Roles = nameof(Role.Passenger))]
+    public async Task<IdResponse> CancelBookingAsync(
+        [FromRoute] IdRequest route,
+        CancellationToken cancellationToken)
+    {
+        int passengerId = User.GetId();
+        int bookingId = await busService.CancelBookingAsync(route.Id, passengerId, cancellationToken);
+
+        await hubContext.Clients
+            .Group(TrackingGroups.Line(route.Id))
+            .OnBookingStatusChangedAsync(bookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
+
+        return new(bookingId);
     }
 }

@@ -1,3 +1,3 @@
-﻿namespace SoftPro.Wasilni.Presentation.Models.Request.Line;
+namespace SoftPro.Wasilni.Presentation.Models.Request.Line;
 
-public record UpdateLineRequest(string Name);
+public record UpdateLineNameRequest(string Name);

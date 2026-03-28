@@ -15,4 +15,7 @@ public static class ToResponseExtensions
             model.PageSize,
             model.TotalPages,
             model.Content.Select(x => x.ToResponse()).ToList());
+
+    public static WayPointResponse ToResponse(this Point point)
+        => new(point.Latitude, point.Longitude, point.Order);
 }
