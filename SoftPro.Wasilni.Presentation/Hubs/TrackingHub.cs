@@ -17,22 +17,18 @@ namespace SoftPro.Wasilni.Presentation.Hubs;
 [Authorize]
 public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 {
-    // ─── Reconnect: restore group membership ─────────────────────────────────
+    // ─── Reconnect: restore line group membership ────────────────────────────
 
     public override async Task OnConnectedAsync()
     {
         await base.OnConnectedAsync();
 
-        var ct = Context.ConnectionAborted;
-
         if (int.TryParse(
                 Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
                 out int userId) &&
-            cache.TryGetValue(BusCacheKeys.DriverBus(userId), out int busId) &&
             cache.TryGetValue(BusCacheKeys.DriverLine(userId), out int lineId))
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Bus(busId),  ct);
-            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), ct);
+            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), Context.ConnectionAborted);
         }
     }
 
@@ -48,8 +44,6 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
         if (result.Status == BusStatus.Active)
         {
-            // Join bus group (for location updates) and line group (for booking notifications)
-            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Bus(result.BusId), ct);
             await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
 
             await Clients.Group(TrackingGroups.Line(result.LineId)).OnBusActivatedAsync(response, ct);
@@ -58,10 +52,9 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
         }
         else
         {
-            await Clients.Group(TrackingGroups.Bus(result.BusId)).OnBusDeactivatedAsync(result.BusId, ct);
+            await Clients.Group(TrackingGroups.Line(result.LineId)).OnBusDeactivatedAsync(result.BusId, ct);
             await Clients.Group(TrackingGroups.Admin).OnBusDeactivatedAsync(result.BusId, ct);
 
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Bus(result.BusId), ct);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
         }
     }
@@ -74,9 +67,6 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
         int driverId = Context.User!.GetId();
 
         var (busId, lineId) = await busService.UpdateLocationAsync(driverId, request.Latitude, request.Longitude, ct);
-
-        await Clients.Group(TrackingGroups.Bus(busId))
-                     .OnLocationUpdatedAsync(busId, request.Latitude, request.Longitude, ct);
 
         await Clients.Group(TrackingGroups.Line(lineId))
                      .OnLocationUpdatedAsync(busId, request.Latitude, request.Longitude, ct);
@@ -92,9 +82,12 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
         var ct       = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
-        var (busId, count) = await busService.AdjustAnonymousAsync(driverId, request.Delta, ct);
+        var (busId, lineId, count) = await busService.AdjustAnonymousAsync(driverId, request.Delta, ct);
 
-        await Clients.Group(TrackingGroups.Bus(busId))
+        await Clients.Group(TrackingGroups.Line(lineId))
+                     .OnAnonymousCountUpdatedAsync(busId, count, ct);
+
+        await Clients.Group(TrackingGroups.Admin)
                      .OnAnonymousCountUpdatedAsync(busId, count, ct);
     }
 
@@ -108,24 +101,13 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
         await busService.ConfirmRiderAsync(driverId, ct);
     }
 
-    // ─── Passenger: Subscribe / Unsubscribe ──────────────────────────────────
-
-    public async Task SubscribeToBus(int busId)
-    {
-        var ct       = Context.ConnectionAborted;
-        int driverId = Context.User!.GetId();
-
-        if (!await busService.HasBusAsync(busId, driverId, ct))
-            throw new ForbiddenException(Phrases.Forbidden);
-
-        await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Bus(busId), ct);
-    }
+    // ─── Passenger / Admin: Subscribe to a line ──────────────────────────────
 
     public Task SubscribeToLine(int lineId)
         => Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), Context.ConnectionAborted);
 
-    public Task UnsubscribeFromBus(int busId)
-        => Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Bus(busId), Context.ConnectionAborted);
+    public Task UnsubscribeFromLine(int lineId)
+        => Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), Context.ConnectionAborted);
 
     // ─── Admin: Join admin group ──────────────────────────────────────────────
 

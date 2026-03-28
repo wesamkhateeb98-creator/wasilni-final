@@ -132,6 +132,17 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
+    /* ── Line subscription ─────────────────────────────────────────────────── */
+    .line-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 28px; }
+    .line-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700; background: #0d2136; border: 1px solid var(--sky); color: var(--sky); }
+    .line-tag button { background: none; border: none; color: var(--sky); cursor: pointer; font-size: .8rem; padding: 0; margin: 0; width: auto; line-height: 1; }
+    .line-tag button:hover { color: var(--red); }
+
+    /* ── Filter bar ────────────────────────────────────────────────────────── */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .filter-btn { padding: 3px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surf2); color: var(--muted); font-size: .72rem; font-weight: 600; cursor: pointer; transition: all .2s; width: auto; margin-top: 0; }
+    .filter-btn.active { background: #0d2136; border-color: var(--sky); color: var(--sky); }
+
     ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: var(--surf); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   </style>
 </head>
@@ -144,6 +155,7 @@
   <div class="dot" id="dot"></div>
   <span id="st-text">Disconnected</span>
   <span class="admin-badge" id="admin-badge">ADMIN GROUP</span>
+  <div id="sbar-lines" style="display:flex;flex-wrap:wrap;gap:5px;margin-left:6px"></div>
   <span id="tok-disp">No token</span>
 </div>
 
@@ -297,9 +309,33 @@
       </div>
     </div>
 
+    <!-- Line Tracker subscription -->
+    <div class="card">
+      <h2>📡 Line Tracker — Subscribe</h2>
+      <div style="display:flex;gap:7px;align-items:flex-end">
+        <div style="flex:1">
+          <label style="margin-top:0">Line ID</label>
+          <input id="sub-line-id" type="number" placeholder="e.g. 1" style="margin-top:3px"/>
+        </div>
+        <button class="btn-sky"   style="margin-top:0;width:auto;padding:7px 14px" onclick="subscribeToLine()">Subscribe</button>
+        <button class="btn-muted" style="margin-top:0;width:auto;padding:7px 14px" onclick="unsubscribeFromLine()">Leave</button>
+      </div>
+      <div class="line-tags" id="line-tags">
+        <span style="color:var(--muted);font-size:.72rem;font-style:italic">No lines subscribed yet</span>
+      </div>
+      <div style="margin-top:8px;font-size:.7rem;color:var(--muted)">
+        💡 Subscribe to a line to receive <code>OnBusActivated</code> · <code>OnLocationUpdated</code> · <code>OnBusDeactivated</code> · <code>OnBookingAdded</code> for that line only.
+        Admin group already receives all events globally.
+      </div>
+    </div>
+
     <!-- Live bus tracker -->
     <div class="card">
-      <h2>🛰️ Live Bus Tracker <span style="color:var(--muted);font-weight:400">(Admin Group)</span></h2>
+      <h2>🛰️ Live Bus Tracker</h2>
+      <!-- Filter bar -->
+      <div class="filter-bar" id="filter-bar">
+        <button class="filter-btn active" data-line="all" onclick="setFilter('all')">All Lines</button>
+      </div>
       <div style="overflow-x:auto">
         <table class="live-table">
           <thead>
@@ -359,8 +395,14 @@
   let totalGps    = 0;
   let totalEvents = 0;
 
-  // busId → { busId, plate, lineId, driverName, seats, lat, lon, updatedAt }
+  // busId → { busId, plate, lineId, driverName, seats, lat, lon, updatedAt, active }
   const liveBuses = {};
+
+  // subscribed line IDs (Set<number>)
+  const subscribedLines = new Set();
+
+  // active filter: 'all' | lineId (number)
+  let activeFilter = 'all';
 
   /* ─── Helpers ───────────────────────────────────────────────────────────── */
   const $ = id => document.getElementById(id);
@@ -437,10 +479,14 @@
     setDot('connecting');
 
     conn.onreconnecting(() => { setDot('connecting'); log('Reconnecting…', 'warn'); });
-    conn.onreconnected(() => {
+    conn.onreconnected(async () => {
       setDot('connected');
-      log('Reconnected — rejoining admin group…', 'warn');
-      conn.invoke('JoinAdminGroup').catch(e => log(`JoinAdminGroup: ${e.message}`, 'err'));
+      log('Reconnected — rejoining admin group + subscribed lines…', 'warn');
+      try { await conn.invoke('JoinAdminGroup'); } catch(e) { log(`JoinAdminGroup: ${e.message}`, 'err'); }
+      for (const lineId of subscribedLines) {
+        try { await conn.invoke('SubscribeToLine', lineId); log(`↻ Re-subscribed Line ${lineId}`, 'ok'); }
+        catch(e) { log(`SubscribeToLine ${lineId}: ${e.message}`, 'err'); }
+      }
     });
     conn.onclose(() => { setDot('disconnected'); log('Connection closed', 'warn'); });
 
@@ -519,9 +565,10 @@
 
   /* ─── Live bus table ────────────────────────────────────────────────────── */
   function upsertLiveBus(bus) {
+    const isNew = !liveBuses[bus.busId];
     liveBuses[bus.busId] = { ...liveBuses[bus.busId], ...bus };
+    if (isNew) renderFilterBar();   // new line may have appeared
     renderLiveTable();
-    // update active count
     $('stat-active').textContent = Object.values(liveBuses).filter(b => b.active).length;
   }
 
@@ -532,12 +579,14 @@
   }
 
   function updateBusLocation(busId, lat, lon) {
-    if (!liveBuses[busId]) liveBuses[busId] = { busId, plate: '?', lineId: '?', driverName: '?', seats: '?', active: true };
+    if (!liveBuses[busId]) {
+      liveBuses[busId] = { busId, plate: '?', lineId: '?', driverName: '?', seats: '?', active: true };
+      renderFilterBar();
+    }
     liveBuses[busId].lat = lat;
     liveBuses[busId].lon = lon;
     liveBuses[busId].updatedAt = now();
     renderLiveTable();
-    // flash the row
     setTimeout(() => {
       const row = document.querySelector(`tr[data-bus="${busId}"]`);
       if (row) { row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); }
@@ -546,9 +595,18 @@
 
   function renderLiveTable() {
     const tbody = $('live-tbody');
-    const buses = Object.values(liveBuses);
+    let buses = Object.values(liveBuses);
+
+    // apply line filter
+    if (activeFilter !== 'all') {
+      buses = buses.filter(b => String(b.lineId) === String(activeFilter));
+    }
+
     if (!buses.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Waiting for SignalR events…</td></tr>';
+      const msg = activeFilter === 'all'
+        ? 'Waiting for SignalR events…'
+        : `No buses on Line ${activeFilter} yet…`;
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="8">${msg}</td></tr>`;
       return;
     }
     // sort: active first, then by busId
@@ -558,12 +616,90 @@
         <td><span class="pulse-dot ${b.active ? 'active' : 'inactive'}"></span></td>
         <td><code>${b.busId}</code></td>
         <td><strong>${b.plate ?? '—'}</strong></td>
-        <td>${b.lineId ?? '—'}</td>
+        <td><span class="chip chip-sky" style="cursor:pointer" onclick="setFilter(${b.lineId})" title="Filter to this line">Line ${b.lineId ?? '—'}</span></td>
         <td style="color:var(--muted)">${b.driverName ?? '—'}</td>
         <td style="color:var(--muted)">${b.seats ?? '—'}</td>
         <td class="gps-coords">${b.lat != null ? `${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}` : '<span style="color:var(--muted)">—</span>'}</td>
         <td style="color:var(--muted);font-size:.68rem">${b.updatedAt ?? '—'}</td>
       </tr>`).join('');
+  }
+
+  /* ─── Line subscription ─────────────────────────────────────────────────── */
+  async function subscribeToLine() {
+    const lineId = parseInt($('sub-line-id').value);
+    if (!lineId || !conn) return;
+    if (subscribedLines.has(lineId)) { log(`Already subscribed to Line ${lineId}`, 'warn'); return; }
+    try {
+      await conn.invoke('SubscribeToLine', lineId);
+      subscribedLines.add(lineId);
+      log(`✓ Subscribed to Line ${lineId}`, 'ok');
+      renderLineTags();
+      renderFilterBar();
+    } catch(e) { log(`✗ SubscribeToLine: ${e.message}`, 'err'); }
+  }
+
+  async function unsubscribeFromLine() {
+    const lineId = parseInt($('sub-line-id').value);
+    if (!lineId || !conn) return;
+    try {
+      await conn.invoke('UnsubscribeFromLine', lineId);
+      subscribedLines.delete(lineId);
+      log(`✓ Unsubscribed from Line ${lineId}`, 'ok');
+      if (activeFilter === lineId) setFilter('all');
+      renderLineTags();
+      renderFilterBar();
+    } catch(e) { log(`✗ UnsubscribeFromLine: ${e.message}`, 'err'); }
+  }
+
+  function renderLineTags() {
+    const container = $('line-tags');
+    const sbar = $('sbar-lines');
+    if (!subscribedLines.size) {
+      container.innerHTML = '<span style="color:var(--muted);font-size:.72rem;font-style:italic">No lines subscribed yet</span>';
+      sbar.innerHTML = '';
+      return;
+    }
+    container.innerHTML = [...subscribedLines].map(id => `
+      <span class="line-tag">
+        Line ${id}
+        <button onclick="quickUnsub(${id})" title="Unsubscribe">✕</button>
+      </span>`).join('');
+    sbar.innerHTML = [...subscribedLines].map(id =>
+      `<span class="chip chip-sky" style="cursor:pointer" onclick="setFilter(${id})">Line ${id}</span>`
+    ).join('');
+  }
+
+  async function quickUnsub(lineId) {
+    if (!conn) return;
+    try {
+      await conn.invoke('UnsubscribeFromLine', lineId);
+      subscribedLines.delete(lineId);
+      if (activeFilter === lineId) setFilter('all');
+      log(`✓ Unsubscribed from Line ${lineId}`, 'ok');
+      renderLineTags();
+      renderFilterBar();
+    } catch(e) { log(`✗ Unsub: ${e.message}`, 'err'); }
+  }
+
+  /* ─── Filter bar ────────────────────────────────────────────────────────── */
+  function renderFilterBar() {
+    const bar = $('filter-bar');
+    const lineIds = [...new Set(Object.values(liveBuses).map(b => b.lineId).filter(Boolean))];
+    bar.innerHTML = `<button class="filter-btn ${activeFilter === 'all' ? 'active' : ''}" data-line="all" onclick="setFilter('all')">All Lines</button>`;
+    lineIds.sort((a,b) => a-b).forEach(id => {
+      const isSub = subscribedLines.has(id);
+      bar.innerHTML += `<button class="filter-btn ${activeFilter == id ? 'active' : ''}" data-line="${id}" onclick="setFilter(${id})">
+        Line ${id}${isSub ? ' 📡' : ''}
+      </button>`;
+    });
+  }
+
+  function setFilter(lineId) {
+    activeFilter = lineId === 'all' ? 'all' : Number(lineId);
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', String(b.dataset.line) === String(lineId));
+    });
+    renderLiveTable();
   }
 
   /* ─── Booking events table ──────────────────────────────────────────────── */

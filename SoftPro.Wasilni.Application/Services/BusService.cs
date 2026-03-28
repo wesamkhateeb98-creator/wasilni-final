@@ -118,9 +118,6 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
     // ─── Driver: Bus state ────────────────────────────────────────────────────
 
-    public Task<bool> HasBusAsync(int busId, int driverId, CancellationToken cancellationToken)
-        => unitOfWork.BusRepository.AnyByDriverAsync(busId, driverId, cancellationToken);
-
     public async Task<GetActiveBusModel> ToggleStatusAsync(int driverId, CancellationToken cancellationToken)
     {
         BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
@@ -170,17 +167,29 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         return (busId, lineId);
     }
 
-    public async Task<(int BusId, int Count)> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken)
+    public async Task<(int BusId, int LineId, int Count)> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken)
     {
-        BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
-            ?? throw new NotFoundException(Phrases.BusNotFound);
+        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId) ||
+            !cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int lineId))
+        {
+            BusEntity cached = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
+                ?? throw new NotFoundException(Phrases.BusNotFound);
 
-        if (bus.Status != BusStatus.Active)
-            throw new FailedPreconditionException(Phrases.BusNotOnRoad);
+            if (cached.Status != BusStatus.Active)
+                throw new FailedPreconditionException(Phrases.BusNotOnRoad);
+
+            busId  = cached.Id;
+            lineId = cached.LineId;
+            cache.Set(BusCacheKeys.DriverBus(driverId), busId);
+            cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
+        }
+
+        BusEntity bus = await unitOfWork.BusRepository.GetByIdAsync(busId, cancellationToken)
+            ?? throw new NotFoundException(Phrases.BusNotFound);
 
         bus.AdjustAnonymous(delta);
         await unitOfWork.CompleteAsync(cancellationToken);
-        return (bus.Id, bus.AnonymousCount);
+        return (bus.Id, lineId, bus.AnonymousCount);
     }
 
     public async Task<int> ConfirmRiderAsync(int driverId, CancellationToken cancellationToken)
