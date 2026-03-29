@@ -183,6 +183,9 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly>("Day")
                         .HasColumnType("date");
 
+                    b.Property<int>("LineId")
+                        .HasColumnType("int");
+
                     b.Property<int>("NumberOfRiders")
                         .HasColumnType("int");
 
@@ -194,8 +197,12 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Day");
+
                     b.HasIndex("BusId", "Day")
                         .IsUnique();
+
+                    b.HasIndex("LineId", "Day");
 
                     b.ToTable("DailyRiderships");
                 });

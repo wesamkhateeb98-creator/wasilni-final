@@ -14,166 +14,120 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 [Route("api/v1.0/seed")]
 public class DevController(AppDbContext dbContext) : BaseController
 {
-    // ─── Constants ────────────────────────────────────────────────────────────
-
     private const string DefaultPassword = "Password@123";
     private const string AdminPassword   = "Admin@123";
     private const string DevFcm          = "dev-fcm-token";
 
-    // ─── Fake Data ────────────────────────────────────────────────────────────
-
-    private static readonly string[] DriverNames = ["Ahmad Khalil", "Majd Hasan", "Rami Nassar", "Tarek Yousef", "Omar Faris"];
-    private static readonly string[] DriverPhones = ["0911000001", "0911000002", "0911000003", "0911000004", "0911000005"];
-
-    private static readonly string[] PassengerNames =
-    [
-        "Sara Ali", "Lina Mrad", "Hala Zain", "Nour Hamdan", "Rima Saleh",
-        "Yousef Issa", "Karim Diab", "Sami Naser", "Dina Qasem", "Rana Hijazi",
-        "Firas Akil", "Maya Taha", "Ruba Saad", "Bilal Moussa", "Jana Harb"
-    ];
-
-    private static readonly (string Plate, string Color, BusType Type, int Seats)[] BusSpecs =
-    [
-        ("DAM-1001", "White",  BusType.Bolman, 50),
-        ("DAM-1002", "Blue",   BusType.Van,    14),
-        ("DAM-1003", "Silver", BusType.Bolman, 50),
-        ("DAM-1004", "Yellow", BusType.Van,    14),
-        ("DAM-1005", "White",  BusType.Servece, 7),
-    ];
-
-    // ─── Seed Endpoint ────────────────────────────────────────────────────────
+    private static readonly string[] Colors = ["White", "Blue", "Silver", "Yellow", "Red", "Green", "Orange", "Black", "Gray", "Beige"];
+    private static readonly BusType[] BusTypes = [BusType.Bolman, BusType.Van, BusType.Servece];
 
     [HttpGet]
     public async Task<IActionResult> SeedAsync(CancellationToken cancellationToken)
     {
-        // ── 1. Delete everything (order matters for FK constraints) ──────────
+        var rng = new Random(42);
+
+        // ── 1. Clear (FK order) ───────────────────────────────────────────────
         await dbContext.Bookings.ExecuteDeleteAsync(cancellationToken);
         await dbContext.DailyRiderships.ExecuteDeleteAsync(cancellationToken);
         await dbContext.Buses.ExecuteDeleteAsync(cancellationToken);
         await dbContext.Accounts.ExecuteDeleteAsync(cancellationToken);
         await dbContext.Lines.ExecuteDeleteAsync(cancellationToken);
 
-        // ── 2. Line ───────────────────────────────────────────────────────────
-        var line = LineEntity.Create(new AddLineModel("Main Line", []));
-        await dbContext.Lines.AddAsync(line, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        // ── 3. Admin ──────────────────────────────────────────────────────────
+        // ── 2. Admin ──────────────────────────────────────────────────────────
         var admin = CreateAccount("Admin", "0900000000", AdminPassword, Role.Admin);
         await dbContext.Accounts.AddAsync(admin, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // ── 4. Drivers (5) ────────────────────────────────────────────────────
-        var drivers = new List<AccountEntity>();
-        for (int i = 0; i < 5; i++)
+        // ── 3. Lines (20) ─────────────────────────────────────────────────────
+        var lines = new List<LineEntity>();
+        for (int i = 1; i <= 20; i++)
         {
-            var driver = CreateAccount(DriverNames[i], DriverPhones[i], DefaultPassword, Role.Passenger);
+            lines.Add(LineEntity.Create(new AddLineModel($"خط {i}", [])));
+        }
+        await dbContext.Lines.AddRangeAsync(lines, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        // ── 4. Drivers (200) + Buses (200) ────────────────────────────────────
+        var drivers = new List<AccountEntity>();
+        var buses   = new List<BusEntity>();
+
+        for (int i = 1; i <= 200; i++)
+        {
+            var driver = CreateAccount($"Driver {i}", $"0911{i:D6}", DefaultPassword, Role.Passenger);
             drivers.Add(driver);
         }
         await dbContext.Accounts.AddRangeAsync(drivers, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // ── 5. Passengers (15) ────────────────────────────────────────────────
-        var passengers = new List<AccountEntity>();
-        for (int i = 0; i < 15; i++)
+        for (int i = 0; i < 200; i++)
         {
-            var p = CreateAccount(PassengerNames[i], $"0912{i + 1:D6}", DefaultPassword, Role.Passenger);
-            passengers.Add(p);
-        }
-        await dbContext.Accounts.AddRangeAsync(passengers, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        // ── 6. Buses (5) — each assigned to one driver ────────────────────────
-        var buses = new List<BusEntity>();
-        for (int i = 0; i < 5; i++)
-        {
-            var (plate, color, type, seats) = BusSpecs[i];
+            int lineIndex = i % 20; // 10 buses per line
             var bus = BusEntity.Create(new AddBusModel(
-                Plate  : plate,
-                Color  : color,
-                LineId : line.Id,
-                Type   : type));
+                Plate  : $"BUS-{i + 1:D4}",
+                Color  : Colors[rng.Next(Colors.Length)],
+                LineId : lines[lineIndex].Id,
+                Type   : BusTypes[rng.Next(BusTypes.Length)]));
             bus.AssignDriverId(drivers[i].Id);
             buses.Add(bus);
         }
         await dbContext.Buses.AddRangeAsync(buses, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // ── 7. Response ───────────────────────────────────────────────────────
+        // ── 5. Passengers (10) ───────────────────────────────────────────────
+        var passengers = new List<AccountEntity>();
+        for (int i = 1; i <= 10; i++)
+        {
+            passengers.Add(CreateAccount($"Passenger {i}", $"0912{i:D6}", DefaultPassword, Role.Passenger));
+        }
+        await dbContext.Accounts.AddRangeAsync(passengers, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        // ── 6. DailyRidership — 100 days × 200 buses ─────────────────────────
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        int totalRiderships = 0;
+
+        for (int d = 0; d < 100; d++)
+        {
+            var day        = today.AddDays(-d);
+            var dayBatch   = new List<DailyRidershipEntity>(200);
+
+            for (int b = 0; b < buses.Count; b++)
+            {
+                int lineIdx = b % 20;
+                dayBatch.Add(DailyRidershipEntity.Create(buses[b].Id, lines[lineIdx].Id, day));
+            }
+
+            await dbContext.DailyRiderships.AddRangeAsync(dayBatch, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            totalRiderships += dayBatch.Count;
+        }
+
+        // Randomise NumberOfRiders (5–81) — bypasses private setter via SQL
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "UPDATE DailyRiderships SET NumberOfRiders = ABS(CHECKSUM(NEWID())) % 77 + 5",
+            cancellationToken);
+
         return Ok(new
         {
             summary = new
             {
-                line       = 1,
                 admin      = 1,
+                lines      = lines.Count,
                 drivers    = drivers.Count,
                 passengers = passengers.Count,
-                buses      = buses.Count
+                buses      = buses.Count,
+                riderships = totalRiderships
             },
-            credentials = new
-            {
-                adminPassword     = AdminPassword,
-                defaultPassword   = DefaultPassword
-            },
-            line = new { id = line.Id, name = line.Name },
-
-            admin = new
-            {
-                id       = admin.Id,
-                name     = admin.Name,
-                phone    = admin.PhoneNumber,
-                password = AdminPassword,
-                role     = admin.Role.ToString()
-            },
-
-            drivers = drivers.Select((d, i) => new
-            {
-                id         = d.Id,
-                name       = d.Name,
-                phone      = d.PhoneNumber,
-                password   = DefaultPassword,
-                busId      = buses[i].Id,
-                busPlate   = buses[i].Plate,
-                lineId     = buses[i].LineId
-            }),
-
-            passengers = passengers.Select(p => new
-            {
-                id    = p.Id,
-                name  = p.Name,
-                phone = p.PhoneNumber,
-                password = DefaultPassword
-            }),
-
-            buses = buses.Select((b, i) => new
-            {
-                id           = b.Id,
-                plate        = b.Plate,
-                color        = b.Color,
-                type         = b.Type.ToString(),
-                numberOfSeats= b.NumberOfSeats,
-                lineId       = b.LineId,
-                driverId     = b.DriverId,
-                driverName   = drivers[i].Name,
-                driverPhone  = drivers[i].PhoneNumber
-            })
+            credentials = new { adminPassword = AdminPassword, defaultPassword = DefaultPassword },
+            admin = new { id = admin.Id, phone = admin.PhoneNumber, password = AdminPassword }
         });
     }
-
-    // ─── Helper ───────────────────────────────────────────────────────────────
 
     private static AccountEntity CreateAccount(string name, string phone, string password, Role role)
     {
         byte[] salt = AuthHelper.GenerateSalt();
-        var model   = new RegisterModel(
-            Username   : name,
-            Phonenumber: phone,
-            Password   : password,
-            FCMToken   : DevFcm,
-            Role       : role);
-
         var account = AccountEntity.Create(
-            model,
+            new RegisterModel(name, phone, password, DevFcm, role),
             AuthHelper.HashPasswordWithSalt(password, salt),
             salt,
             AuthHelper.GenerateRefreshToken(),

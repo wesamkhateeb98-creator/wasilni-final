@@ -12,5 +12,6 @@ public static class RegistrationExtensions
                     .AddScoped<IBusService, BusService>()
         //            .AddScoped<ICityService, CityService>()
                     .AddScoped<ILineService, LineService>()
+                    .AddScoped<IReportService, ReportService>()
                     .AddScoped<AuthHelper>();
 }

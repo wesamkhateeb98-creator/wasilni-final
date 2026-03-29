@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts;
 using SoftPro.Wasilni.Application.Cache;
+using SoftPro.Wasilni.Domain.Enums;
 using System.Security.Claims;
 
 namespace SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
@@ -13,6 +14,16 @@ public class HasBusAuthorizationHandler(IMemoryCache cache, IServiceScopeFactory
         AuthorizationHandlerContext context,
         HasBusRequirement requirement)
     {
+        var roleClaim = context.User.FindFirst(ClaimTypes.Role);
+
+        if (roleClaim is not null
+            && Enum.TryParse(roleClaim.Value, out Role role)
+            && role == Role.Admin)
+        {
+            context.Succeed(requirement);
+            return;
+        }
+
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
 
         if (userIdClaim is null || !int.TryParse(userIdClaim.Value, out int userId))

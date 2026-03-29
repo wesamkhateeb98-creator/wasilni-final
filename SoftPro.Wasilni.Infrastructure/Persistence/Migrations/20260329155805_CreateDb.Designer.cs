@@ -9,11 +9,11 @@ using SoftPro.Wasilni.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
+namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260327075807_RefactorBusTracking_RemoveTrips")]
-    partial class RefactorBusTracking_RemoveTrips
+    [Migration("20260329155805_CreateDb")]
+    partial class CreateDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -57,9 +57,6 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
 
-                    b.Property<int>("Permission")
-                        .HasColumnType("int");
-
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -94,9 +91,6 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("BusId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -105,6 +99,9 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
 
                     b.Property<double>("Latitude")
                         .HasColumnType("float");
+
+                    b.Property<int>("LineId")
+                        .HasColumnType("int");
 
                     b.Property<double>("Longitude")
                         .HasColumnType("float");
@@ -117,7 +114,7 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BusId");
+                    b.HasIndex("LineId");
 
                     b.HasIndex("PassengerId");
 
@@ -145,13 +142,13 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
                     b.Property<int?>("DriverId")
                         .HasColumnType("int");
 
-                    b.Property<int>("LineId")
+                    b.Property<int?>("LineId")
                         .HasColumnType("int");
 
                     b.Property<int>("NumberOfSeats")
                         .HasColumnType("int");
 
-                    b.Property<int>("OwnId")
+                    b.Property<int?>("OwnId")
                         .HasColumnType("int");
 
                     b.Property<string>("Plate")
@@ -189,6 +186,9 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
                     b.Property<DateOnly>("Day")
                         .HasColumnType("date");
 
+                    b.Property<int>("LineId")
+                        .HasColumnType("int");
+
                     b.Property<int>("NumberOfRiders")
                         .HasColumnType("int");
 
@@ -200,8 +200,12 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Day");
+
                     b.HasIndex("BusId", "Day")
                         .IsUnique();
+
+                    b.HasIndex("LineId", "Day");
 
                     b.ToTable("DailyRiderships");
                 });
@@ -225,9 +229,9 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
 
             modelBuilder.Entity("SoftPro.Wasilni.Domain.Entities.BookingEntity", b =>
                 {
-                    b.HasOne("SoftPro.Wasilni.Domain.Entities.BusEntity", "Bus")
+                    b.HasOne("SoftPro.Wasilni.Domain.Entities.LineEntity", "Line")
                         .WithMany()
-                        .HasForeignKey("BusId")
+                        .HasForeignKey("LineId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -237,7 +241,7 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Bus");
+                    b.Navigation("Line");
 
                     b.Navigation("Passenger");
                 });
@@ -251,14 +255,11 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
                     b.HasOne("SoftPro.Wasilni.Domain.Entities.LineEntity", "LineEntity")
                         .WithMany("Buses")
                         .HasForeignKey("LineId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("SoftPro.Wasilni.Domain.Entities.AccountEntity", "Own")
                         .WithMany()
-                        .HasForeignKey("OwnId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("OwnId");
 
                     b.Navigation("Driver");
 
@@ -276,6 +277,39 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migratins
                         .IsRequired();
 
                     b.Navigation("Bus");
+                });
+
+            modelBuilder.Entity("SoftPro.Wasilni.Domain.Entities.LineEntity", b =>
+                {
+                    b.OwnsMany("SoftPro.Wasilni.Domain.Models.Lines.Point", "Points", b1 =>
+                        {
+                            b1.Property<int>("LineEntityId")
+                                .HasColumnType("int");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int");
+
+                            b1.Property<double>("Latitude")
+                                .HasColumnType("float");
+
+                            b1.Property<double>("Longitude")
+                                .HasColumnType("float");
+
+                            b1.Property<int>("Order")
+                                .HasColumnType("int");
+
+                            b1.HasKey("LineEntityId", "__synthesizedOrdinal");
+
+                            b1.ToTable("Lines");
+
+                            b1.ToJson("Points");
+
+                            b1.WithOwner()
+                                .HasForeignKey("LineEntityId");
+                        });
+
+                    b.Navigation("Points");
                 });
 
             modelBuilder.Entity("SoftPro.Wasilni.Domain.Entities.LineEntity", b =>

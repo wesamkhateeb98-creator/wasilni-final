@@ -408,4 +408,10 @@
   <data name="TripNotActive" xml:space="preserve">
     <value>الرحلة غير نشطة</value>
   </data>
+  <data name="InvalidReportType" xml:space="preserve">
+    <value>نوع التقرير غير صحيح</value>
+  </data>
+  <data name="InvalidDateRange" xml:space="preserve">
+    <value>تاريخ البداية يجب أن يكون قبل تاريخ النهاية</value>
+  </data>
 </root>

@@ -18,5 +18,8 @@ public class DailyRidershipConfiguration : IEntityTypeConfiguration<DailyRidersh
 
         builder.HasIndex(r => new { r.BusId, r.Day })
                .IsUnique();
+
+        builder.HasIndex(r => new { r.LineId, r.Day });
+        builder.HasIndex(r => r.Day);
     }
 }

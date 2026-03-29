@@ -933,5 +933,17 @@ namespace Domain.Resources
                 return ResourceManager.GetString("TripNotActive", resourceCulture);
             }
         }
+
+        public static string InvalidReportType {
+            get {
+                return ResourceManager.GetString("InvalidReportType", resourceCulture);
+            }
+        }
+
+        public static string InvalidDateRange {
+            get {
+                return ResourceManager.GetString("InvalidDateRange", resourceCulture);
+            }
+        }
     }
 }

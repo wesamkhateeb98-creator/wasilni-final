@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateDatabase : Migration
+    public partial class CreateDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -28,7 +28,6 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                     CodeExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Role = table.Column<int>(type: "int", nullable: false),
-                    Permission = table.Column<int>(type: "int", nullable: false),
                     RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RefreshTokenExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -43,7 +42,8 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PointIds = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Points = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -51,36 +51,34 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Notifications",
+                name: "Bookings",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    NotificationType = table.Column<int>(type: "int", nullable: false),
-                    SenderId = table.Column<int>(type: "int", nullable: false),
-                    ReceiverId = table.Column<int>(type: "int", nullable: false),
-                    TripId = table.Column<int>(type: "int", nullable: true),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Body = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LineId = table.Column<int>(type: "int", nullable: false),
+                    PassengerId = table.Column<int>(type: "int", nullable: false),
+                    Date = table.Column<DateOnly>(type: "date", nullable: false),
+                    Latitude = table.Column<double>(type: "float", nullable: false),
+                    Longitude = table.Column<double>(type: "float", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
-                    ErrorMessage = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.PrimaryKey("PK_Bookings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Notifications_Accounts_ReceiverId",
-                        column: x => x.ReceiverId,
+                        name: "FK_Bookings_Accounts_PassengerId",
+                        column: x => x.PassengerId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Notifications_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
+                        name: "FK_Bookings_Lines_LineId",
+                        column: x => x.LineId,
+                        principalTable: "Lines",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -91,13 +89,14 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Plate = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Color = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LineId = table.Column<int>(type: "int", nullable: false),
+                    LineId = table.Column<int>(type: "int", nullable: true),
                     Type = table.Column<int>(type: "int", nullable: false),
                     NumberOfSeats = table.Column<int>(type: "int", nullable: false),
-                    OwnId = table.Column<int>(type: "int", nullable: false),
+                    OwnId = table.Column<int>(type: "int", nullable: true),
                     DriverId = table.Column<int>(type: "int", nullable: true),
-                    RequestsBusIds = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TripIds = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    ActiveSince = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    AnonymousCount = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -111,8 +110,7 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                         name: "FK_Buses_Accounts_OwnId",
                         column: x => x.OwnId,
                         principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Buses_Lines_LineId",
                         column: x => x.LineId,
@@ -122,24 +120,37 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Points",
+                name: "DailyRiderships",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Latitude = table.Column<double>(type: "float", nullable: false),
-                    Longitude = table.Column<double>(type: "float", nullable: false),
-                    LineId = table.Column<int>(type: "int", nullable: true)
+                    BusId = table.Column<int>(type: "int", nullable: false),
+                    LineId = table.Column<int>(type: "int", nullable: false),
+                    Day = table.Column<DateOnly>(type: "date", nullable: false),
+                    NumberOfRiders = table.Column<int>(type: "int", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Points", x => x.Id);
+                    table.PrimaryKey("PK_DailyRiderships", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Points_Lines_LineId",
-                        column: x => x.LineId,
-                        principalTable: "Lines",
-                        principalColumn: "Id");
+                        name: "FK_DailyRiderships_Buses_BusId",
+                        column: x => x.BusId,
+                        principalTable: "Buses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_LineId",
+                table: "Bookings",
+                column: "LineId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_PassengerId",
+                table: "Bookings",
+                column: "PassengerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Buses_DriverId",
@@ -157,32 +168,33 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                 column: "OwnId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Notifications_ReceiverId",
-                table: "Notifications",
-                column: "ReceiverId");
+                name: "IX_DailyRiderships_BusId_Day",
+                table: "DailyRiderships",
+                columns: new[] { "BusId", "Day" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Notifications_SenderId",
-                table: "Notifications",
-                column: "SenderId");
+                name: "IX_DailyRiderships_Day",
+                table: "DailyRiderships",
+                column: "Day");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Points_LineId",
-                table: "Points",
-                column: "LineId");
+                name: "IX_DailyRiderships_LineId_Day",
+                table: "DailyRiderships",
+                columns: new[] { "LineId", "Day" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Bookings");
+
+            migrationBuilder.DropTable(
+                name: "DailyRiderships");
+
+            migrationBuilder.DropTable(
                 name: "Buses");
-
-            migrationBuilder.DropTable(
-                name: "Notifications");
-
-            migrationBuilder.DropTable(
-                name: "Points");
 
             migrationBuilder.DropTable(
                 name: "Accounts");

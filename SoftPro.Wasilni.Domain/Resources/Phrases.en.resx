@@ -366,4 +366,10 @@
   <data name="RecordInUse" xml:space="preserve">
     <value>Cannot remove this record because it is being used by other entities. Please remove the dependencies first.</value>
   </data>
+  <data name="InvalidReportType" xml:space="preserve">
+    <value>Invalid report type</value>
+  </data>
+  <data name="InvalidDateRange" xml:space="preserve">
+    <value>From date must be before to date</value>
+  </data>
 </root>
