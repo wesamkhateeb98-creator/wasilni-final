@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 
-public class HasBusAuthorizationHandler(IMemoryCache cache, IUnitOfWork unitOfWork)
+public class HasBusAuthorizationHandler(IMemoryCache cache, IServiceScopeFactory scopeFactory)
     : AuthorizationHandler<HasBusRequirement>
 {
     protected override async Task HandleRequirementAsync(
@@ -27,6 +27,8 @@ public class HasBusAuthorizationHandler(IMemoryCache cache, IUnitOfWork unitOfWo
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
 
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                 return await unitOfWork.BusRepository.HasBusAsync(userId, CancellationToken.None);
             });
 

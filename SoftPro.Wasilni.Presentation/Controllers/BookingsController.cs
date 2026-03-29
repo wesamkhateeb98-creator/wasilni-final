@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Trips;
+using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
 using SoftPro.Wasilni.Presentation.Hubs;
@@ -25,14 +26,9 @@ public class BookingsController(
     // DRIVER endpoints
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Driver retrieves all <c>Waiting</c> bookings on their line
-    /// that are within <b>40 m</b> of the bus's current GPS position.
-    /// Bus location must have been sent at least once via the SignalR hub
-    /// (<c>UpdateLocation</c>).
-    /// </summary>
     [HttpGet("nearby")]
     [Authorize]
+    [HasBus]
     public async Task<List<GetBookingResponse>> GetNearbyBookingsAsync(
         CancellationToken cancellationToken)
     {
@@ -43,14 +39,9 @@ public class BookingsController(
         return models.Select(m => m.ToResponse()).ToList();
     }
 
-    /// <summary>
-    /// Driver confirms that a passenger boarded the bus.
-    /// Marks the booking as <c>PickedUp</c>, increments daily ridership,
-    /// and notifies <b>all drivers on the same line</b> to remove the booking
-    /// from their nearby list.
-    /// </summary>
     [HttpPut("{id}/confirm")]
     [Authorize]
+    [HasBus]
     public async Task<IdResponse> ConfirmBookingAsync(
         [FromRoute] int id,
         CancellationToken cancellationToken)
@@ -66,13 +57,9 @@ public class BookingsController(
         return new IdResponse(bookingId);
     }
 
-    /// <summary>
-    /// Driver marks a passenger as a no-show (didn't board).
-    /// Marks the booking as <c>Cancelled</c> and notifies <b>all drivers on
-    /// the same line</b> to remove it from their nearby list.
-    /// </summary>
     [HttpPut("{id}/no-show")]
     [Authorize]
+    [HasBus]
     public async Task<IdResponse> MarkNoShowAsync(
         [FromRoute] int id,
         CancellationToken cancellationToken)
@@ -90,7 +77,6 @@ public class BookingsController(
 
     // ─── Passenger: Bookings ──────────────────────────────────────────────────
 
-    /// <summary>Passenger creates a booking on this line.</summary>
     [HttpPost("{id}/bookings")]
     [Authorize(Roles = nameof(Role.Passenger))]
     public async Task<IdResponse> AddBookingAsync(
@@ -117,7 +103,6 @@ public class BookingsController(
         return new(bookingId);
     }
 
-    /// <summary>Passenger cancels their active booking on this line.</summary>
     [HttpDelete("{id}/bookings")]
     [Authorize(Roles = nameof(Role.Passenger))]
     public async Task<IdResponse> CancelBookingAsync(
