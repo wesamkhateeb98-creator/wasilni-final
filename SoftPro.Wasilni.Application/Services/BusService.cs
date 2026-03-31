@@ -18,9 +18,6 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 {
     // ─── Admin CRUD ───────────────────────────────────────────────────────────
 
-    public Task<Page<GetBusesModel>> GetBusesAsync(GetBusModel inputModel, CancellationToken cancellationToken)
-        => unitOfWork.BusRepository.GetAllBusesForPassengerIdAsync(inputModel, cancellationToken);
-
     public Task<Page<GetBusesForAdminModel>> GetBusesForAdminAsync(GetBusForAdminModel inputModel, CancellationToken cancellationToken)
         => unitOfWork.BusRepository.GetAllBusesForAdminAsync(inputModel, cancellationToken);
 
@@ -145,7 +142,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (bus.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            busId  = bus.Id;
+            busId = bus.Id;
             lineId = bus.LineId!.Value;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
             cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
@@ -166,7 +163,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (cached.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            busId  = cached.Id;
+            busId = cached.Id;
             lineId = cached.LineId!.Value;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
             cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
@@ -187,7 +184,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         {
             BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
-            busId  = bus.Id;
+            busId = bus.Id;
             lineId = bus.LineId!.Value;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
             cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
@@ -225,7 +222,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (bus.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            busId  = bus.Id;
+            busId = bus.Id;
             lineId = bus.LineId!.Value;
             cache.Set(BusCacheKeys.DriverBus(driverId), busId);
             cache.Set(BusCacheKeys.DriverLine(driverId), lineId);

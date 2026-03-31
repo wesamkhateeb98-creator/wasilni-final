@@ -9,7 +9,7 @@ public record GetBusesResponse(
     string Plate,
     string Color,
     BusType Type,
-    int? LineId,
+    LineBusResponse? Line,
     UsernameModel? Driver
     );
 

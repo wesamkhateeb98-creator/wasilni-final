@@ -19,7 +19,7 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 [Route(BaseUrl)]
 public class BusesController(IBusService busService) : BaseController
 {
-    [HttpPost]
+    [HttpPost] //~~~
     [Authorize(Roles = nameof(Role.Admin))]
     public async Task<IdResponse> AddAsync([FromBody] AddBusRequest request, CancellationToken cancellationToken)
     {
@@ -27,7 +27,7 @@ public class BusesController(IBusService busService) : BaseController
         return new(id);
     }
 
-    [HttpGet]
+    [HttpGet] //~~~
     [Authorize(Roles = nameof(Role.Admin))]
     public async Task<Page<GetBusesForAdminResponse>> GetBusesAsync([FromQuery] GetBusesForAdminRequest request, CancellationToken cancellationToken)
     {
@@ -35,7 +35,7 @@ public class BusesController(IBusService busService) : BaseController
         return buses.ToResponse();
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{id}")] //~~~
     [Authorize(Roles = nameof(Role.Admin))]
     public async Task<IdResponse> UpdateAsync([FromRoute] IdRequest route, [FromBody] UpdateBusRequest request, CancellationToken cancellationToken)
     {
@@ -43,7 +43,7 @@ public class BusesController(IBusService busService) : BaseController
         return new(id);
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id}")] //~~~
     [Authorize(Roles = nameof(Role.Admin))]
     public async Task<IdResponse> DeleteAsync([FromRoute] IdRequest request, CancellationToken cancellationToken)
     {
@@ -51,7 +51,7 @@ public class BusesController(IBusService busService) : BaseController
         return new(id);
     }
 
-    [HttpPatch("{id}/driver")]
+    [HttpPatch("{id}/driver")] //~~~
     [Authorize(Roles = nameof(Role.Admin))]
     public async Task<IdResponse> AddDriverAsync([FromRoute] IdRequest route, [FromBody] AddDriverOnBusRequest request, CancellationToken cancellationToken)
     {
@@ -59,7 +59,7 @@ public class BusesController(IBusService busService) : BaseController
         return new(id);
     }
 
-    [HttpDelete("{id}/driver")]
+    [HttpDelete("{id}/driver")] //~~~
     [Authorize(Roles = nameof(Role.Admin))]
     public async Task<IdResponse> DeleteDriverAsync([FromRoute] IdRequest route, CancellationToken cancellationToken)
     {

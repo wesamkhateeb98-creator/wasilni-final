@@ -35,7 +35,7 @@ public static class ToModelBusExtensions
             model.Plate,
             model.Color,
             model.Type,
-            model.LineId,
+            model.Line is not null ? new LineBusResponse(model.Line.Id, model.Line.Name) : null,
             model.Driver
             );
 

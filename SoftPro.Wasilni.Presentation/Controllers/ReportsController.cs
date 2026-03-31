@@ -4,7 +4,6 @@ using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Reports;
 using SoftPro.Wasilni.Presentation.Models.Request.Report;
-using SoftPro.Wasilni.Presentation.Models.Response.Report;
 
 namespace SoftPro.Wasilni.Presentation.Controllers;
 

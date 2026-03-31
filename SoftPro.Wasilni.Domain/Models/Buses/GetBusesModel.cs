@@ -8,7 +8,7 @@ public record GetBusesModel(
     string Plate,
     string Color,
     BusType Type,
-    int? LineId,
+    LineBusModel? Line,
     UsernameModel? Driver
     );
 

@@ -20,24 +20,9 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
     public async Task<Page<GetBusesModel>> GetAllBusesForPassengerIdAsync(GetBusModel inputFilter, CancellationToken cancellationToken)
     {
         IQueryable<BusEntity> query = dbContext.Buses
-        .Include(x => x.LineEntity)
-        .AsQueryable();
-
-        //query = inputFilter.Filter switch
-        //{
-        //    GetBusesFilter.MyBus => query
-        //        .Include(x => x.Own)
-        //        .Where(x => x.OwnId == inputFilter.Id),
-
-        //    GetBusesFilter.AssginToMe => query
-        //        .Include(x => x.Driver)
-        //        .Where(x => x.DriverId == inputFilter.Id),
-
-        //    _ => query
-        //        .Include(x => x.Driver)
-        //        .Include(x => x.Own)
-        //        .Where(x => x.DriverId == inputFilter.Id || x.OwnId == inputFilter.Id),
-        //};
+            .Include(x => x.LineEntity)
+            .Include(x => x.Driver)
+            .AsQueryable();
 
         List<GetBusesModel> result = await query
              .Select(x => new GetBusesModel(
@@ -46,8 +31,8 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
                     x.Plate,
                     x.Color,
                     x.Type,
-                    x.LineId,
-                    x.DriverId.HasValue ? new(x.DriverId.Value, x.Driver.Name) : null
+                    x.LineId.HasValue ? new LineBusModel(x.LineId.Value, x.LineEntity!.Name) : null,
+                    x.DriverId.HasValue ? new UsernameModel(x.DriverId.Value, x.Driver!.Name) : null
                  ))
              .Skip((inputFilter.pageNumber - 1) * inputFilter.PageSize)
              .Take(inputFilter.PageSize)
@@ -78,7 +63,7 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
 
     public Task<BusEntity?> GetWithBusWithRequestBusByIdAsync(int busId, CancellationToken cancellationToken)
         //=> dbContext.Buses.Include(x => x.Requests).Include(x => x.Own).FirstOrDefaultAsync(x => x.Id == busId,cancellationToken);
-        =>null;
+        => null;
     public Task<BusEntity?> GetWithRequestByIdAsync(int id, CancellationToken cancellationToken)
         //=> dbContext.Buses.Include(x => x.Requests).FirstOrDefaultAsync(x => x. == id, cancellationToken);
         => null;
