@@ -528,9 +528,9 @@
     const lng    = parseFloat($('bk-lng').value);
     if (!lineId) { log('error','Book','Line ID required'); return; }
 
-    log('api', `POST /lines/${lineId}/bookings`, { lat, lng });
+    log('api', `POST /bookings/line/${lineId}`, { lat, lng });
     try {
-      const r = await fetch(`${API}/api/v1.0/lines/${lineId}/bookings`, {
+      const r = await fetch(`${API}/api/v1.0/bookings/line/${lineId}`, {
         method:'POST',
         headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ latitude: lat, longitude: lng })
@@ -555,9 +555,9 @@
   // ── Cancel ─────────────────────────────────────────────────────────────────
   async function cancelBooking() {
     if (!currentBkLine) { log('error','Cancel','No active booking'); return; }
-    log('api', `DELETE /lines/${currentBkLine}/bookings`, '…');
+    log('api', `DELETE /bookings/cancel`, '…');
     try {
-      const r = await fetch(`${API}/api/v1.0/lines/${currentBkLine}/bookings`, {
+      const r = await fetch(`${API}/api/v1.0/bookings/cancel`, {
         method:'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

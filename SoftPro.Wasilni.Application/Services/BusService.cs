@@ -317,13 +317,12 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         }).ToList();
     }
 
-    public async Task<int> AddBookingAsync(
-        int lineId, int passengerId, double latitude, double longitude, CancellationToken cancellationToken)
+    public async Task<int> AddBookingAsync(int lineId, int passengerId, double latitude, double longitude, CancellationToken cancellationToken)
     {
         if (!await unitOfWork.LineRepository.AnyAsync(lineId, cancellationToken))
             throw new NotFoundException(Phrases.LineNotFound);
 
-        if (await unitOfWork.BookingRepository.HasActiveBookingOnLineAsync(passengerId, lineId, cancellationToken))
+        if (await unitOfWork.BookingRepository.HasActiveBookingAsync(passengerId, cancellationToken))
             throw new AlreadyExistsException(Phrases.AlreadyBooked);
 
         BookingEntity booking = BookingEntity.Create(lineId, passengerId, latitude, longitude);
@@ -333,14 +332,15 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         return booking.Id;
     }
 
-    public async Task<int> CancelBookingAsync(int lineId, int passengerId, CancellationToken cancellationToken)
+    public async Task<(int BookingId, int LineId)> CancelBookingAsync(int passengerId, CancellationToken cancellationToken)
     {
         BookingEntity booking = await unitOfWork.BookingRepository
-            .GetActiveByPassengerAndLineAsync(passengerId, lineId, cancellationToken)
+            .GetActiveByPassengerAsync(passengerId, cancellationToken)
             ?? throw new NotFoundException(Phrases.BookingNotFound);
 
+        int lineId = booking.LineId;
         booking.Cancel();
         await unitOfWork.CompleteAsync(cancellationToken);
-        return booking.Id;
+        return (booking.Id, lineId);
     }
 }

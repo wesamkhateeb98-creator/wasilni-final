@@ -8,19 +8,17 @@ namespace SoftPro.Wasilni.Infrastructure.Repositories;
 
 public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntity>(dbContext), IBookingRepository
 {
-    public Task<BookingEntity?> GetActiveByPassengerAndLineAsync(int passengerId, int lineId, CancellationToken cancellationToken)
+    public Task<BookingEntity?> GetActiveByPassengerAsync(int passengerId, CancellationToken cancellationToken)
         => dbContext.Bookings
             .FirstOrDefaultAsync(
                 b => b.PassengerId == passengerId &&
-                     b.LineId      == lineId      &&
                      b.Status      == BookingStatus.Waiting,
                 cancellationToken);
 
-    public Task<bool> HasActiveBookingOnLineAsync(int passengerId, int lineId, CancellationToken cancellationToken)
+    public Task<bool> HasActiveBookingAsync(int passengerId, CancellationToken cancellationToken)
         => dbContext.Bookings
             .AnyAsync(
                 b => b.PassengerId == passengerId &&
-                     b.LineId      == lineId      &&
                      b.Status      == BookingStatus.Waiting,
                 cancellationToken);
 

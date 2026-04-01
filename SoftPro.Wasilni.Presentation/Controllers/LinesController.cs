@@ -4,7 +4,6 @@ using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Lines;
-using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions.LineExtensions;
 using SoftPro.Wasilni.Presentation.Models.Request.Generic;
 using SoftPro.Wasilni.Presentation.Models.Request.Line;
@@ -29,7 +28,6 @@ public class LinesController(ILineService lineService) : BaseController
     }
 
     [HttpGet]
-    [HasBus]
     public async Task<Page<GetLineResponse>> GetLinesAsync(
         [FromQuery] GetLinesRequest request,
         CancellationToken cancellationToken)
@@ -39,7 +37,6 @@ public class LinesController(ILineService lineService) : BaseController
     }
 
     [HttpGet("{id}/points")]
-    [HasBus]
     public async Task<List<WayPointResponse>> GetLinePointsAsync(
         [FromRoute] IdRequest route,
         CancellationToken cancellationToken)

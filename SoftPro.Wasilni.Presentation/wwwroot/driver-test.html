@@ -679,8 +679,8 @@
       const pTok = ld.token ?? ld.accessToken ?? ld.Token ?? ld.AccessToken;
       log('api','PassSim','✅ Passenger logged in');
 
-      log('api',`POST /lines/${lineId}/bookings`, { lat, lng });
-      const br = await fetch(`${API}/api/v1.0/lines/${lineId}/bookings`, {
+      log('api',`POST /bookings/line/${lineId}`, { lat, lng });
+      const br = await fetch(`${API}/api/v1.0/bookings/line/${lineId}`, {
         method:'POST',
         headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${pTok}` },
         body: JSON.stringify({ latitude: lat, longitude: lng })
@@ -707,7 +707,7 @@
       const ld   = await lr.json();
       const pTok = ld.token ?? ld.accessToken ?? ld.Token ?? ld.AccessToken;
 
-      const dr = await fetch(`${API}/api/v1.0/lines/${lineId}/bookings`, {
+      const dr = await fetch(`${API}/api/v1.0/bookings/cancel`, {
         method:'DELETE',
         headers:{ 'Authorization': `Bearer ${pTok}` }
       });

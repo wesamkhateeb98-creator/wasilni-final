@@ -34,5 +34,5 @@ public interface IBusService
     // ─── Passenger ────────────────────────────────────────────────────────────
     Task<List<GetActiveBusModel>> GetActiveBusesAsync(int? lineId, CancellationToken cancellationToken);
     Task<int> AddBookingAsync(int lineId, int passengerId, double latitude, double longitude, CancellationToken cancellationToken);
-    Task<int> CancelBookingAsync(int lineId, int passengerId, CancellationToken cancellationToken);
+    Task<(int BookingId, int LineId)> CancelBookingAsync(int passengerId, CancellationToken cancellationToken);
 }
