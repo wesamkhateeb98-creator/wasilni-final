@@ -23,6 +23,14 @@ public class ReportService(IUnitOfWork unitOfWork) : IReportService
         var entities = await unitOfWork.DailyRidershipRepository
             .GetDailyAsync(DateOnly.FromDateTime(from), DateOnly.FromDateTime(to), lineId, busId, ct);
 
+        // Line report: sum all buses per day
+        if (lineId.HasValue && !busId.HasValue)
+            return entities
+                .GroupBy(e => e.Day)
+                .OrderBy(g => g.Key)
+                .Select(g => new RidershipReportItem(lineId, null, g.Key.Year, g.Key.Month, g.Key, g.Sum(e => e.NumberOfRiders)))
+                .ToList();
+
         return entities
             .Select(e => new RidershipReportItem(e.LineId, e.BusId, e.Day.Year, e.Day.Month, e.Day, e.NumberOfRiders))
             .ToList();
