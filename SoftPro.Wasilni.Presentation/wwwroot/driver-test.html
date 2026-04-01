@@ -317,6 +317,16 @@
   let activeLineId  = null;
   let seedData      = null;
   let autoGpsTimer  = null;
+  let autoGpsIndex  = 0;
+
+  const ROUTE_POINTS = [
+    { lat: 33.9668, lng: 36.6572 },
+    { lat: 33.9675, lng: 36.6585 },
+    { lat: 33.9682, lng: 36.6600 },
+    { lat: 33.9695, lng: 36.6615 },
+    { lat: 33.9710, lng: 36.6630 },
+    { lat: 33.9725, lng: 36.6645 },
+  ];
   let demoAborted   = false;
 
   // Map<bookingId → { id, lineId, passengerId, lat, lng, status, createdAt }>
@@ -556,18 +566,25 @@
 
   function startAutoGPS() {
     if (autoGpsTimer) return;
-    log('info','AutoGPS','Started — sending every 5 s');
+    autoGpsIndex = 0;
+    log('info', 'AutoGPS', `Started — walking ${ROUTE_POINTS.length} route points every 5 s`);
     $('btn-auto-gps').disabled = true;
     $('btn-stop-gps').disabled = false;
-    autoGpsTimer = setInterval(async () => {
-      // nudge location slightly east each tick
-      const lat = parseFloat($('lat').value);
-      const lng = parseFloat($('lng').value);
-      $('lat').value = (lat + 0.00015).toFixed(6);
-      $('lng').value = (lng + 0.00020).toFixed(6);
+
+    const tick = async () => {
+      const pt = ROUTE_POINTS[autoGpsIndex % ROUTE_POINTS.length];
+      $('lat').value = pt.lat.toFixed(6);
+      $('lng').value = pt.lng.toFixed(6);
+      autoGpsIndex++;
+      if (autoGpsIndex >= ROUTE_POINTS.length) {
+        autoGpsIndex = 0;
+        log('info', 'AutoGPS', 'Loop — restarting route from point 1');
+      }
       await sendLocation();
-    }, 5000);
-    sendLocation(); // immediate first send
+    };
+
+    tick(); // immediate first send
+    autoGpsTimer = setInterval(tick, 5000);
   }
 
   function stopAutoGPS() {
