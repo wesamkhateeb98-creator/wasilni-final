@@ -39,20 +39,18 @@ public class DevController(AppDbContext dbContext) : BaseController
         await dbContext.SaveChangesAsync(cancellationToken);
 
         // ── 3. Lines (20) ─────────────────────────────────────────────────────
-        List<Point> routePoints =
-        [
-            new(33.9668, 36.6572, 1),
-            new(33.9675, 36.6585, 2),
-            new(33.9682, 36.6600, 3),
-            new(33.9695, 36.6615, 4),
-            new(33.9710, 36.6630, 5),
-            new(33.9725, 36.6645, 6),
-        ];
-
         var lines = new List<LineEntity>();
         for (int i = 1; i <= 20; i++)
         {
-            lines.Add(LineEntity.Create(new AddLineModel($"خط {i}", routePoints)));
+            lines.Add(LineEntity.Create(new AddLineModel($"خط {i}",
+            [
+                new(33.9668, 36.6572, 1),
+                new(33.9675, 36.6585, 2),
+                new(33.9682, 36.6600, 3),
+                new(33.9695, 36.6615, 4),
+                new(33.9710, 36.6630, 5),
+                new(33.9725, 36.6645, 6),
+            ])));
         }
         await dbContext.Lines.AddRangeAsync(lines, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
