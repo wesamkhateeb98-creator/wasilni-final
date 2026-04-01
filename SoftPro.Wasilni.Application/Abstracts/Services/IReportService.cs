@@ -5,5 +5,5 @@ namespace SoftPro.Wasilni.Application.Abstracts.Services;
 
 public interface IReportService
 {
-    Task<List<RidershipReportItem>> GetAsync(ReportType type, DateTime from, DateTime to, int? lineId, CancellationToken cancellationToken);
+    Task<List<RidershipReportItem>> GetAsync(ReportType type, DateTime from, DateTime to, int? lineId, int? busId, CancellationToken cancellationToken);
 }

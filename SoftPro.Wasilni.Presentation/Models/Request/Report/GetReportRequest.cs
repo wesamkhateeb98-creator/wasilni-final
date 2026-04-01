@@ -6,4 +6,5 @@ public record GetReportRequest(
     ReportType  Type,
     DateTime    From,
     DateTime    To,
-    int?        LineId);
+    int?        LineId,
+    int?        BusId);

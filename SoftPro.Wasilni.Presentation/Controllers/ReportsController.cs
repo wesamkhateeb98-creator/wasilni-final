@@ -12,13 +12,17 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 [Authorize(Roles = nameof(Role.Admin))]
 public class ReportsController(IReportService reportService) : BaseController
 {
-    [HttpGet]
-    public async Task<List<RidershipReportItem>> GetAsync(
-        [FromQuery] GetReportRequest request,
+    [HttpGet("bus/{busId}")]
+    public Task<List<RidershipReportItem>> GetByBusAsync(
+        [FromRoute] int busId,
+        [FromQuery] GetReportFilterRequest request,
         CancellationToken cancellationToken)
-    {
-        return await reportService.GetAsync(
-            request.Type, request.From, request.To,
-            request.LineId, cancellationToken);
-    }
+        => reportService.GetAsync(request.Type, request.From, request.To, null, busId, cancellationToken);
+
+    [HttpGet("line/{lineId}")]
+    public Task<List<RidershipReportItem>> GetByLineAsync(
+        [FromRoute] int lineId,
+        [FromQuery] GetReportFilterRequest request,
+        CancellationToken cancellationToken)
+        => reportService.GetAsync(request.Type, request.From, request.To, lineId, null, cancellationToken);
 }

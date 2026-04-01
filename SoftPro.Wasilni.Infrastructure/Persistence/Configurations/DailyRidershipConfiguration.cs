@@ -11,15 +11,17 @@ public class DailyRidershipConfiguration : IEntityTypeConfiguration<DailyRidersh
         builder.Property(r => r.RowVersion)
                .IsRowVersion();
 
+        builder.HasOne(r => r.Line)
+               .WithMany()
+               .HasForeignKey(r => r.LineId)
+               .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasOne(r => r.Bus)
                .WithMany()
                .HasForeignKey(r => r.BusId)
-               .OnDelete(DeleteBehavior.Cascade);
+               .OnDelete(DeleteBehavior.NoAction);
 
-        builder.HasIndex(r => new { r.BusId, r.Day })
+        builder.HasIndex(r => new { r.LineId, r.BusId, r.Day })
                .IsUnique();
-
-        builder.HasIndex(r => new { r.LineId, r.Day });
-        builder.HasIndex(r => r.Day);
     }
 }

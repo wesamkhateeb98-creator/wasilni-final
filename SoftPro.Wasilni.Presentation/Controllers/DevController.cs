@@ -82,25 +82,17 @@ public class DevController(AppDbContext dbContext) : BaseController
         await dbContext.Accounts.AddRangeAsync(passengers, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // ── 6. DailyRidership — 100 days × 200 buses ─────────────────────────
+        // ── 6. DailyRidership — 200 buses × 100 days ─────────────────────────
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        int totalRiderships = 0;
 
-        for (int d = 0; d < 100; d++)
-        {
-            var day        = today.AddDays(-d);
-            var dayBatch   = new List<DailyRidershipEntity>(200);
+        var riderships = (
+            from d    in Enumerable.Range(0, 100)
+            from bus  in buses
+            select DailyRidershipEntity.Create(bus.LineId!.Value, bus.Id, today.AddDays(-d))
+        ).ToList();
 
-            for (int b = 0; b < buses.Count; b++)
-            {
-                int lineIdx = b % 20;
-                dayBatch.Add(DailyRidershipEntity.Create(buses[b].Id, lines[lineIdx].Id, day));
-            }
-
-            await dbContext.DailyRiderships.AddRangeAsync(dayBatch, cancellationToken);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            totalRiderships += dayBatch.Count;
-        }
+        await dbContext.DailyRiderships.AddRangeAsync(riderships, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         // Randomise NumberOfRiders (5–81) — bypasses private setter via SQL
         await dbContext.Database.ExecuteSqlRawAsync(
@@ -116,7 +108,7 @@ public class DevController(AppDbContext dbContext) : BaseController
                 drivers    = drivers.Count,
                 passengers = passengers.Count,
                 buses      = buses.Count,
-                riderships = totalRiderships
+                riderships = riderships.Count // 200 buses × 100 days
             },
             credentials = new { adminPassword = AdminPassword, defaultPassword = DefaultPassword },
             admin = new { id = admin.Id, phone = admin.PhoneNumber, password = AdminPassword }

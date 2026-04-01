@@ -191,7 +191,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         }
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
-        return await unitOfWork.DailyRidershipRepository.IncrementAsync(busId, lineId, today, cancellationToken);
+        return await unitOfWork.DailyRidershipRepository.IncrementAsync(lineId, busId, today, cancellationToken);
     }
 
     public async Task<GetActiveBusModel?> GetMyActiveBusAsync(int driverId, CancellationToken cancellationToken)
@@ -267,7 +267,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         await unitOfWork.CompleteAsync(cancellationToken);
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
-        await unitOfWork.DailyRidershipRepository.IncrementAsync(busId, booking.LineId, today, cancellationToken);
+        await unitOfWork.DailyRidershipRepository.IncrementAsync(booking.LineId, busId, today, cancellationToken);
 
         return (booking.Id, booking.LineId);
     }

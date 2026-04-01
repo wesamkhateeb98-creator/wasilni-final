@@ -8,18 +8,18 @@ namespace SoftPro.Wasilni.Infrastructure.Repositories;
 public class DailyRidershipRepository(AppDbContext dbContext)
     : Repository<DailyRidershipEntity>(dbContext), IDailyRidershipRepository
 {
-    public async Task<int> IncrementAsync(int busId, int lineId, DateOnly day, CancellationToken cancellationToken)
+    public async Task<int> IncrementAsync(int lineId, int busId, DateOnly day, CancellationToken cancellationToken)
     {
         while (true)
         {
             try
             {
                 DailyRidershipEntity? ridership = await dbContext.DailyRiderships
-                    .FirstOrDefaultAsync(r => r.BusId == busId && r.Day == day, cancellationToken);
+                    .FirstOrDefaultAsync(r => r.LineId == lineId && r.BusId == busId && r.Day == day, cancellationToken);
 
                 if (ridership is null)
                 {
-                    ridership = DailyRidershipEntity.Create(busId, lineId, day);
+                    ridership = DailyRidershipEntity.Create(lineId, busId, day);
                     dbContext.DailyRiderships.Add(ridership);
                 }
 
@@ -35,19 +35,20 @@ public class DailyRidershipRepository(AppDbContext dbContext)
     }
 
     public Task<List<DailyRidershipEntity>> GetDailyAsync(
-        DateOnly from, DateOnly to, int? lineId, CancellationToken cancellationToken)
+        DateOnly from, DateOnly to, int? lineId, int? busId, CancellationToken cancellationToken)
     {
         var query = dbContext.DailyRiderships
             .Where(r => r.Day >= from && r.Day <= to);
 
         if (lineId.HasValue) query = query.Where(r => r.LineId == lineId.Value);
+        if (busId.HasValue)  query = query.Where(r => r.BusId  == busId.Value);
 
         return query.OrderBy(r => r.Day).ToListAsync(cancellationToken);
     }
 
     public async Task<List<(int Year, int Month, int TotalRiders)>> GetMonthlyAsync(
         int fromYear, int fromMonth, int toYear, int toMonth,
-        int? lineId, CancellationToken cancellationToken)
+        int? lineId, int? busId, CancellationToken cancellationToken)
     {
         var from = new DateOnly(fromYear, fromMonth, 1);
         var to   = new DateOnly(toYear, toMonth, 1).AddMonths(1).AddDays(-1);
@@ -56,6 +57,7 @@ public class DailyRidershipRepository(AppDbContext dbContext)
             .Where(r => r.Day >= from && r.Day <= to);
 
         if (lineId.HasValue) query = query.Where(r => r.LineId == lineId.Value);
+        if (busId.HasValue)  query = query.Where(r => r.BusId  == busId.Value);
 
         var grouped = await query
             .GroupBy(r => new { r.Day.Year, r.Day.Month })
@@ -67,12 +69,13 @@ public class DailyRidershipRepository(AppDbContext dbContext)
     }
 
     public async Task<List<(int Year, int TotalRiders)>> GetYearlyAsync(
-        int fromYear, int toYear, int? lineId, CancellationToken cancellationToken)
+        int fromYear, int toYear, int? lineId, int? busId, CancellationToken cancellationToken)
     {
         var query = dbContext.DailyRiderships
             .Where(r => r.Day.Year >= fromYear && r.Day.Year <= toYear);
 
         if (lineId.HasValue) query = query.Where(r => r.LineId == lineId.Value);
+        if (busId.HasValue)  query = query.Where(r => r.BusId  == busId.Value);
 
         var grouped = await query
             .GroupBy(r => r.Day.Year)
