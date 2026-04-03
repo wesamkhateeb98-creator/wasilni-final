@@ -15,6 +15,14 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
                      b.Status      == BookingStatus.Waiting,
                 cancellationToken);
 
+    public Task<BookingEntity?> GetActiveByPassengerWithLineAsync(int passengerId, CancellationToken cancellationToken)
+        => dbContext.Bookings
+            .Include(b => b.Line)
+            .FirstOrDefaultAsync(
+                b => b.PassengerId == passengerId &&
+                     b.Status      == BookingStatus.Waiting,
+                cancellationToken);
+
     public Task<bool> HasActiveBookingAsync(int passengerId, CancellationToken cancellationToken)
         => dbContext.Bookings
             .AnyAsync(

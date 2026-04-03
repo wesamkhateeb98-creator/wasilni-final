@@ -7,28 +7,31 @@ namespace SoftPro.Wasilni.Application.Services;
 
 public class ReportService(IUnitOfWork unitOfWork) : IReportService
 {
-    public Task<List<RidershipReportItem>> GetAsync(
-        ReportType type, DateTime from, DateTime to, int? lineId, int? busId, CancellationToken cancellationToken)
-        => type switch
+    public Task<List<RidershipReportItem>> GetAsync(GetReportFilterModel filter, CancellationToken cancellationToken)
+        => filter.Type switch
         {
-            ReportType.Daily   => GetDailyAsync(from, to, lineId, busId, cancellationToken),
-            ReportType.Monthly => GetMonthlyAsync(from, to, lineId, busId, cancellationToken),
-            ReportType.Yearly  => GetYearlyAsync(from, to, lineId, busId, cancellationToken),
+            ReportType.Daily   => GetDailyAsync(filter, cancellationToken),
+            ReportType.Monthly => GetMonthlyAsync(filter, cancellationToken),
+            ReportType.Yearly  => GetYearlyAsync(filter, cancellationToken),
             _                  => Task.FromResult(new List<RidershipReportItem>())
         };
 
-    private async Task<List<RidershipReportItem>> GetDailyAsync(
-        DateTime from, DateTime to, int? lineId, int? busId, CancellationToken ct)
+    private async Task<List<RidershipReportItem>> GetDailyAsync(GetReportFilterModel filter, CancellationToken ct)
     {
-        var entities = await unitOfWork.DailyRidershipRepository
-            .GetDailyAsync(DateOnly.FromDateTime(from), DateOnly.FromDateTime(to), lineId, busId, ct);
+        var dailyFilter = new GetDailyFilterModel(
+            DateOnly.FromDateTime(filter.From),
+            DateOnly.FromDateTime(filter.To),
+            filter.LineId,
+            filter.BusId);
+
+        var entities = await unitOfWork.DailyRidershipRepository.GetDailyAsync(dailyFilter, ct);
 
         // Line report: sum all buses per day
-        if (lineId.HasValue && !busId.HasValue)
+        if (filter.LineId.HasValue && !filter.BusId.HasValue)
             return entities
                 .GroupBy(e => e.Day)
                 .OrderBy(g => g.Key)
-                .Select(g => new RidershipReportItem(lineId, null, g.Key.Year, g.Key.Month, g.Key, g.Sum(e => e.NumberOfRiders)))
+                .Select(g => new RidershipReportItem(filter.LineId, null, g.Key.Year, g.Key.Month, g.Key, g.Sum(e => e.NumberOfRiders)))
                 .ToList();
 
         return entities
@@ -36,25 +39,30 @@ public class ReportService(IUnitOfWork unitOfWork) : IReportService
             .ToList();
     }
 
-    private async Task<List<RidershipReportItem>> GetMonthlyAsync(
-        DateTime from, DateTime to, int? lineId, int? busId, CancellationToken ct)
+    private async Task<List<RidershipReportItem>> GetMonthlyAsync(GetReportFilterModel filter, CancellationToken ct)
     {
-        var results = await unitOfWork.DailyRidershipRepository
-            .GetMonthlyAsync(from.Year, from.Month, to.Year, to.Month, lineId, busId, ct);
+        var monthlyFilter = new GetMonthlyFilterModel(
+            filter.From.Year, filter.From.Month,
+            filter.To.Year,   filter.To.Month,
+            filter.LineId,    filter.BusId);
+
+        var results = await unitOfWork.DailyRidershipRepository.GetMonthlyAsync(monthlyFilter, ct);
 
         return results
-            .Select(r => new RidershipReportItem(lineId, busId, r.Year, r.Month, null, r.TotalRiders))
+            .Select(r => new RidershipReportItem(filter.LineId, filter.BusId, r.Year, r.Month, null, r.TotalRiders))
             .ToList();
     }
 
-    private async Task<List<RidershipReportItem>> GetYearlyAsync(
-        DateTime from, DateTime to, int? lineId, int? busId, CancellationToken ct)
+    private async Task<List<RidershipReportItem>> GetYearlyAsync(GetReportFilterModel filter, CancellationToken ct)
     {
-        var results = await unitOfWork.DailyRidershipRepository
-            .GetYearlyAsync(from.Year, to.Year, lineId, busId, ct);
+        var yearlyFilter = new GetYearlyFilterModel(
+            filter.From.Year, filter.To.Year,
+            filter.LineId,    filter.BusId);
+
+        var results = await unitOfWork.DailyRidershipRepository.GetYearlyAsync(yearlyFilter, ct);
 
         return results
-            .Select(r => new RidershipReportItem(lineId, busId, r.Year, null, null, r.TotalRiders))
+            .Select(r => new RidershipReportItem(filter.LineId, filter.BusId, r.Year, null, null, r.TotalRiders))
             .ToList();
     }
 }

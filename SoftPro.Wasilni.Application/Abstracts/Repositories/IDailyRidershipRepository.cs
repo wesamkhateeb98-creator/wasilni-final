@@ -1,14 +1,15 @@
 using SoftPro.Wasilni.Domain.Entities;
+using SoftPro.Wasilni.Domain.Models.Reports;
 
 namespace SoftPro.Wasilni.Application.Abstracts.Repositories;
 
 public interface IDailyRidershipRepository : IRepository<DailyRidershipEntity>
 {
-    Task<int> IncrementAsync(int lineId, int busId, DateOnly day, CancellationToken cancellationToken);
+    Task<int> IncrementAsync(IncrementRidershipModel model, CancellationToken cancellationToken);
 
-    Task<List<DailyRidershipEntity>> GetDailyAsync(DateOnly from, DateOnly to, int? lineId, int? busId, CancellationToken cancellationToken);
+    Task<List<DailyRidershipEntity>> GetDailyAsync(GetDailyFilterModel filter, CancellationToken cancellationToken);
 
-    Task<List<(int Year, int Month, int TotalRiders)>> GetMonthlyAsync(int fromYear, int fromMonth, int toYear, int toMonth, int? lineId, int? busId, CancellationToken cancellationToken);
+    Task<List<MonthlyRidershipResult>> GetMonthlyAsync(GetMonthlyFilterModel filter, CancellationToken cancellationToken);
 
-    Task<List<(int Year, int TotalRiders)>> GetYearlyAsync(int fromYear, int toYear, int? lineId, int? busId, CancellationToken cancellationToken);
+    Task<List<YearlyRidershipResult>> GetYearlyAsync(GetYearlyFilterModel filter, CancellationToken cancellationToken);
 }

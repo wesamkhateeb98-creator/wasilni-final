@@ -46,14 +46,14 @@ public class BookingsController(
         CancellationToken cancellationToken)
     {
         int driverId = User.GetId();
-        var (bookingId, lineId) =
+        BookingActionResult result =
             await busService.ConfirmBookingAsync(id, driverId, cancellationToken);
 
         await hubContext.Clients
-            .Group(TrackingGroups.Line(lineId))
-            .OnBookingStatusChangedAsync(bookingId, BookingStatus.PickedUp.ToString(), cancellationToken);
+            .Group(TrackingGroups.Line(result.LineId))
+            .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.PickedUp.ToString(), cancellationToken);
 
-        return new IdResponse(bookingId);
+        return new IdResponse(result.BookingId);
     }
 
     [HttpPut("{id}/no-show")]
@@ -64,17 +64,30 @@ public class BookingsController(
         CancellationToken cancellationToken)
     {
         int driverId = User.GetId();
-        var (bookingId, lineId) =
+        BookingActionResult result =
             await busService.MarkNoShowAsync(id, driverId, cancellationToken);
 
         await hubContext.Clients
-            .Group(TrackingGroups.Line(lineId))
-            .OnBookingStatusChangedAsync(bookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
+            .Group(TrackingGroups.Line(result.LineId))
+            .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
 
-        return new IdResponse(bookingId);
+        return new IdResponse(result.BookingId);
     }
 
     // ─── Passenger: Bookings ──────────────────────────────────────────────────
+
+    [HttpGet("my")]
+    [Authorize(Roles = nameof(Role.Passenger))]
+    public async Task<NullableResponse<MyBookingResponse>> GetMyBookingAsync(CancellationToken cancellationToken)
+    {
+        int passengerId = User.GetId();
+        MyBookingResult? result = await busService.GetMyBookingAsync(passengerId, cancellationToken);
+
+        if (result is null)
+            return new(null);
+
+        return new(new MyBookingResponse(result.BookingId, result.LineId, result.LineName));
+    }
 
     [HttpPost("line/{lineId}")]
     [Authorize(Roles = nameof(Role.Passenger))]
@@ -85,7 +98,7 @@ public class BookingsController(
     {
         int passengerId = User.GetId();
         int bookingId = await busService.AddBookingAsync(
-            lineId, passengerId, request.Latitude, request.Longitude, cancellationToken);
+            new CreateBookingModel(lineId, passengerId, request.Latitude, request.Longitude), cancellationToken);
 
         // Notify all active drivers on this line
         var notification = new GetBookingResponse(
@@ -107,12 +120,12 @@ public class BookingsController(
     public async Task<IdResponse> CancelBookingAsync(CancellationToken cancellationToken)
     {
         int passengerId = User.GetId();
-        var (bookingId, lineId) = await busService.CancelBookingAsync(passengerId, cancellationToken);
+        BookingActionResult result = await busService.CancelBookingAsync(passengerId, cancellationToken);
 
         await hubContext.Clients
-            .Group(TrackingGroups.Line(lineId))
-            .OnBookingStatusChangedAsync(bookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
+            .Group(TrackingGroups.Line(result.LineId))
+            .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
 
-        return new(bookingId);
+        return new(result.BookingId);
     }
 }

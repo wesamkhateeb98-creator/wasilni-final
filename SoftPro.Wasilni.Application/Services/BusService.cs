@@ -10,6 +10,7 @@ using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Buses;
+using SoftPro.Wasilni.Domain.Models.Reports;
 using SoftPro.Wasilni.Domain.Models.Trips;
 
 namespace SoftPro.Wasilni.Application.Services;
@@ -131,12 +132,12 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         }
     }
 
-    public async Task<(int BusId, int LineId)> UpdateLocationAsync(int driverId, double latitude, double longitude, CancellationToken cancellationToken)
+    public async Task<UpdateLocationResult> UpdateLocationAsync(UpdateBusLocationModel model, CancellationToken cancellationToken)
     {
-        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId) ||
-            !cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int lineId))
+        if (!cache.TryGetValue(BusCacheKeys.DriverBus(model.DriverId), out int busId) ||
+            !cache.TryGetValue(BusCacheKeys.DriverLine(model.DriverId), out int lineId))
         {
-            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
+            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(model.DriverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
 
             if (bus.Status != BusStatus.Active)
@@ -144,15 +145,15 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
             busId = bus.Id;
             lineId = bus.LineId!.Value;
-            cache.Set(BusCacheKeys.DriverBus(driverId), busId);
-            cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
+            cache.Set(BusCacheKeys.DriverBus(model.DriverId), busId);
+            cache.Set(BusCacheKeys.DriverLine(model.DriverId), lineId);
         }
 
-        cache.Set(BusCacheKeys.Location(busId), new BusLocationModel(latitude, longitude, DateTime.UtcNow));
-        return (busId, lineId);
+        cache.Set(BusCacheKeys.Location(busId), new BusLocationModel(model.Latitude, model.Longitude, DateTime.UtcNow));
+        return new UpdateLocationResult(busId, lineId);
     }
 
-    public async Task<(int BusId, int LineId, int Count)> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken)
+    public async Task<AdjustAnonymousResult> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken)
     {
         if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId) ||
             !cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int lineId))
@@ -174,7 +175,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
         bus.AdjustAnonymous(delta);
         await unitOfWork.CompleteAsync(cancellationToken);
-        return (bus.Id, lineId, bus.AnonymousCount);
+        return new AdjustAnonymousResult(bus.Id, lineId, bus.AnonymousCount);
     }
 
     public async Task<int> ConfirmRiderAsync(int driverId, CancellationToken cancellationToken)
@@ -191,7 +192,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         }
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
-        return await unitOfWork.DailyRidershipRepository.IncrementAsync(lineId, busId, today, cancellationToken);
+        return await unitOfWork.DailyRidershipRepository.IncrementAsync(new IncrementRidershipModel(lineId, busId, today), cancellationToken);
     }
 
     public async Task<GetActiveBusModel?> GetMyActiveBusAsync(int driverId, CancellationToken cancellationToken)
@@ -244,7 +245,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             .ToList();
     }
 
-    public async Task<(int BookingId, int LineId)> ConfirmBookingAsync(
+    public async Task<BookingActionResult> ConfirmBookingAsync(
         int bookingId, int driverId, CancellationToken cancellationToken)
     {
         BookingEntity booking = await unitOfWork.BookingRepository.GetByIdAsync(bookingId, cancellationToken)
@@ -267,12 +268,12 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         await unitOfWork.CompleteAsync(cancellationToken);
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
-        await unitOfWork.DailyRidershipRepository.IncrementAsync(booking.LineId, busId, today, cancellationToken);
+        await unitOfWork.DailyRidershipRepository.IncrementAsync(new IncrementRidershipModel(booking.LineId, busId, today), cancellationToken);
 
-        return (booking.Id, booking.LineId);
+        return new BookingActionResult(booking.Id, booking.LineId);
     }
 
-    public async Task<(int BookingId, int LineId)> MarkNoShowAsync(
+    public async Task<BookingActionResult> MarkNoShowAsync(
         int bookingId, int driverId, CancellationToken cancellationToken)
     {
         BookingEntity booking = await unitOfWork.BookingRepository.GetByIdAsync(bookingId, cancellationToken)
@@ -301,7 +302,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         booking.Cancel();
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return (booking.Id, booking.LineId);
+        return new BookingActionResult(booking.Id, booking.LineId);
     }
 
     // ─── Passenger ────────────────────────────────────────────────────────────
@@ -317,22 +318,31 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         }).ToList();
     }
 
-    public async Task<int> AddBookingAsync(int lineId, int passengerId, double latitude, double longitude, CancellationToken cancellationToken)
+    public async Task<MyBookingResult?> GetMyBookingAsync(int passengerId, CancellationToken cancellationToken)
     {
-        if (!await unitOfWork.LineRepository.AnyAsync(lineId, cancellationToken))
+        BookingEntity? booking = await unitOfWork.BookingRepository
+            .GetActiveByPassengerWithLineAsync(passengerId, cancellationToken);
+
+        if (booking is null) return null;
+        return new MyBookingResult(booking.Id, booking.LineId, booking.Line.Name);
+    }
+
+    public async Task<int> AddBookingAsync(CreateBookingModel model, CancellationToken cancellationToken)
+    {
+        if (!await unitOfWork.LineRepository.AnyAsync(model.LineId, cancellationToken))
             throw new NotFoundException(Phrases.LineNotFound);
 
-        if (await unitOfWork.BookingRepository.HasActiveBookingAsync(passengerId, cancellationToken))
+        if (await unitOfWork.BookingRepository.HasActiveBookingAsync(model.PassengerId, cancellationToken))
             throw new AlreadyExistsException(Phrases.AlreadyBooked);
 
-        BookingEntity booking = BookingEntity.Create(lineId, passengerId, latitude, longitude);
+        BookingEntity booking = BookingEntity.Create(model.LineId, model.PassengerId, model.Latitude, model.Longitude);
         await unitOfWork.BookingRepository.AddAsync(booking, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return booking.Id;
     }
 
-    public async Task<(int BookingId, int LineId)> CancelBookingAsync(int passengerId, CancellationToken cancellationToken)
+    public async Task<BookingActionResult> CancelBookingAsync(int passengerId, CancellationToken cancellationToken)
     {
         BookingEntity booking = await unitOfWork.BookingRepository
             .GetActiveByPassengerAsync(passengerId, cancellationToken)
@@ -341,6 +351,6 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         int lineId = booking.LineId;
         booking.Cancel();
         await unitOfWork.CompleteAsync(cancellationToken);
-        return (booking.Id, lineId);
+        return new BookingActionResult(booking.Id, lineId);
     }
 }

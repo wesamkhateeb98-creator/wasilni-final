@@ -47,13 +47,11 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
             await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
 
             await Clients.Group(TrackingGroups.Line(result.LineId)).OnBusActivatedAsync(response, ct);
-            await Clients.Group(TrackingGroups.Admin).OnBusActivatedAsync(response, ct);
             await Clients.Caller.OnBusActivatedAsync(response, ct);
         }
         else
         {
             await Clients.Group(TrackingGroups.Line(result.LineId)).OnBusDeactivatedAsync(result.BusId, ct);
-            await Clients.Group(TrackingGroups.Admin).OnBusDeactivatedAsync(result.BusId, ct);
 
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
         }
@@ -67,13 +65,11 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
         var ct = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
-        var (busId, lineId) = await busService.UpdateLocationAsync(driverId, request.Latitude, request.Longitude, ct);
+        var result = await busService.UpdateLocationAsync(
+            new UpdateBusLocationModel(driverId, request.Latitude, request.Longitude), ct);
 
-        await Clients.Group(TrackingGroups.Line(lineId))
-                     .OnLocationUpdatedAsync(busId, request.Latitude, request.Longitude, ct);
-
-        await Clients.Group(TrackingGroups.Admin)
-                     .OnLocationUpdatedAsync(busId, request.Latitude, request.Longitude, ct);
+        await Clients.Group(TrackingGroups.Line(result.LineId))
+                     .OnLocationUpdatedAsync(result.BusId, request.Latitude, request.Longitude, ct);
     }
 
     // ─── Driver: Adjust anonymous passenger count ─────────────────────────────
@@ -84,13 +80,10 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
         var ct = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
-        var (busId, lineId, count) = await busService.AdjustAnonymousAsync(driverId, request.Delta, ct);
+        var result = await busService.AdjustAnonymousAsync(driverId, request.Delta, ct);
 
-        await Clients.Group(TrackingGroups.Line(lineId))
-                     .OnAnonymousCountUpdatedAsync(busId, count, ct);
-
-        await Clients.Group(TrackingGroups.Admin)
-                     .OnAnonymousCountUpdatedAsync(busId, count, ct);
+        await Clients.Group(TrackingGroups.Line(result.LineId))
+                     .OnAnonymousCountUpdatedAsync(result.BusId, result.Count, ct);
     }
 
     // ─── Driver: Confirm a passenger boarded ─────────────────────────────────
@@ -111,10 +104,4 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     public Task UnsubscribeFromLine(int lineId)
         => Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), Context.ConnectionAborted);
-
-    // ─── Admin: Join admin group ──────────────────────────────────────────────
-
-    [Authorize(Roles = nameof(Role.Admin))]
-    public Task JoinAdminGroup()
-        => Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Admin, Context.ConnectionAborted);
 }

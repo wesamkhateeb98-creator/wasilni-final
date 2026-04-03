@@ -16,9 +16,9 @@ public interface IBusService
 
     // ─── Driver: Bus state ────────────────────────────────────────────────────
     Task<GetActiveBusModel> ToggleStatusAsync(int driverId, CancellationToken cancellationToken);
-    Task<(int BusId, int LineId)> UpdateLocationAsync(int driverId, double latitude, double longitude, CancellationToken cancellationToken);
-    Task<(int BusId, int LineId, int Count)> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken);
-    Task<int> ConfirmRiderAsync(int driverId, CancellationToken cancellationToken);      // anonymous rider
+    Task<UpdateLocationResult> UpdateLocationAsync(UpdateBusLocationModel model, CancellationToken cancellationToken);
+    Task<AdjustAnonymousResult> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken);
+    Task<int> ConfirmRiderAsync(int driverId, CancellationToken cancellationToken);
     Task<GetActiveBusModel?> GetMyActiveBusAsync(int driverId, CancellationToken cancellationToken);
 
     // ─── Driver: Bookings ─────────────────────────────────────────────────────
@@ -26,13 +26,14 @@ public interface IBusService
     Task<List<GetBookingModel>> GetNearbyBookingsAsync(int driverId, CancellationToken cancellationToken);
 
     /// <summary>Marks a booking as PickedUp and increments daily ridership.</summary>
-    Task<(int BookingId, int LineId)> ConfirmBookingAsync(int bookingId, int driverId, CancellationToken cancellationToken);
+    Task<BookingActionResult> ConfirmBookingAsync(int bookingId, int driverId, CancellationToken cancellationToken);
 
     /// <summary>Marks a booking as Cancelled (passenger didn't board).</summary>
-    Task<(int BookingId, int LineId)> MarkNoShowAsync(int bookingId, int driverId, CancellationToken cancellationToken);
+    Task<BookingActionResult> MarkNoShowAsync(int bookingId, int driverId, CancellationToken cancellationToken);
 
     // ─── Passenger ────────────────────────────────────────────────────────────
     Task<List<GetActiveBusModel>> GetActiveBusesAsync(int? lineId, CancellationToken cancellationToken);
-    Task<int> AddBookingAsync(int lineId, int passengerId, double latitude, double longitude, CancellationToken cancellationToken);
-    Task<(int BookingId, int LineId)> CancelBookingAsync(int passengerId, CancellationToken cancellationToken);
+    Task<MyBookingResult?> GetMyBookingAsync(int passengerId, CancellationToken cancellationToken);
+    Task<int> AddBookingAsync(CreateBookingModel model, CancellationToken cancellationToken);
+    Task<BookingActionResult> CancelBookingAsync(int passengerId, CancellationToken cancellationToken);
 }
