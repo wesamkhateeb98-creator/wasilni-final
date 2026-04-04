@@ -93,13 +93,34 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         if (bus.DriverId is null)
             throw new FailedPreconditionException(Phrases.DriverNotFound);
 
+        int driverId = bus.DriverId.Value;
         bus.UnassignDriver();
         await unitOfWork.CompleteAsync(cancellationToken);
+
+        cache.Remove(BusCacheKeys.DriverInfo(driverId));
 
         return bus.Id;
     }
 
     // ─── Driver: Bus state ────────────────────────────────────────────────────
+
+    public async Task<DriverBusInfoModel> GetBusInfoAsync(int driverId, CancellationToken cancellationToken)
+    {
+        return await cache.GetOrCreateAsync(BusCacheKeys.DriverInfo(driverId), async _ =>
+        {
+            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
+                ?? throw new NotFoundException(Phrases.BusNotFound);
+
+            return new DriverBusInfoModel(
+                bus.Id,
+                bus.Plate,
+                bus.Color,
+                bus.Type,
+                bus.Status,
+                bus.LineId,
+                bus.LineEntity?.Name);
+        }) ?? throw new NotFoundException(Phrases.BusNotFound);
+    }
 
     public async Task<GetActiveBusModel> ToggleStatusAsync(int driverId, CancellationToken cancellationToken)
     {

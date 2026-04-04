@@ -67,6 +67,16 @@ public class BusesController(IBusService busService) : BaseController
         return new(id);
     }
 
+    [HttpGet("my-info")]
+    [Authorize]
+    [HasBus]
+    public async Task<DriverBusInfoResponse> GetBusInfoAsync(CancellationToken cancellationToken)
+    {
+        int driverId = User.GetId();
+        DriverBusInfoModel model = await busService.GetBusInfoAsync(driverId, cancellationToken);
+        return new(model.BusId, model.Plate, model.Color, model.Type, model.Status, model.LineId, model.LineName);
+    }
+
     [HttpGet("my-active")]
     [Authorize]
     [HasBus]

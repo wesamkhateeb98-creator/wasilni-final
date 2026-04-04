@@ -6,4 +6,5 @@ public static class BusCacheKeys
     public static string DriverBus(int driverId)  => $"driver-bus:{driverId}";
     public static string DriverLine(int driverId) => $"driver-line:{driverId}";
     public static string HasBus(int driverId)     => $"has-bus:{driverId}";
+    public static string DriverInfo(int driverId) => $"driver-info:{driverId}";
 }
