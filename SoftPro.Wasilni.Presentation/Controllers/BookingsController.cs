@@ -50,7 +50,7 @@ public class BookingsController(
             await busService.ConfirmBookingAsync(id, driverId, cancellationToken);
 
         await hubContext.Clients
-            .Group(TrackingGroups.Line(result.LineId))
+            .Group(TrackingGroups.LineBooking(result.LineId))
             .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.PickedUp.ToString(), cancellationToken);
 
         return new IdResponse(result.BookingId);
@@ -68,7 +68,7 @@ public class BookingsController(
             await busService.MarkNoShowAsync(id, driverId, cancellationToken);
 
         await hubContext.Clients
-            .Group(TrackingGroups.Line(result.LineId))
+            .Group(TrackingGroups.LineBooking(result.LineId))
             .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
 
         return new IdResponse(result.BookingId);
@@ -109,7 +109,7 @@ public class BookingsController(
             DateTime.UtcNow);
 
         await hubContext.Clients
-            .Group(TrackingGroups.Line(lineId))
+            .Group(TrackingGroups.LineBooking(lineId))
             .OnBookingAddedAsync(notification, cancellationToken);
 
         return new(bookingId);
@@ -123,7 +123,7 @@ public class BookingsController(
         BookingActionResult result = await busService.CancelBookingAsync(passengerId, cancellationToken);
 
         await hubContext.Clients
-            .Group(TrackingGroups.Line(result.LineId))
+            .Group(TrackingGroups.LineBooking(result.LineId))
             .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
 
         return new(result.BookingId);

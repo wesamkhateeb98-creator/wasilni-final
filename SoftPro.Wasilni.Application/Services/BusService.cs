@@ -122,35 +122,42 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         }) ?? throw new NotFoundException(Phrases.BusNotFound);
     }
 
-    public async Task<GetActiveBusModel> ToggleStatusAsync(int driverId, CancellationToken cancellationToken)
+    public async Task<GetActiveBusModel> ActivateBusAsync(int driverId, CancellationToken cancellationToken)
     {
         BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
             ?? throw new NotFoundException(Phrases.BusNotFound);
 
         if (bus.Status == BusStatus.Active)
-        {
-            bus.Deactivate();
-            await unitOfWork.CompleteAsync(cancellationToken);
+            throw new FailedPreconditionException(Phrases.BusAlreadyActive);
 
-            cache.Remove(BusCacheKeys.DriverBus(driverId));
-            cache.Remove(BusCacheKeys.DriverLine(driverId));
-            cache.Remove(BusCacheKeys.Location(bus.Id));
+        if (bus.LineId is null)
+            throw new FailedPreconditionException(Phrases.LineNotFound);
 
-            return bus.ToModel(null);
-        }
-        else
-        {
-            if (bus.LineId is null)
-                throw new FailedPreconditionException(Phrases.LineNotFound);
+        bus.Activate();
+        await unitOfWork.CompleteAsync(cancellationToken);
 
-            bus.Activate();
-            await unitOfWork.CompleteAsync(cancellationToken);
+        cache.Set(BusCacheKeys.DriverBus(driverId), bus.Id);
+        cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
 
-            cache.Set(BusCacheKeys.DriverBus(driverId), bus.Id);
-            cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
+        return bus.ToModel(null);
+    }
 
-            return bus.ToModel(null);
-        }
+    public async Task<GetActiveBusModel> DeactivateBusAsync(int driverId, CancellationToken cancellationToken)
+    {
+        BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
+            ?? throw new NotFoundException(Phrases.BusNotFound);
+
+        if (bus.Status != BusStatus.Active)
+            throw new FailedPreconditionException(Phrases.BusNotOnRoad);
+
+        bus.Deactivate();
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        cache.Remove(BusCacheKeys.DriverBus(driverId));
+        cache.Remove(BusCacheKeys.DriverLine(driverId));
+        cache.Remove(BusCacheKeys.Location(bus.Id));
+
+        return bus.ToModel(null);
     }
 
     public async Task<UpdateLocationResult> UpdateLocationAsync(UpdateBusLocationModel model, CancellationToken cancellationToken)

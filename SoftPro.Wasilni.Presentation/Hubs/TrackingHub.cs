@@ -28,33 +28,42 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
             cache.TryGetValue(BusCacheKeys.DriverLine(userId), out int lineId))
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), Context.ConnectionAborted);
+            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.LineBooking(lineId), Context.ConnectionAborted);
         }
     }
 
-    // ─── Driver: Toggle bus on/off route ─────────────────────────────────────
+    // ─── Driver: Activate bus ─────────────────────────────────────────────────
 
     [HasBus]
-    public async Task ToggleStatus()
+    public async Task ActiveBus()
     {
         var ct = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
-        GetActiveBusModel result = await busService.ToggleStatusAsync(driverId, ct);
+        GetActiveBusModel result = await busService.ActivateBusAsync(driverId, ct);
         var response = result.ToResponse();
 
-        if (result.Status == BusStatus.Active)
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
+        await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
+        await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.LineBooking(result.LineId), ct);
 
-            await Clients.Group(TrackingGroups.Line(result.LineId)).OnBusActivatedAsync(response, ct);
-            await Clients.Caller.OnBusActivatedAsync(response, ct);
-        }
-        else
-        {
-            await Clients.Group(TrackingGroups.Line(result.LineId)).OnBusDeactivatedAsync(result.BusId, ct);
+        await Clients.Group(TrackingGroups.Line(result.LineId)).OnBusActivatedAsync(response, ct);
+        await Clients.Caller.OnBusActivatedAsync(response, ct);
+    }
 
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
-        }
+    // ─── Driver: Deactivate bus ───────────────────────────────────────────────
+
+    [HasBus]
+    public async Task InactiveBus()
+    {
+        var ct = Context.ConnectionAborted;
+        int driverId = Context.User!.GetId();
+
+        GetActiveBusModel result = await busService.DeactivateBusAsync(driverId, ct);
+
+        await Clients.Group(TrackingGroups.Line(result.LineId)).OnBusDeactivatedAsync(result.BusId, ct);
+
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Line(result.LineId), ct);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.LineBooking(result.LineId), ct);
     }
 
     // ─── Driver: Send GPS location ────────────────────────────────────────────
