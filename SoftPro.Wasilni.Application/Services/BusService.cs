@@ -216,20 +216,6 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         return await unitOfWork.DailyRidershipRepository.IncrementAsync(new IncrementRidershipModel(lineId, busId, today), cancellationToken);
     }
 
-    public async Task<GetActiveBusModel?> GetMyActiveBusAsync(int driverId, CancellationToken cancellationToken)
-    {
-        BusEntity? bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken);
-
-        if (bus is null || bus.Status != BusStatus.Active)
-            return null;
-
-        cache.Set(BusCacheKeys.DriverBus(driverId), bus.Id);
-        cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
-
-        var location = cache.Get<BusLocationModel>(BusCacheKeys.Location(bus.Id));
-        return bus.ToModel(location);
-    }
-
     // ─── Driver: Bookings ─────────────────────────────────────────────────────
 
     public async Task<List<GetBookingModel>> GetNearbyBookingsAsync(int driverId, CancellationToken cancellationToken)
@@ -327,17 +313,6 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
     }
 
     // ─── Passenger ────────────────────────────────────────────────────────────
-
-    public async Task<List<GetActiveBusModel>> GetActiveBusesAsync(int? lineId, CancellationToken cancellationToken)
-    {
-        List<BusEntity> buses = await unitOfWork.BusRepository.GetActiveBusesAsync(lineId, cancellationToken);
-
-        return buses.Select(b =>
-        {
-            var location = cache.Get<BusLocationModel>(BusCacheKeys.Location(b.Id));
-            return b.ToModel(location);
-        }).ToList();
-    }
 
     public async Task<MyBookingResult?> GetMyBookingAsync(int passengerId, CancellationToken cancellationToken)
     {

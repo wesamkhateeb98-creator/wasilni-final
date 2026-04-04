@@ -20,7 +20,6 @@ public interface IBusService
     Task<UpdateLocationResult> UpdateLocationAsync(UpdateBusLocationModel model, CancellationToken cancellationToken);
     Task<AdjustAnonymousResult> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken);
     Task<int> ConfirmRiderAsync(int driverId, CancellationToken cancellationToken);
-    Task<GetActiveBusModel?> GetMyActiveBusAsync(int driverId, CancellationToken cancellationToken);
 
     // ─── Driver: Bookings ─────────────────────────────────────────────────────
     /// <summary>Returns waiting bookings on the driver's line within 40 m of the bus.</summary>
@@ -33,7 +32,6 @@ public interface IBusService
     Task<BookingActionResult> MarkNoShowAsync(int bookingId, int driverId, CancellationToken cancellationToken);
 
     // ─── Passenger ────────────────────────────────────────────────────────────
-    Task<List<GetActiveBusModel>> GetActiveBusesAsync(int? lineId, CancellationToken cancellationToken);
     Task<MyBookingResult?> GetMyBookingAsync(int passengerId, CancellationToken cancellationToken);
     Task<int> AddBookingAsync(CreateBookingModel model, CancellationToken cancellationToken);
     Task<BookingActionResult> CancelBookingAsync(int passengerId, CancellationToken cancellationToken);

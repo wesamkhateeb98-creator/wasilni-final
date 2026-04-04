@@ -77,25 +77,4 @@ public class BusesController(IBusService busService) : BaseController
         return new(model.BusId, model.Plate, model.Color, model.Type, model.Status, model.LineId, model.LineName);
     }
 
-    [HttpGet("my-active")]
-    [Authorize]
-    [HasBus]
-    public async Task<GetActiveBusResponse?> GetMyActiveBusAsync(CancellationToken cancellationToken)
-    {
-        int driverId = User.GetId();
-        GetActiveBusModel? model = await busService.GetMyActiveBusAsync(driverId, cancellationToken);
-        return model?.ToResponse();
-    }
-
-
-    [HttpGet("active")]
-    [Authorize(Roles = nameof(Role.Passenger))]
-    public async Task<List<GetActiveBusResponse>> GetActiveBusesAsync(
-        [FromQuery] int? lineId,
-        CancellationToken cancellationToken)
-    {
-        List<GetActiveBusModel> models = await busService.GetActiveBusesAsync(lineId, cancellationToken);
-        return models.Select(m => m.ToResponse()).ToList();
-    }
-
 }
