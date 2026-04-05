@@ -191,7 +191,7 @@
     <!-- ③ Bus Control -->
     <div class="card">
       <h2>③ Bus Control</h2>
-      <button class="btn-green"  onclick="toggleStatus()" id="btn-toggle" disabled>▶ Activate Bus</button>
+      <button class="btn-green"  onclick="handleToggle()" id="btn-toggle" disabled>▶ Activate Bus</button>
 
       <div id="bus-info">
         <span id="bi-plate"></span>
@@ -548,11 +548,23 @@
   }
 
   // ── Hub Invocations ────────────────────────────────────────────────────────
-  async function toggleStatus() {
-    log('sent','ToggleStatus →', '(no params)');
+  async function activateBus() {
+    log('sent','ActiveBus →', '(no params)');
     try {
-      await conn.invoke('ToggleStatus');
-    } catch (e) { log('error','ToggleStatus ✗', parseHubErr(e)); }
+      await conn.invoke('ActiveBus');
+    } catch (e) { log('error','ActiveBus ✗', parseHubErr(e)); }
+  }
+
+  async function deactivateBus() {
+    log('sent','InactiveBus →', '(no params)');
+    try {
+      await conn.invoke('InactiveBus');
+    } catch (e) { log('error','InactiveBus ✗', parseHubErr(e)); }
+  }
+
+  function handleToggle() {
+    if (busActive) deactivateBus();
+    else activateBus();
   }
 
   async function sendLocation() {
@@ -831,8 +843,8 @@
       await wait(delay);
 
       // 3. Activate bus
-      demoProgress('ToggleStatus → Activate bus');
-      await toggleStatus();
+      demoProgress('ActiveBus → Activate bus');
+      await activateBus();
       if (abort()) return demoFinish();
       await wait(delay);
 
@@ -881,8 +893,8 @@
 
       // 8. Deactivate bus
       if (abort()) return demoFinish();
-      demoProgress('ToggleStatus → Deactivate bus');
-      await toggleStatus();
+      demoProgress('InactiveBus → Deactivate bus');
+      await deactivateBus();
       await wait(delay / 2);
 
       log('info','Demo','🎉 Demo completed successfully!');

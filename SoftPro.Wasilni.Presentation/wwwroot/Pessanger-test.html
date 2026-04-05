@@ -482,9 +482,8 @@
   // ── Get Active Buses ───────────────────────────────────────────────────────
   async function getActiveBuses() {
     const lineId = parseInt($('line-id').value);
-    const url    = lineId
-      ? `/api/v1.0/buses/active?lineId=${lineId}`
-      : '/api/v1.0/buses/active';
+    if (!lineId) { log('error','GetActiveBuses','Line ID required'); return; }
+    const url = `/api/v1.0/buses/line/${lineId}`;
 
     log('api', `GET ${url}`, '…');
     try {
