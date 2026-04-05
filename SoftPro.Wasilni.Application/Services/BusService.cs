@@ -4,7 +4,6 @@ using SoftPro.Wasilni.Application.Abstracts;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
 using SoftPro.Wasilni.Application.Extensions;
-using SoftPro.Wasilni.Application.Helpers;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Exceptions;
@@ -136,8 +135,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         bus.Activate();
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        cache.Set(BusCacheKeys.DriverBus(driverId), bus.Id);
-        cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
+        cache.Set(BusCacheKeys.DriverContext(driverId), new DriverContextCache(bus.Id, bus.LineId!.Value));
 
         return bus.ToModel(null);
     }
@@ -153,17 +151,14 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         bus.Deactivate();
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        cache.Remove(BusCacheKeys.DriverBus(driverId));
-        cache.Remove(BusCacheKeys.DriverLine(driverId));
-        cache.Remove(BusCacheKeys.Location(bus.Id));
+        cache.Remove(BusCacheKeys.DriverContext(driverId));
 
         return bus.ToModel(null);
     }
 
     public async Task<UpdateLocationResult> UpdateLocationAsync(UpdateBusLocationModel model, CancellationToken cancellationToken)
     {
-        if (!cache.TryGetValue(BusCacheKeys.DriverBus(model.DriverId), out int busId) ||
-            !cache.TryGetValue(BusCacheKeys.DriverLine(model.DriverId), out int lineId))
+        if (!cache.TryGetValue(BusCacheKeys.DriverContext(model.DriverId), out DriverContextCache? ctx) || ctx is null)
         {
             BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(model.DriverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
@@ -171,20 +166,15 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (bus.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            busId = bus.Id;
-            lineId = bus.LineId!.Value;
-            cache.Set(BusCacheKeys.DriverBus(model.DriverId), busId);
-            cache.Set(BusCacheKeys.DriverLine(model.DriverId), lineId);
+            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
+            cache.Set(BusCacheKeys.DriverContext(model.DriverId), ctx);
         }
-
-        cache.Set(BusCacheKeys.Location(busId), new BusLocationModel(model.Latitude, model.Longitude, DateTime.UtcNow));
-        return new UpdateLocationResult(busId, lineId);
+        return new UpdateLocationResult(ctx.BusId, ctx.LineId);
     }
 
     public async Task<AdjustAnonymousResult> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken)
     {
-        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId) ||
-            !cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int lineId))
+        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
         {
             BusEntity cached = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
@@ -192,44 +182,38 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (cached.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            busId = cached.Id;
-            lineId = cached.LineId!.Value;
-            cache.Set(BusCacheKeys.DriverBus(driverId), busId);
-            cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
+            ctx = new DriverContextCache(cached.Id, cached.LineId!.Value);
+            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
 
-        BusEntity bus = await unitOfWork.BusRepository.GetByIdAsync(busId, cancellationToken)
+        BusEntity bus = await unitOfWork.BusRepository.GetByIdAsync(ctx.BusId, cancellationToken)
             ?? throw new NotFoundException(Phrases.BusNotFound);
 
         bus.AdjustAnonymous(delta);
         await unitOfWork.CompleteAsync(cancellationToken);
-        return new AdjustAnonymousResult(bus.Id, lineId, bus.AnonymousCount);
+        return new AdjustAnonymousResult(bus.Id, ctx.LineId, bus.AnonymousCount);
     }
 
     public async Task<int> ConfirmRiderAsync(int driverId, CancellationToken cancellationToken)
     {
-        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId) ||
-            !cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int lineId))
+        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
         {
             BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
-            busId = bus.Id;
-            lineId = bus.LineId!.Value;
-            cache.Set(BusCacheKeys.DriverBus(driverId), busId);
-            cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
+
+            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
+            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
-        return await unitOfWork.DailyRidershipRepository.IncrementAsync(new IncrementRidershipModel(lineId, busId, today), cancellationToken);
+        return await unitOfWork.DailyRidershipRepository.IncrementAsync(new IncrementRidershipModel(ctx.LineId, ctx.BusId, today), cancellationToken);
     }
 
     // ─── Driver: Bookings ─────────────────────────────────────────────────────
 
     public async Task<List<GetBookingModel>> GetNearbyBookingsAsync(int driverId, CancellationToken cancellationToken)
     {
-        // Resolve busId + lineId (prefer cache, fall back to DB once)
-        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId) ||
-            !cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int lineId))
+        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
         {
             BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
@@ -237,26 +221,14 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (bus.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            busId = bus.Id;
-            lineId = bus.LineId!.Value;
-            cache.Set(BusCacheKeys.DriverBus(driverId), busId);
-            cache.Set(BusCacheKeys.DriverLine(driverId), lineId);
+            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
+            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
 
-        // Bus must have a known location (driver sends GPS via hub)
-        var location = cache.Get<BusLocationModel>(BusCacheKeys.Location(busId));
-        if (location is null)
-            return [];
-
-        // All waiting bookings on this line, filtered by 40 m radius
         List<BookingEntity> bookings =
-            await unitOfWork.BookingRepository.GetWaitingByLineAsync(lineId, cancellationToken);
+            await unitOfWork.BookingRepository.GetWaitingByLineAsync(ctx.LineId, cancellationToken);
 
-        return bookings
-            .Where(b => GeoHelper.Distance(b.Latitude, b.Longitude,
-                                           location.Latitude, location.Longitude) <= 40)
-            .Select(b => b.ToModel())
-            .ToList();
+        return bookings.Select(b => b.ToModel()).ToList();
     }
 
     public async Task<BookingActionResult> ConfirmBookingAsync(
@@ -268,21 +240,20 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         if (booking.Status != BookingStatus.Waiting)
             throw new FailedPreconditionException(Phrases.AlreadyBooked);
 
-        // Resolve busId for daily ridership record
-        if (!cache.TryGetValue(BusCacheKeys.DriverBus(driverId), out int busId))
+        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
         {
             BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
-            busId = bus.Id;
-            cache.Set(BusCacheKeys.DriverBus(driverId), busId);
-            cache.Set(BusCacheKeys.DriverLine(driverId), bus.LineId);
+
+            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
+            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
 
         booking.MarkPickedUp();
         await unitOfWork.CompleteAsync(cancellationToken);
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
-        await unitOfWork.DailyRidershipRepository.IncrementAsync(new IncrementRidershipModel(booking.LineId, busId, today), cancellationToken);
+        await unitOfWork.DailyRidershipRepository.IncrementAsync(new IncrementRidershipModel(booking.LineId, ctx.BusId, today), cancellationToken);
 
         return new BookingActionResult(booking.Id, booking.LineId);
     }
@@ -296,8 +267,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         if (booking.Status != BookingStatus.Waiting)
             throw new FailedPreconditionException(Phrases.AlreadyBooked);
 
-        // Verify the driver's bus is on the same line as the booking
-        if (!cache.TryGetValue(BusCacheKeys.DriverLine(driverId), out int driverLineId))
+        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
         {
             BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
@@ -305,12 +275,11 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             if (bus.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            driverLineId = bus.LineId!.Value;
-            cache.Set(BusCacheKeys.DriverBus(driverId), bus.Id);
-            cache.Set(BusCacheKeys.DriverLine(driverId), driverLineId);
+            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
+            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
 
-        if (booking.LineId != driverLineId)
+        if (booking.LineId != ctx.LineId)
             throw new ForbiddenException(Phrases.Forbidden);
 
         booking.Cancel();

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
+
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
@@ -25,10 +26,11 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
         if (int.TryParse(
                 Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
                 out int userId) &&
-            cache.TryGetValue(BusCacheKeys.DriverLine(userId), out int lineId))
+            cache.TryGetValue(BusCacheKeys.DriverContext(userId), out DriverContextCache? ctx) &&
+            ctx is not null)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), Context.ConnectionAborted);
-            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.LineBooking(lineId), Context.ConnectionAborted);
+            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(ctx.LineId), Context.ConnectionAborted);
+            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.LineBooking(ctx.LineId), Context.ConnectionAborted);
         }
     }
 
