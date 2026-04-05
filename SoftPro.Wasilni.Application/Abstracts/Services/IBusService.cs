@@ -23,8 +23,8 @@ public interface IBusService
     Task<int> ConfirmRiderAsync(int driverId, CancellationToken cancellationToken);
 
     // ─── Driver: Bookings ─────────────────────────────────────────────────────
-    /// <summary>Returns waiting bookings on the driver's line within 40 m of the bus.</summary>
-    Task<List<GetBookingModel>> GetNearbyBookingsAsync(int driverId, CancellationToken cancellationToken);
+    /// <summary>Returns all waiting bookings on the driver's current line.</summary>
+    Task<List<GetBookingModel>> GetBookingForLineAsync(int driverId, CancellationToken cancellationToken);
 
     /// <summary>Marks a booking as PickedUp and increments daily ridership.</summary>
     Task<BookingActionResult> ConfirmBookingAsync(int bookingId, int driverId, CancellationToken cancellationToken);

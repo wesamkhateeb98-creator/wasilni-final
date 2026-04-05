@@ -211,7 +211,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
     // ─── Driver: Bookings ─────────────────────────────────────────────────────
 
-    public async Task<List<GetBookingModel>> GetNearbyBookingsAsync(int driverId, CancellationToken cancellationToken)
+    public async Task<List<GetBookingModel>> GetBookingForLineAsync(int driverId, CancellationToken cancellationToken)
     {
         if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
         {

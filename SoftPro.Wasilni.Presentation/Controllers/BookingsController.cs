@@ -25,15 +25,15 @@ public class BookingsController(
     // DRIVER endpoints
     // ═══════════════════════════════════════════════════════════════════════════
 
-    [HttpGet("line/{lineId}")]
+    [HttpGet("line")]
     [Authorize]
     [HasBus]
-    public async Task<List<GetBookingResponse>> GetBookingsByLineAsync(
-        [FromRoute] int lineId,
+    public async Task<List<GetBookingResponse>> GetBookingForLineAsync(
         CancellationToken cancellationToken)
     {
+        int driverId = User.GetId();
         List<GetBookingModel> models =
-            await busService.GetNearbyBookingsAsync(lineId, cancellationToken);
+            await busService.GetBookingForLineAsync(driverId, cancellationToken);
 
         return [.. models.Select(m => m.ToResponse())];
     }
