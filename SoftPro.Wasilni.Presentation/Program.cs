@@ -18,8 +18,8 @@ builder.Services.AddControllers(x =>
 builder.Services.AddSignalR(o => o.EnableDetailedErrors = true)
                 .AddHubOptions<SoftPro.Wasilni.Presentation.Hubs.TrackingHub>(o =>
                 {
-                    o.AddFilter<HubValidationFilter>();   // ① validates first
-                    o.AddFilter<HubExceptionFilter>();    // ② catches & formats errors
+                    o.AddFilter<HubExceptionFilter>();    // ① outermost — catches & formats all errors
+                    o.AddFilter<HubValidationFilter>();   // ② inner — validates args then calls method
                 });
 
 builder.Services.AddMemoryCache();

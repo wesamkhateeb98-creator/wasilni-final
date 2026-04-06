@@ -34,7 +34,7 @@ public class HubExceptionFilter : IHubFilter
             throw new HubException(JsonSerializer.Serialize(new
             {
                 type   = details.Type,
-                detail = details.Detail ?? details.Title
+                detail = details.Detail ?? details.Title ?? ex.Message
             }));
         }
         catch (HubException)
