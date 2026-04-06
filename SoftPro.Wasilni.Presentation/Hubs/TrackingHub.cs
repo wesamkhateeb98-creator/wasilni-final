@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
-
-using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
@@ -76,36 +74,11 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
         var ct = Context.ConnectionAborted;
         int driverId = Context.User!.GetId();
 
-        var result = await busService.UpdateLocationAsync(
+        UpdateLocationResult result = await busService.UpdateLocationAsync(
             new UpdateBusLocationModel(driverId, request.Latitude, request.Longitude), ct);
 
         await Clients.Group(TrackingGroups.Line(result.LineId))
                      .OnLocationUpdatedAsync(result.BusId, request.Latitude, request.Longitude, ct);
-    }
-
-    // ─── Driver: Adjust anonymous passenger count ─────────────────────────────
-
-    [HasBus]
-    public async Task AdjustAnonymousPassenger(AdjustAnonymousHubRequest request)
-    {
-        var ct = Context.ConnectionAborted;
-        int driverId = Context.User!.GetId();
-
-        var result = await busService.AdjustAnonymousAsync(driverId, request.Delta, ct);
-
-        await Clients.Group(TrackingGroups.Line(result.LineId))
-                     .OnAnonymousCountUpdatedAsync(result.BusId, result.Count, ct);
-    }
-
-    // ─── Driver: Confirm a passenger boarded ─────────────────────────────────
-
-    [HasBus]
-    public async Task ConfirmRider()
-    {
-        var ct = Context.ConnectionAborted;
-        int driverId = Context.User!.GetId();
-
-        await busService.ConfirmRiderAsync(driverId, ct);
     }
 
     // ─── Passenger / Admin: Subscribe to a line ──────────────────────────────

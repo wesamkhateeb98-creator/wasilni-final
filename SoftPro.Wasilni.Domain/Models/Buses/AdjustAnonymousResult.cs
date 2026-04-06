@@ -1,3 +1,3 @@
 namespace SoftPro.Wasilni.Domain.Models.Buses;
 
-public record AdjustAnonymousResult(int BusId, int LineId, int Count);
+public record AdjustAnonymousResult(int BusId, int LineId, int PreviousCount, int Count);

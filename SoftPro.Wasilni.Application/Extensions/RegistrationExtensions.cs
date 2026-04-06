@@ -10,6 +10,7 @@ public static class RegistrationExtensions
     public static IServiceCollection RegisterApplication(this IServiceCollection services)
         => services.AddScoped<IAccountService, AccountService>()
                     .AddScoped<IBusService, BusService>()
+                    .AddScoped<IBookingService, BookingService>()
         //            .AddScoped<ICityService, CityService>()
                     .AddScoped<ILineService, LineService>()
                     .AddScoped<IReportService, ReportService>()

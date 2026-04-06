@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models;
@@ -8,6 +9,8 @@ using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.BusExtensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
+using SoftPro.Wasilni.Presentation.Hubs;
+using SoftPro.Wasilni.Presentation.Hubs.Helpers;
 using SoftPro.Wasilni.Presentation.Models.Request.Bus;
 using SoftPro.Wasilni.Presentation.Models.Request.Generic;
 using SoftPro.Wasilni.Presentation.Models.Response;
@@ -17,7 +20,7 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 
 [ApiController]
 [Route(BaseUrl)]
-public class BusesController(IBusService busService) : BaseController
+public class BusesController(IBusService busService, IHubContext<TrackingHub> hubContext) : BaseController
 {
     [HttpPost] //~~~
     [Authorize(Roles = nameof(Role.Admin))]
@@ -75,6 +78,24 @@ public class BusesController(IBusService busService) : BaseController
         int driverId = User.GetId();
         DriverBusInfoModel model = await busService.GetBusInfoAsync(driverId, cancellationToken);
         return new(model.BusId, model.Plate, model.Color, model.Type, model.Status, model.LineId, model.LineName);
+    }
+
+    [HttpPost("adjust-anonymous")]
+    [Authorize]
+    [HasBus]
+    public async Task<AdjustAnonymousResponse> AdjustAnonymousAsync(
+        [FromBody] AdjustAnonymousRequest request,
+        CancellationToken cancellationToken)
+    {
+        int driverId = User.GetId();
+        AdjustAnonymousResult result =
+            await busService.AdjustAnonymousAsync(driverId, request.Delta, cancellationToken);
+
+        await hubContext.Clients
+            .Group(TrackingGroups.Line(result.LineId))
+            .OnAnonymousCountUpdatedAsync(result.BusId, result.Count, cancellationToken);
+
+        return new AdjustAnonymousResponse(result.PreviousCount, result.Count);
     }
 
 }

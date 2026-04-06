@@ -18,12 +18,22 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 [ApiController]
 [Route("api/v1.0/bookings")]
 public class BookingsController(
-    IBusService busService,
+    IBookingService bookingService,
     IHubContext<TrackingHub> hubContext) : BaseController
 {
     // ═══════════════════════════════════════════════════════════════════════════
     // DRIVER endpoints
     // ═══════════════════════════════════════════════════════════════════════════
+
+    [HttpPost("confirm-rider")]
+    [Authorize]
+    [HasBus]
+    public async Task<IdResponse> ConfirmRiderAsync(CancellationToken cancellationToken)
+    {
+        int driverId = User.GetId();
+        int count = await bookingService.ConfirmRiderAsync(driverId, cancellationToken);
+        return new IdResponse(count);
+    }
 
     [HttpGet("line")]
     [Authorize]
@@ -33,7 +43,7 @@ public class BookingsController(
     {
         int driverId = User.GetId();
         List<GetBookingModel> models =
-            await busService.GetBookingForLineAsync(driverId, cancellationToken);
+            await bookingService.GetBookingForLineAsync(driverId, cancellationToken);
 
         return [.. models.Select(m => m.ToResponse())];
     }
@@ -47,7 +57,7 @@ public class BookingsController(
     {
         int driverId = User.GetId();
         BookingActionResult result =
-            await busService.ConfirmBookingAsync(id, driverId, cancellationToken);
+            await bookingService.ConfirmBookingAsync(id, driverId, cancellationToken);
 
         await hubContext.Clients
             .Group(TrackingGroups.LineBooking(result.LineId))
@@ -65,7 +75,7 @@ public class BookingsController(
     {
         int driverId = User.GetId();
         BookingActionResult result =
-            await busService.MarkNoShowAsync(id, driverId, cancellationToken);
+            await bookingService.MarkNoShowAsync(id, driverId, cancellationToken);
 
         await hubContext.Clients
             .Group(TrackingGroups.LineBooking(result.LineId))
@@ -81,7 +91,7 @@ public class BookingsController(
     public async Task<NullableResponse<MyBookingResponse>> GetMyBookingAsync(CancellationToken cancellationToken)
     {
         int passengerId = User.GetId();
-        MyBookingResult? result = await busService.GetMyBookingAsync(passengerId, cancellationToken);
+        MyBookingResult? result = await bookingService.GetMyBookingAsync(passengerId, cancellationToken);
 
         if (result is null)
             return new(null);
@@ -97,7 +107,7 @@ public class BookingsController(
         CancellationToken cancellationToken)
     {
         int passengerId = User.GetId();
-        int bookingId = await busService.AddBookingAsync(
+        int bookingId = await bookingService.AddBookingAsync(
             new CreateBookingModel(lineId, passengerId, request.Latitude, request.Longitude), cancellationToken);
 
         // Notify all active drivers on this line
@@ -120,7 +130,7 @@ public class BookingsController(
     public async Task<IdResponse> CancelBookingAsync(CancellationToken cancellationToken)
     {
         int passengerId = User.GetId();
-        BookingActionResult result = await busService.CancelBookingAsync(passengerId, cancellationToken);
+        BookingActionResult result = await bookingService.CancelBookingAsync(passengerId, cancellationToken);
 
         await hubContext.Clients
             .Group(TrackingGroups.LineBooking(result.LineId))
