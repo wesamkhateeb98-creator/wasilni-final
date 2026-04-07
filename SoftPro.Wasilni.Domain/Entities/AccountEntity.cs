@@ -18,6 +18,7 @@ public class AccountEntity : IEntity
     public Role Role { get; private set; }
     public string RefreshToken { get; private set; }
     public DateTime RefreshTokenExpiresAt { get; private set; }
+    public Guid Key { get; private set; }
 
     private const int RefreshTokenDurationDays = 30;
 
@@ -34,21 +35,23 @@ public class AccountEntity : IEntity
         bool confirmed,
         string refreshToken,
         DateTime refreshTokenExpiresAt,
-        string fCMToken)
+        string fCMToken,
+        Guid idempotencyKey)
     {
-        Name = name;
-        PhoneNumber = phoneNumber;
-        Password = password;
-        Salt = salt;
-        Code = code;
-        SendCodeCount = sendCodeCount;
-        CodeExpiration = codeExpiration;
-        CreatedAt = createdAt;
-        Role = role;
-        Confirmed = confirmed;
-        RefreshToken = refreshToken;
+        Name                  = name;
+        PhoneNumber           = phoneNumber;
+        Password              = password;
+        Salt                  = salt;
+        Code                  = code;
+        SendCodeCount         = sendCodeCount;
+        CodeExpiration        = codeExpiration;
+        CreatedAt             = createdAt;
+        Role                  = role;
+        Confirmed             = confirmed;
+        RefreshToken          = refreshToken;
         RefreshTokenExpiresAt = refreshTokenExpiresAt;
-        FCMToken = fCMToken;
+        FCMToken              = fCMToken;
+        Key           = idempotencyKey;
     }
 
     public static AccountEntity Create(RegisterModel registerModel, byte[] passwordHashed, byte[] salt, string refreshToken, string code)
@@ -65,7 +68,8 @@ public class AccountEntity : IEntity
             false,
             refreshToken,
             DateTime.UtcNow.AddDays(RefreshTokenDurationDays),
-            registerModel.FCMToken);
+            registerModel.FCMToken,
+            registerModel.key);
 
     public void SetCountCode(int codeCount) 
         => SendCodeCount = codeCount;

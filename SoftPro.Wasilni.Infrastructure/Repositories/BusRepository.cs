@@ -135,4 +135,6 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
     public Task<bool> HasBusAsync(int driverId, CancellationToken cancellationToken)
         => dbContext.Buses.AnyAsync(x => x.DriverId == driverId, cancellationToken);
 
+    public Task<BusEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken)
+        => dbContext.Buses.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
 }

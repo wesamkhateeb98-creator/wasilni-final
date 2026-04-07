@@ -29,4 +29,7 @@ public class LineRepository(AppDbContext dbContext) : Repository<LineEntity>(dbC
 
         return new(filter.PageNumber, filter.PageSize, (int)Math.Ceiling((double)count / filter.PageSize), list);
     }
+
+    public Task<LineEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken)
+        => dbContext.Lines.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
 }

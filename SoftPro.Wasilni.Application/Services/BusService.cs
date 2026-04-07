@@ -23,6 +23,10 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
     public async Task<int> AddAsync(AddBusModel model, CancellationToken cancellationToken)
     {
+        BusEntity? bus = await unitOfWork.BusRepository.FindByIdempotencyKeyAsync(model.key, cancellationToken);
+        if (bus is not null)
+            throw new AlreadyExistsException(Phrases.PlateAlreadyExists);
+
         if (await unitOfWork.BusRepository.ExistsPlateAsync(model.Plate, cancellationToken))
             throw new AlreadyExistsException(Phrases.PlateAlreadyExists);
 
@@ -32,6 +36,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         BusEntity bus = BusEntity.Create(model);
         await unitOfWork.BusRepository.AddAsync(bus, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
+
         return bus.Id;
     }
 

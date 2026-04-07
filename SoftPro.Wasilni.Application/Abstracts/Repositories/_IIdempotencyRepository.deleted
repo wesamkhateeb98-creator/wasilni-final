@@ -1,0 +1,16 @@
+using SoftPro.Wasilni.Domain.Entities;
+
+namespace SoftPro.Wasilni.Application.Abstracts.Repositories;
+
+public interface IIdempotencyRepository
+{
+    /// <summary>
+    /// يرجع السجل إذا موجود، null إذا لا.
+    /// </summary>
+    Task<IdempotencyEntity?> FindAsync(Guid key, string context, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// يحفظ سجل جديد.
+    /// </summary>
+    Task AddAsync(IdempotencyEntity entity, CancellationToken cancellationToken);
+}

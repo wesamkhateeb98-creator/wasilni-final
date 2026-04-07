@@ -25,5 +25,9 @@ public class RegisterPassengerRequestValidator : AbstractValidator<SignupPasseng
             .WithName(Title.Password)
             .WithMessage(Phrases.InvalidPassword);
 
+        RuleFor(x => x.key)
+            .NotEmpty()
+            .WithMessage(Phrases.InvalidKey);
+
     }
 }

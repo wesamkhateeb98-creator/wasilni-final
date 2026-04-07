@@ -108,13 +108,17 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
 
     public async Task<int> AddBookingAsync(CreateBookingModel model, CancellationToken cancellationToken)
     {
+        BookingEntity? book = await unitOfWork.BookingRepository.FindByIdempotencyKeyAsync(model.key, cancellationToken);
+        if (book is not null)
+            throw new AlreadyExistsException(Phrases.AlreadyBooked);
+
         if (!await unitOfWork.LineRepository.AnyAsync(model.LineId, cancellationToken))
             throw new NotFoundException(Phrases.LineNotFound);
 
         if (await unitOfWork.BookingRepository.HasActiveBookingAsync(model.PassengerId, cancellationToken))
             throw new AlreadyExistsException(Phrases.AlreadyBooked);
 
-        BookingEntity booking = BookingEntity.Create(model.LineId, model.PassengerId, model.Latitude, model.Longitude);
+        BookingEntity booking = BookingEntity.Create(model.LineId, model.PassengerId, model.Latitude, model.Longitude, model.key);
         await unitOfWork.BookingRepository.AddAsync(booking, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 

@@ -16,4 +16,5 @@ public interface IBusRepository : IRepository<BusEntity>
     Task<BusEntity?> GetByDriverIdAsync(int driverId, CancellationToken cancellationToken);
     Task<bool>       AnyByDriverAsync(int busId, int driverId, CancellationToken cancellationToken);
     Task<bool>       HasBusAsync(int driverId, CancellationToken cancellationToken);
+    Task<BusEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken);
 }

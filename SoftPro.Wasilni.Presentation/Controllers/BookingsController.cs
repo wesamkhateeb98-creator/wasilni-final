@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Trips;
@@ -108,7 +109,7 @@ public class BookingsController(
     {
         int passengerId = User.GetId();
         int bookingId = await bookingService.AddBookingAsync(
-            new CreateBookingModel(lineId, passengerId, request.Latitude, request.Longitude), cancellationToken);
+            new CreateBookingModel(lineId, passengerId, request.Latitude, request.Longitude, request.key), cancellationToken);
 
         // Notify all active drivers on this line
         var notification = new GetBookingResponse(

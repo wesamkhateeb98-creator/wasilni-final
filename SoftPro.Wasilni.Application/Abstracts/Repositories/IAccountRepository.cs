@@ -10,4 +10,5 @@ public interface IAccountRepository : IRepository<AccountEntity>
     Task<Page<SearchByPhoneNumberModel>> GetByFilter(int pageNumber, int pageSize, string? phonenumber, CancellationToken cancellationToken);
     Task<AccountEntity?> GetMatchPhonenumber(string phonenumber, CancellationToken cancellationToken);
     Task<AccountEntity?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
+    Task<AccountEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken);
 }

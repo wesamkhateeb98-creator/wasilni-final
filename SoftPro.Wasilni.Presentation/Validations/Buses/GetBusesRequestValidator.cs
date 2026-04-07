@@ -16,6 +16,7 @@ public class GetBusesRequestValidator : AbstractValidator<GetBusesRequest>
 
         RuleFor(x => x.PageSize)
             .GreaterThan(0)
+            .LessThanOrEqualTo(50)
             .WithName(Title.PageSize)
             .WithMessage(Phrases.InvalidPageSize);
 

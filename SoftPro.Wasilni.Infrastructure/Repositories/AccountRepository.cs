@@ -42,4 +42,7 @@ public class AccountRepository(AppDbContext dbContext) : Repository<AccountEntit
 
     public Task<AccountEntity?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
         => dbContext.Accounts.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken, cancellationToken);
+
+    public Task<AccountEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken)
+        => dbContext.Accounts.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
 }

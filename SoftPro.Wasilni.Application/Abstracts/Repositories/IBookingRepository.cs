@@ -15,4 +15,5 @@ public interface IBookingRepository : IRepository<BookingEntity>
 
     /// <summary>All <see cref="BookingStatus.Waiting"/> bookings on a given line.</summary>
     Task<List<BookingEntity>> GetWaitingByLineAsync(int lineId, CancellationToken cancellationToken);
+    Task<BookingEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken);
 }

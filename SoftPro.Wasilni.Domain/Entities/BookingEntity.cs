@@ -11,13 +11,14 @@ public class BookingEntity : IEntity
     public double Longitude { get; private set; }
     public BookingStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
+    public Guid Key { get; private set; }
 
     public LineEntity Line { get; private set; } = null!;
     public AccountEntity Passenger { get; private set; } = null!;
 
     private BookingEntity() { }
 
-    public static BookingEntity Create(int lineId, int passengerId, double latitude, double longitude)
+    public static BookingEntity Create(int lineId, int passengerId, double latitude, double longitude, Guid key)
         => new()
         {
             LineId = lineId,
@@ -27,6 +28,7 @@ public class BookingEntity : IEntity
             Longitude = longitude,
             Status = BookingStatus.Waiting,
             CreatedAt = DateTime.UtcNow,
+            Key = key,
         };
 
     public void Cancel() => Status = BookingStatus.Cancelled;

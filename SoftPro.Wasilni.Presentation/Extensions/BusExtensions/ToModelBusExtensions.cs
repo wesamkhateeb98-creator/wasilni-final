@@ -9,7 +9,7 @@ namespace SoftPro.Wasilni.Presentation.Extensions.BusExtensions;
 public static class ToModelBusExtensions
 {
     public static AddBusModel ToModel(this AddBusRequest request)
-        => new(request.Plate, request.Color, request.LineId, request.Type);
+        => new(request.Plate, request.Color, request.LineId, request.Type, request.key);
 
     public static UpdateBusModel ToModel(this UpdateBusRequest request)
         => new(request.Plate, request.Color, request.LineId, request.Type);

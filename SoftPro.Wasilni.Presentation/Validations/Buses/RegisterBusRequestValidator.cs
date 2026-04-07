@@ -1,6 +1,5 @@
 using Domain.Resources;
 using FluentValidation;
-using SoftPro.Wasilni.Presentation;
 using SoftPro.Wasilni.Presentation.Models.Request.Bus;
 using System.Text.RegularExpressions;
 
@@ -25,5 +24,9 @@ public class AddBusRequestValidator : AbstractValidator<AddBusRequest>
             .When(x => x.LineId.HasValue)
             .WithName(Title.LineId)
             .WithMessage(Phrases.InvalidLineId);
+
+        RuleFor(x => x.key)
+            .NotEmpty()
+            .WithMessage(Phrases.InvalidKey);
     }
 }

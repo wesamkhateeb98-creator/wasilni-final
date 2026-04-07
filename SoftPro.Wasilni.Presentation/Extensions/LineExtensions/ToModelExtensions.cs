@@ -6,7 +6,7 @@ namespace SoftPro.Wasilni.Presentation.Extensions.LineExtensions;
 public static class ToModelExtensions
 {
     public static AddLineModel ToModel(this AddLineRequest request)
-        => new(request.Name, request.Points.Select(p => p.ToModel()).ToList());
+        => new(request.Name, request.Points.Select(p => p.ToModel()).ToList(), request.key);
 
     public static UpdateLineModel ToModel(this UpdateLineRequest request)
         => new(request.Name, request.Points.Select(p => p.ToModel()).ToList());

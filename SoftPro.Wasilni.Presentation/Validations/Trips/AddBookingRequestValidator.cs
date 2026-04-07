@@ -17,5 +17,9 @@ public class AddBookingRequestValidator : AbstractValidator<AddBookingRequest>
             .InclusiveBetween(-180, 180)
             .WithName(Title.Longitude)
             .WithMessage(Phrases.InvalidLongitude);
+
+        RuleFor(x => x.key)
+            .NotEmpty()
+            .WithMessage(Phrases.InvalidKey);
     }
 }

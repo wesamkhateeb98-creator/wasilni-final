@@ -945,5 +945,11 @@ namespace Domain.Resources
                 return ResourceManager.GetString("InvalidDateRange", resourceCulture);
             }
         }
+
+        public static string InvalidKey {
+            get {
+                return ResourceManager.GetString("InvalidKey", resourceCulture);
+            }
+        }
     }
 }

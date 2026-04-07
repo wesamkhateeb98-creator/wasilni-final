@@ -12,7 +12,8 @@ public static class ToModelExtensions
             registerRequest.Phonenumber,
             registerRequest.Password,
             registerRequest.FCMToken,
-            Role.Passenger);
+            Role.Passenger,
+            registerRequest.key);
 
     public static LoginModel ToModel(this LoginAccountRequest loginRequest)
         => new(
