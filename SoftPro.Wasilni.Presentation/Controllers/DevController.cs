@@ -71,7 +71,7 @@ public class DevController(AppDbContext dbContext) : BaseController
         {
             int lineIndex = i % 20; // 10 buses per line
             var bus = BusEntity.Create(new AddBusModel(
-                Plate: $"BUS-{i + 1:D4}",
+                Plate: $"1{i + 1:D5}",
                 Color: Colors[rng.Next(Colors.Length)],
                 LineId: lines[lineIndex].Id,
                 Type: BusTypes[rng.Next(BusTypes.Length)],
