@@ -372,4 +372,49 @@
   <data name="InvalidDateRange" xml:space="preserve">
     <value>From date must be before to date</value>
   </data>
+  <data name="InvalidLineName" xml:space="preserve">
+    <value>Invalid line name</value>
+  </data>
+  <data name="InvalidLatitude" xml:space="preserve">
+    <value>Latitude must be between -90 and 90</value>
+  </data>
+  <data name="InvalidLongitude" xml:space="preserve">
+    <value>Longitude must be between -180 and 180</value>
+  </data>
+  <data name="InvalidPointId" xml:space="preserve">
+    <value>Invalid point id</value>
+  </data>
+  <data name="PointNotFound" xml:space="preserve">
+    <value>Point not found</value>
+  </data>
+  <data name="PointsRequired" xml:space="preserve">
+    <value>At least one point is required</value>
+  </data>
+  <data name="BusAlreadyActive" xml:space="preserve">
+    <value>The bus is already on an active trip</value>
+  </data>
+  <data name="NotYourBus" xml:space="preserve">
+    <value>This bus is not assigned to you</value>
+  </data>
+  <data name="TripAlreadyEnded" xml:space="preserve">
+    <value>The trip has already ended</value>
+  </data>
+  <data name="InvalidDelta" xml:space="preserve">
+    <value>Value must be 1 or -1 only</value>
+  </data>
+  <data name="BookingNotFound" xml:space="preserve">
+    <value>Booking not found</value>
+  </data>
+  <data name="AlreadyBooked" xml:space="preserve">
+    <value>You already have an active booking on this trip</value>
+  </data>
+  <data name="NotYourBooking" xml:space="preserve">
+    <value>This booking does not belong to you</value>
+  </data>
+  <data name="TripNotActive" xml:space="preserve">
+    <value>The trip is not active</value>
+  </data>
+  <data name="InvalidKey" xml:space="preserve">
+    <value>Invalid idempotency key</value>
+  </data>
 </root>

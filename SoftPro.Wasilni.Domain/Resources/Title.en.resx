@@ -228,4 +228,25 @@
   <data name="Error" xml:space="preserve">
     <value>Error</value>
   </data>
+  <data name="LineName" xml:space="preserve">
+    <value>Line name</value>
+  </data>
+  <data name="Latitude" xml:space="preserve">
+    <value>Latitude</value>
+  </data>
+  <data name="Longitude" xml:space="preserve">
+    <value>Longitude</value>
+  </data>
+  <data name="PointId" xml:space="preserve">
+    <value>Point id</value>
+  </data>
+  <data name="Points" xml:space="preserve">
+    <value>Points</value>
+  </data>
+  <data name="Delta" xml:space="preserve">
+    <value>Delta</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Order</value>
+  </data>
 </root>
