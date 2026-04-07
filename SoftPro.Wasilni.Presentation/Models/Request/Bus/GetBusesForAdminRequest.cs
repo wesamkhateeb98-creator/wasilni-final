@@ -2,4 +2,4 @@
 
 namespace SoftPro.Wasilni.Presentation.Models.Request.Bus;
 
-public record GetBusesForAdminRequest(int? OwnerId, string? Plate, BusTypeFilter Filter, int PageNumber, int PageSize);
+public record GetBusesForAdminRequest(string? Plate, BusType? Type, int PageNumber, int PageSize);

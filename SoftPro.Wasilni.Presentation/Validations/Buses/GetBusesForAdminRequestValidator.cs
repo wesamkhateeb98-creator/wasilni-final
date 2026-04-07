@@ -1,9 +1,6 @@
-﻿using System.Text.RegularExpressions;
 using Domain.Resources;
 using FluentValidation;
-using SoftPro.Wasilni.Presentation;
 using SoftPro.Wasilni.Presentation.Models.Request.Bus;
-
 
 namespace SoftPro.Wasilni.Presentation.Validations.Buses;
 
@@ -22,21 +19,10 @@ public class GetBusesForAdminRequestValidator : AbstractValidator<GetBusesForAdm
             .WithName(Title.PageSize)
             .WithMessage(Phrases.InvalidPageSize);
 
-        RuleFor(x => x.OwnerId)
-            .GreaterThan(0)
-            .WithName(Title.Id)
-            .WithMessage(Phrases.InvalidId);
-
-        RuleFor(x => x.Plate)
-            .Must(x => Regex.IsMatch(x!, PresentationConsts.plateExpression))
-            .WithName(Title.Plate)
-            .WithMessage(Phrases.InvalidPlate)
-            .When(x => x.Plate is not null);
-
-        RuleFor(x => x.Filter)
+        RuleFor(x => x.Type)
             .IsInEnum()
-            .WithName(Title.Filter)
-            .WithMessage(Phrases.InvalidFilter);
-
+            .When(x => x.Type.HasValue)
+            .WithName(Title.BusType)
+            .WithMessage(Phrases.InvalidBusType);
     }
 }

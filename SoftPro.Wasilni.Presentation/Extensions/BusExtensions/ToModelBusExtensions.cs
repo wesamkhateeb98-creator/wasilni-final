@@ -18,7 +18,7 @@ public static class ToModelBusExtensions
         => new(id, request.PageNumber, request.PageSize, request.Filter);
 
     public static GetBusForAdminModel ToInput(this GetBusesForAdminRequest request)
-        => new(request.OwnerId, request.Plate, request.Filter, request.PageNumber, request.PageSize);
+        => new(request.Plate, request.Type, request.PageNumber, request.PageSize);
 
     public static Page<GetBusesResponse> ToResponse(this Page<GetBusesModel> model)
         => new(
@@ -55,6 +55,7 @@ public static class ToModelBusExtensions
             model.Type,
             model.NumberOfSeats,
             model.LineId,
+            model.LineName,
             model.Driver
             );
 

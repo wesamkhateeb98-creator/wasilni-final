@@ -9,5 +9,6 @@ public record GetBusesForAdminModel(
     BusType Type,
     int NumberOfSeats,
     int? LineId,
+    string? LineName,
     UsernameModel? Driver
     );

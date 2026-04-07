@@ -73,26 +73,12 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
         IQueryable<BusEntity> query = dbContext.Buses
             .Include(x => x.LineEntity)
             .AsQueryable();
-        //if (inputModel.Filter != BusTypeFilter.All)
-        //{
-        //    BusType type = inputModel.Filter switch
-        //    {
-        //        BusTypeFilter.Bolman => BusType.Bolman,
-        //        BusTypeFilter.Van => BusType.Van,
-        //        _ => BusType.Servece
-        //    };
-        //    query = query.Where(x => x.Type == type);
-        //}
 
         if (inputModel.Plate is not null)
-        {
-            query = query.Where(x => x.Plate == inputModel.Plate);
-        }
+            query = query.Where(x => x.Plate.Contains(inputModel.Plate));
 
-        //if (inputModel.OwnerId is not null)
-        //{
-        //    query = query.Where(x => x.OwnId == inputModel.OwnerId);
-        //}
+        if (inputModel.Type.HasValue)
+            query = query.Where(x => x.Type == inputModel.Type.Value);
 
         int count = await query.CountAsync(cancellationToken);
 
@@ -104,7 +90,8 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
                  x.Type,
                  x.NumberOfSeats,
                  x.LineId,
-                 x.DriverId.HasValue ? new(x.DriverId.Value, x.Driver.Name) : null
+                 x.LineId.HasValue ? x.LineEntity!.Name : null,
+                 x.DriverId.HasValue ? new(x.DriverId.Value, x.Driver!.Name) : null
              ))
              .Skip((inputModel.pageNumber - 1) * inputModel.PageSize)
              .Take(inputModel.PageSize)
@@ -116,7 +103,6 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
              (int)Math.Ceiling((double)count / inputModel.PageSize),
              result
              );
-
     }
 
     public Task<BusEntity?> GetByIdWithLineAsync(int id, CancellationToken cancellationToken)
