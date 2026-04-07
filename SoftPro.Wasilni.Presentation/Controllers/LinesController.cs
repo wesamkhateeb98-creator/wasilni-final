@@ -45,25 +45,14 @@ public class LinesController(ILineService lineService) : BaseController
         return points.Select(p => p.ToResponse()).ToList();
     }
 
-    [HttpPatch("{id}/name")]
+    [HttpPut("{id}")]
     [Authorize(Roles = nameof(Role.Admin))]
-    public async Task<IdResponse> UpdateNameAsync(
+    public async Task<IdResponse> UpdateAsync(
         [FromRoute] IdRequest route,
-        [FromBody] UpdateLineNameRequest request,
+        [FromBody] UpdateLineRequest request,
         CancellationToken cancellationToken)
     {
-        int id = await lineService.UpdateLineNameAsync(route.Id, request.Name, cancellationToken);
-        return new(id);
-    }
-
-    [HttpPut("{id}/points")]
-    [Authorize(Roles = nameof(Role.Admin))]
-    public async Task<IdResponse> UpdatePointsAsync(
-        [FromRoute] IdRequest route,
-        [FromBody] UpdateLinePointsRequest request,
-        CancellationToken cancellationToken)
-    {
-        int id = await lineService.UpdateLinePointsAsync(route.Id, request.ToModel(), cancellationToken);
+        int id = await lineService.UpdateLineAsync(route.Id, request.ToModel(), cancellationToken);
         return new(id);
     }
 

@@ -13,35 +13,22 @@ public class LineService(IUnitOfWork unitOfWork) : ILineService
     public async Task<int> AddLineAsync(AddLineModel model, CancellationToken cancellationToken)
     {
         LineEntity? existing = unitOfWork.LineRepository.GetLineByName(model.Name, cancellationToken);
-
         if (existing is not null) throw new AlreadyExistsException(Phrases.LineAlreadyExists);
 
         LineEntity line = LineEntity.Create(model);
-
         await unitOfWork.LineRepository.AddAsync(line, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return line.Id;
     }
 
-    public async Task<int> UpdateLineNameAsync(int id, string name, CancellationToken cancellationToken)
+    public async Task<int> UpdateLineAsync(int id, UpdateLineModel model, CancellationToken cancellationToken)
     {
         LineEntity line = await unitOfWork.LineRepository.GetByIdAsync(id, cancellationToken)
             ?? throw new NotFoundException(Phrases.LineNotFound);
 
-        line.SetName(name);
-
-        await unitOfWork.CompleteAsync(cancellationToken);
-
-        return line.Id;
-    }
-
-    public async Task<int> UpdateLinePointsAsync(int id, List<Point> points, CancellationToken cancellationToken)
-    {
-        LineEntity line = await unitOfWork.LineRepository.GetByIdAsync(id, cancellationToken)
-            ?? throw new NotFoundException(Phrases.LineNotFound);
-
-        line.SetPoints(points);
+        line.SetName(model.Name);
+        line.SetPoints(model.Points);
 
         await unitOfWork.CompleteAsync(cancellationToken);
 
@@ -54,7 +41,6 @@ public class LineService(IUnitOfWork unitOfWork) : ILineService
             ?? throw new NotFoundException(Phrases.LineNotFound);
 
         unitOfWork.LineRepository.Delete(line, cancellationToken);
-
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return id;

@@ -4,7 +4,7 @@ using SoftPro.Wasilni.Presentation.Models.Request.Line;
 
 namespace SoftPro.Wasilni.Presentation.Validations.Lines;
 
-public class UpdateLineRequestValidator : AbstractValidator<UpdateLineNameRequest>
+public class UpdateLineRequestValidator : AbstractValidator<UpdateLineRequest>
 {
     public UpdateLineRequestValidator()
     {
@@ -13,5 +13,9 @@ public class UpdateLineRequestValidator : AbstractValidator<UpdateLineNameReques
             .Length(1, 50)
             .WithName(Title.LineName)
             .WithMessage(Phrases.InvalidLineName);
+
+        RuleFor(x => x.Points)
+            .NotNull()
+            .NotEmpty();
     }
 }

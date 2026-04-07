@@ -8,6 +8,9 @@ public static class ToModelExtensions
     public static AddLineModel ToModel(this AddLineRequest request)
         => new(request.Name, request.Points.Select(p => p.ToModel()).ToList());
 
+    public static UpdateLineModel ToModel(this UpdateLineRequest request)
+        => new(request.Name, request.Points.Select(p => p.ToModel()).ToList());
+
     public static Point ToModel(this WayPointRequest request)
         => new(request.Latitude, request.Longitude, request.Order);
 
