@@ -96,7 +96,7 @@ public class BusesController(IBusService busService, IHubContext<TrackingHub> hu
             .Group(TrackingGroups.Line(result.LineId))
             .OnAnonymousCountUpdatedAsync(result.BusId, result.Count, cancellationToken);
 
-        return new AdjustAnonymousResponse(result.PreviousCount, result.Count);
+        return new AdjustAnonymousResponse(result.Count);
     }
 
 }

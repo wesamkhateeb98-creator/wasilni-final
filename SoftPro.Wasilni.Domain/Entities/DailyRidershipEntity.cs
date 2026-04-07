@@ -17,4 +17,5 @@ public class DailyRidershipEntity : IEntity
         => new() { LineId = lineId, BusId = busId, Day = day, NumberOfRiders = 0 };
 
     public void IncrementRiders() => NumberOfRiders++;
+    public void AdjustRiders(int delta) => NumberOfRiders = Math.Max(0, NumberOfRiders + delta);
 }

@@ -178,23 +178,22 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
     {
         if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
         {
-            BusEntity cached = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
+            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
                 ?? throw new NotFoundException(Phrases.BusNotFound);
 
-            if (cached.Status != BusStatus.Active)
+            if (bus.Status != BusStatus.Active)
                 throw new FailedPreconditionException(Phrases.BusNotOnRoad);
 
-            ctx = new DriverContextCache(cached.Id, cached.LineId!.Value);
+            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
             cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
 
-        BusEntity bus = await unitOfWork.BusRepository.GetByIdAsync(ctx.BusId, cancellationToken)
-            ?? throw new NotFoundException(Phrases.BusNotFound);
+        // delta = 1 راكب ركب، delta = -1 راكب نزل — نسجّل على الـ DailyRidership مباشرة
+        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+        int count = await unitOfWork.DailyRidershipRepository.AdjustAsync(
+            new IncrementRidershipModel(ctx.LineId, ctx.BusId, today), delta, cancellationToken);
 
-        int previousCount = bus.AnonymousCount;
-        bus.AdjustAnonymous(delta);
-        await unitOfWork.CompleteAsync(cancellationToken);
-        return new AdjustAnonymousResult(bus.Id, ctx.LineId, previousCount, bus.AnonymousCount);
+        return new AdjustAnonymousResult(ctx.BusId, ctx.LineId, count);
     }
 
 }
