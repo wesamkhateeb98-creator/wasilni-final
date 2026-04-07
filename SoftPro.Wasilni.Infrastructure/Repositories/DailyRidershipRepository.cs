@@ -39,30 +39,20 @@ public class DailyRidershipRepository(AppDbContext dbContext)
 
     public async Task<int> AdjustAsync(IncrementRidershipModel model, int delta, CancellationToken cancellationToken)
     {
-        while (true)
+        DailyRidershipEntity? ridership = await dbContext.DailyRiderships
+            .FirstOrDefaultAsync(
+                r => r.LineId == model.LineId && r.BusId == model.BusId && r.Day == model.Day,
+                cancellationToken);
+
+        if (ridership is null)
         {
-            try
-            {
-                DailyRidershipEntity? ridership = await dbContext.DailyRiderships
-                    .FirstOrDefaultAsync(
-                        r => r.LineId == model.LineId && r.BusId == model.BusId && r.Day == model.Day,
-                        cancellationToken);
-
-                if (ridership is null)
-                {
-                    ridership = DailyRidershipEntity.Create(model.LineId, model.BusId, model.Day);
-                    dbContext.DailyRiderships.Add(ridership);
-                }
-
-                ridership.AdjustRiders(delta);
-                await dbContext.SaveChangesAsync(cancellationToken);
-                return ridership.NumberOfRiders;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                // reload and retry
-            }
+            ridership = DailyRidershipEntity.Create(model.LineId, model.BusId, model.Day);
+            dbContext.DailyRiderships.Add(ridership);
         }
+
+        ridership.AdjustRiders(delta);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ridership.NumberOfRiders;
     }
 
     public Task<List<DailyRidershipEntity>> GetDailyAsync(GetDailyFilterModel filter, CancellationToken cancellationToken)
