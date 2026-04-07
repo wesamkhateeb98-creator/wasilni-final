@@ -140,9 +140,13 @@ public static class RegistrationExtensions
         {
             options.AddPolicy("AllowAll", policy =>
             {
-                policy.AllowAnyOrigin()
+                policy.WithOrigins(
+                          "http://localhost:4200",
+                          "http://localhost:3000"
+                      )
                       .AllowAnyMethod()
-                      .AllowAnyHeader();
+                      .AllowAnyHeader()
+                      .AllowCredentials();  // مطلوب لـ SignalR
             });
         });
 
