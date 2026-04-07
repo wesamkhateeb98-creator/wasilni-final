@@ -14,7 +14,6 @@ public static class BusEntityExtensions
                bus.Status,
                location?.Latitude,
                location?.Longitude,
-               bus.AnonymousCount,
                bus.ActiveSince);
 
     public static GetBookingModel ToModel(this BookingEntity booking)

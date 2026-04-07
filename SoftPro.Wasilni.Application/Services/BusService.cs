@@ -23,8 +23,8 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
     public async Task<int> AddAsync(AddBusModel model, CancellationToken cancellationToken)
     {
-        BusEntity? bus = await unitOfWork.BusRepository.FindByIdempotencyKeyAsync(model.key, cancellationToken);
-        if (bus is not null)
+        BusEntity? existingKey = await unitOfWork.BusRepository.FindByIdempotencyKeyAsync(model.key, cancellationToken);
+        if (existingKey is not null)
             throw new AlreadyExistsException(Phrases.PlateAlreadyExists);
 
         if (await unitOfWork.BusRepository.ExistsPlateAsync(model.Plate, cancellationToken))

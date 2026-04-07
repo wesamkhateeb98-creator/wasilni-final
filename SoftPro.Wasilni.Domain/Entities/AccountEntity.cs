@@ -6,11 +6,11 @@ namespace SoftPro.Wasilni.Domain.Entities;
 public class AccountEntity : IEntity
 {
     public string Name { get; private set; }
-    public string FCMToken { get; private set; } 
+    public string FCMToken { get; private set; }
     public string PhoneNumber { get; private set; }
     public byte[] Password { get; private set; }
     public byte[] Salt { get; private set; }
-    public string? Code { get;private set; }
+    public string? Code { get; private set; }
     public int SendCodeCount { get; private set; }
     public bool Confirmed { get; private set; }
     public DateTime? CodeExpiration { get; private set; }
@@ -21,6 +21,8 @@ public class AccountEntity : IEntity
     public Guid Key { get; private set; }
 
     private const int RefreshTokenDurationDays = 30;
+
+    private AccountEntity() { }
 
     public AccountEntity(
         string name,
@@ -38,20 +40,20 @@ public class AccountEntity : IEntity
         string fCMToken,
         Guid idempotencyKey)
     {
-        Name                  = name;
-        PhoneNumber           = phoneNumber;
-        Password              = password;
-        Salt                  = salt;
-        Code                  = code;
-        SendCodeCount         = sendCodeCount;
-        CodeExpiration        = codeExpiration;
-        CreatedAt             = createdAt;
-        Role                  = role;
-        Confirmed             = confirmed;
-        RefreshToken          = refreshToken;
+        Name = name;
+        PhoneNumber = phoneNumber;
+        Password = password;
+        Salt = salt;
+        Code = code;
+        SendCodeCount = sendCodeCount;
+        CodeExpiration = codeExpiration;
+        CreatedAt = createdAt;
+        Role = role;
+        Confirmed = confirmed;
+        RefreshToken = refreshToken;
         RefreshTokenExpiresAt = refreshTokenExpiresAt;
-        FCMToken              = fCMToken;
-        Key           = idempotencyKey;
+        FCMToken = fCMToken;
+        Key = idempotencyKey;
     }
 
     public static AccountEntity Create(RegisterModel registerModel, byte[] passwordHashed, byte[] salt, string refreshToken, string code)
@@ -71,14 +73,14 @@ public class AccountEntity : IEntity
             registerModel.FCMToken,
             registerModel.key);
 
-    public void SetCountCode(int codeCount) 
+    public void SetCountCode(int codeCount)
         => SendCodeCount = codeCount;
 
     public void MinusCountCode() => SendCodeCount--;
 
     public void SetCode(string code)
         => Code = code;
-        
+
     public void SetCodeExpiration(DateTime? dateTime)
         => CodeExpiration = dateTime;
 
@@ -105,5 +107,5 @@ public class AccountEntity : IEntity
     }
 
     public void SetFCMToken(string fCMToken)
-        => FCMToken=fCMToken;
+        => FCMToken = fCMToken;
 }

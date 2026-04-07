@@ -27,7 +27,7 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
         List<GetBusesModel> result = await query
              .Select(x => new GetBusesModel(
                     x.Id,
-                    x.OwnId.HasValue ? new UsernameModel(x.OwnId.Value, x.Own!.Name) : null,
+                    null,
                     x.Plate,
                     x.Color,
                     x.Type,
@@ -123,4 +123,7 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
 
     public Task<BusEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken)
         => dbContext.Buses.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
+
+    public Task<bool> ExistsByKeyAsync(Guid key, CancellationToken cancellationToken)
+        => dbContext.Buses.AnyAsync(x => x.Key == key, cancellationToken);
 }

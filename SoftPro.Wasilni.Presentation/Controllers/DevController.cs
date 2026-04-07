@@ -15,8 +15,8 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 public class DevController(AppDbContext dbContext) : BaseController
 {
     private const string DefaultPassword = "Password@123";
-    private const string AdminPassword   = "Admin@123";
-    private const string DevFcm          = "dev-fcm-token";
+    private const string AdminPassword = "Admin@123";
+    private const string DevFcm = "dev-fcm-token";
 
     private static readonly string[] Colors = ["White", "Blue", "Silver", "Yellow", "Red", "Green", "Orange", "Black", "Gray", "Beige"];
     private static readonly BusType[] BusTypes = [BusType.Bolman, BusType.Van, BusType.Servece];
@@ -50,14 +50,14 @@ public class DevController(AppDbContext dbContext) : BaseController
                 new(33.9695, 36.6615, 4),
                 new(33.9710, 36.6630, 5),
                 new(33.9725, 36.6645, 6),
-            ])));
+            ], key: Guid.NewGuid())));
         }
         await dbContext.Lines.AddRangeAsync(lines, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         // ── 4. Drivers (200) + Buses (200) ────────────────────────────────────
         var drivers = new List<AccountEntity>();
-        var buses   = new List<BusEntity>();
+        var buses = new List<BusEntity>();
 
         for (int i = 1; i <= 200; i++)
         {
@@ -71,10 +71,11 @@ public class DevController(AppDbContext dbContext) : BaseController
         {
             int lineIndex = i % 20; // 10 buses per line
             var bus = BusEntity.Create(new AddBusModel(
-                Plate  : $"BUS-{i + 1:D4}",
-                Color  : Colors[rng.Next(Colors.Length)],
-                LineId : lines[lineIndex].Id,
-                Type   : BusTypes[rng.Next(BusTypes.Length)]));
+                Plate: $"BUS-{i + 1:D4}",
+                Color: Colors[rng.Next(Colors.Length)],
+                LineId: lines[lineIndex].Id,
+                Type: BusTypes[rng.Next(BusTypes.Length)],
+                key: Guid.NewGuid()));
             bus.AssignDriverId(drivers[i].Id);
             buses.Add(bus);
         }
@@ -94,8 +95,8 @@ public class DevController(AppDbContext dbContext) : BaseController
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
         var riderships = (
-            from d    in Enumerable.Range(0, 100)
-            from bus  in buses
+            from d in Enumerable.Range(0, 100)
+            from bus in buses
             select DailyRidershipEntity.Create(bus.LineId!.Value, bus.Id, today.AddDays(-d))
         ).ToList();
 
@@ -111,11 +112,11 @@ public class DevController(AppDbContext dbContext) : BaseController
         {
             summary = new
             {
-                admin      = 1,
-                lines      = lines.Count,
-                drivers    = drivers.Count,
+                admin = 1,
+                lines = lines.Count,
+                drivers = drivers.Count,
                 passengers = passengers.Count,
-                buses      = buses.Count,
+                buses = buses.Count,
                 riderships = riderships.Count // 200 buses × 100 days
             },
             credentials = new { adminPassword = AdminPassword, defaultPassword = DefaultPassword },
@@ -127,7 +128,7 @@ public class DevController(AppDbContext dbContext) : BaseController
     {
         byte[] salt = AuthHelper.GenerateSalt();
         var account = AccountEntity.Create(
-            new RegisterModel(name, phone, password, DevFcm, role),
+            new RegisterModel(name, phone, password, DevFcm, role, key: Guid.NewGuid()),
             AuthHelper.HashPasswordWithSalt(password, salt),
             salt,
             AuthHelper.GenerateRefreshToken(),

@@ -14,9 +14,6 @@ public static class ToModelBusExtensions
     public static UpdateBusModel ToModel(this UpdateBusRequest request)
         => new(request.Plate, request.Color, request.LineId, request.Type);
 
-    public static GetBusModel ToInput(this GetBusesRequest request, int id)
-        => new(id, request.PageNumber, request.PageSize, request.Filter);
-
     public static GetBusForAdminModel ToInput(this GetBusesForAdminRequest request)
         => new(request.Plate, request.Type, request.PageNumber, request.PageSize);
 

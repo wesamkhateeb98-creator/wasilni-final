@@ -9,8 +9,7 @@ public static class ToResponseExtensions
 {
     public static GetActiveBusResponse ToResponse(this GetActiveBusModel model)
         => new(model.BusId, model.Plate, model.LineId, model.LineName,
-               model.Status.ToString(), model.Latitude, model.Longitude,
-               model.AnonymousCount, model.ActiveSince);
+               model.Status.ToString(), model.Latitude, model.Longitude, model.ActiveSince);
 
     public static GetBookingResponse ToResponse(this GetBookingModel model)
         => new(model.Id, model.LineId, model.PassengerId, model.Date,
