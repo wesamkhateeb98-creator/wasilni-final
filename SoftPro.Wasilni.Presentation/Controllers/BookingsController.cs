@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
@@ -9,6 +10,7 @@ using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
 using SoftPro.Wasilni.Presentation.Hubs;
+using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Hubs.Helpers;
 using SoftPro.Wasilni.Presentation.Models.Request.Trip;
 using SoftPro.Wasilni.Presentation.Models.Response;
@@ -18,6 +20,7 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 
 [ApiController]
 [Route("api/v1.0/bookings")]
+[EnableRateLimiting(RateLimitPolicies.Default)]
 public class BookingsController(
     IBookingService bookingService,
     IHubContext<TrackingHub> hubContext) : BaseController

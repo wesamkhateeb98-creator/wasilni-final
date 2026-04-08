@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using SoftPro.Wasilni.Presentation.Extensions;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
@@ -19,6 +21,7 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 public class AccountsController(IAccountService accountService) : BaseController
 {
     [HttpPost("sign-up")]
+    [EnableRateLimiting(RateLimitPolicies.Login)]
     public async Task<IdResponse> RegisterAsync([FromBody] SignupPassengerRequest registerRequest, CancellationToken cancellationToken)
     {
         int id = await accountService.SignUpAsync(registerRequest.ToModel(), cancellationToken);
@@ -26,6 +29,7 @@ public class AccountsController(IAccountService accountService) : BaseController
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting(RateLimitPolicies.Login)]
     public async Task<TokenResponse> LoginAsync([FromBody] LoginAccountRequest loginPassengerRequest, CancellationToken cancellationToken)
     {
         LoginModelExtended loginModelExtended = await accountService.LoginAsync(loginPassengerRequest.ToModel(), cancellationToken);
@@ -56,6 +60,7 @@ public class AccountsController(IAccountService accountService) : BaseController
     }
 
     [HttpPost("send-code")]
+    [EnableRateLimiting(RateLimitPolicies.Login)]
     public async Task<IdResponse> SendCodeAsync([FromBody]SendCodeRequest request , CancellationToken cancellationToken)
     {
         int id = await accountService.SendCodeAsync(request.Phonenumber, cancellationToken);
@@ -63,6 +68,7 @@ public class AccountsController(IAccountService accountService) : BaseController
     }
 
     [HttpPost("verify-account")]
+    [EnableRateLimiting(RateLimitPolicies.Login)]
     public async Task<TokenResponse> VerifyAccountAsync([FromBody] ConfirmCodeRequest request, CancellationToken cancellationToken)
     {
         LoginModelExtended loginModelExtended = await accountService.VerifyAccountAsync(request.Phonenumber, request.Code , cancellationToken);

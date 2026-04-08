@@ -3,6 +3,7 @@ using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Infrastructure.Extensions;
 using SoftPro.Wasilni.Presentation.ActionFilters;
 using SoftPro.Wasilni.Presentation.Extensions;
+using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Filters;
 using SoftPro.Wasilni.Presentation.Middlewares;
 
@@ -19,10 +20,12 @@ builder.Services.AddSignalR(o => o.EnableDetailedErrors = true)
                 .AddHubOptions<SoftPro.Wasilni.Presentation.Hubs.TrackingHub>(o =>
                 {
                     o.AddFilter<HubExceptionFilter>();    // ① outermost — catches & formats all errors
-                    o.AddFilter<HubValidationFilter>();   // ② inner — validates args then calls method
+                    o.AddFilter<HubRateLimitFilter>();    // ② rate limits per-user per-method
+                    o.AddFilter<HubValidationFilter>();   // ③ inner — validates args then calls method
                 });
 
 builder.Services.AddMemoryCache();
+builder.Services.AddRateLimiting();
 
 builder.Services
     .RegisterApplication()
@@ -54,6 +57,7 @@ app.UseCors("AllowAll");
 
 //app.UseHttpsRedirection();
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

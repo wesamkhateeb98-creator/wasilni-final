@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
@@ -21,6 +22,7 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 
 [ApiController]
 [Route(BaseUrl)]
+[EnableRateLimiting(RateLimitPolicies.Default)]
 public class BusesController(IBusService busService, IHubContext<TrackingHub> hubContext) : BaseController
 {
     [HttpPost] //~~~

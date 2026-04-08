@@ -45,6 +45,7 @@ namespace SoftPro.Wasilni.Presentation.Middlewares
                 "Unauthorization" => HttpStatusCode.Unauthorized,
                 "Invalid Arguement" => HttpStatusCode.BadRequest,
                 "Failed Precondition" => HttpStatusCode.PreconditionFailed,
+                "Too Many Requests"   => HttpStatusCode.TooManyRequests,
                 _ => HttpStatusCode.InternalServerError
             };
 
