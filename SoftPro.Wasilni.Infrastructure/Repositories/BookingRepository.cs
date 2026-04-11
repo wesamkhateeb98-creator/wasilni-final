@@ -46,7 +46,7 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
         IQueryable<BookingEntity> query = dbContext.Bookings
             .Where(b => filter.Status == null || b.Status == filter.Status)
             .Where(b => filter.LineId == null || b.LineId == filter.LineId)
-            .OrderBy(b => b.Date);
+            .OrderByDescending(b => b.Date);
 
         int count = await query.CountAsync(cancellationToken);
 

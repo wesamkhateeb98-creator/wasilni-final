@@ -15,7 +15,7 @@ public class AddLineRequestValidator : AbstractValidator<AddLineRequest>
             .WithMessage(Phrases.InvalidLineName);
 
         RuleFor(x => x.key)
-            .NotEmpty()
+            .NotEqual(Guid.Empty)
             .WithMessage(Phrases.InvalidKey);
     }
 }

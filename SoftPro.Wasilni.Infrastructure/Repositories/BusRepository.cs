@@ -25,6 +25,7 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
             .AsQueryable();
 
         List<GetBusesModel> result = await query
+             .OrderByDescending(x => x.Id)
              .Select(x => new GetBusesModel(
                     x.Id,
                     null,
@@ -83,6 +84,7 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
         int count = await query.CountAsync(cancellationToken);
 
         List<GetBusesForAdminModel> result = await query
+             .OrderByDescending(x => x.Id)
              .Select(x => new GetBusesForAdminModel(
                  x.Id,
                  x.Plate,

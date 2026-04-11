@@ -26,7 +26,7 @@ public class RegisterPassengerRequestValidator : AbstractValidator<SignupPasseng
             .WithMessage(Phrases.InvalidPassword);
 
         RuleFor(x => x.key)
-            .NotEmpty()
+            .NotEqual(Guid.Empty)
             .WithMessage(Phrases.InvalidKey);
 
     }

@@ -19,7 +19,7 @@ public class AddBookingRequestValidator : AbstractValidator<AddBookingRequest>
             .WithMessage(Phrases.InvalidLongitude);
 
         RuleFor(x => x.key)
-            .NotEmpty()
+            .NotEqual(Guid.Empty)
             .WithMessage(Phrases.InvalidKey);
     }
 }

@@ -26,7 +26,7 @@ public class AddBusRequestValidator : AbstractValidator<AddBusRequest>
             .WithMessage(Phrases.InvalidLineId);
 
         RuleFor(x => x.key)
-            .NotEmpty()
+            .NotEqual(Guid.Empty)
             .WithMessage(Phrases.InvalidKey);
     }
 }
