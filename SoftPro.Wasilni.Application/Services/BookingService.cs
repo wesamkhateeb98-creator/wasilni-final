@@ -7,6 +7,7 @@ using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Exceptions;
+using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Domain.Models.Reports;
 using SoftPro.Wasilni.Domain.Models.Trips;
@@ -17,9 +18,9 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
 {
     // ─── Admin ────────────────────────────────────────────────────────────────
 
-    public Task<List<GetAdminBookingModel>> GetBookingsForAdminAsync(
-        BookingStatus? status, int? lineId, CancellationToken cancellationToken)
-        => unitOfWork.BookingRepository.GetBookingsForAdminAsync(status, lineId, cancellationToken);
+    public Task<Page<GetAdminBookingModel>> GetBookingsForAdminAsync(
+        GetAdminBookingsFilterModel filter, CancellationToken cancellationToken)
+        => unitOfWork.BookingRepository.GetBookingsForAdminAsync(filter, cancellationToken);
 
     // ─── Driver ───────────────────────────────────────────────────────────────
 

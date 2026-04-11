@@ -1,8 +1,8 @@
 using Domain.Resources;
 using FluentValidation;
-using SoftPro.Wasilni.Presentation.Models.Request.Trip;
+using SoftPro.Wasilni.Presentation.Models.Request.Booking;
 
-namespace SoftPro.Wasilni.Presentation.Validations.Trips;
+namespace SoftPro.Wasilni.Presentation.Validations.Booking;
 
 public class AddBookingRequestValidator : AbstractValidator<AddBookingRequest>
 {

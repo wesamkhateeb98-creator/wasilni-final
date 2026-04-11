@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SoftPro.Wasilni.Application.Abstracts.Repositories;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Trips;
 using SoftPro.Wasilni.Infrastructure.Persistence;
 
@@ -39,21 +40,33 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
     public Task<BookingEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken)
         => dbContext.Bookings.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
 
-    public Task<List<GetAdminBookingModel>> GetBookingsForAdminAsync(
-        BookingStatus? status, int? lineId, CancellationToken cancellationToken)
-        => dbContext.Bookings
-            .Where(b => status  == null || b.Status == status)
-            .Where(b => lineId  == null || b.LineId == lineId)
-            .OrderBy(b => b.Date)
+    public async Task<Page<GetAdminBookingModel>> GetBookingsForAdminAsync(
+        GetAdminBookingsFilterModel filter, CancellationToken cancellationToken)
+    {
+        IQueryable<BookingEntity> query = dbContext.Bookings
+            .Where(b => filter.Status == null || b.Status == filter.Status)
+            .Where(b => filter.LineId == null || b.LineId == filter.LineId)
+            .OrderBy(b => b.Date);
+
+        int count = await query.CountAsync(cancellationToken);
+
+        List<GetAdminBookingModel> list = await query
+            .Skip((filter.PageNumber - 1) * filter.PageSize)
+            .Take(filter.PageSize)
             .Select(b => new GetAdminBookingModel(
                 b.Id,
                 b.PassengerId,
                 b.Passenger.Name,
                 b.LineId,
+                b.Line.Name,
                 b.Date,
                 b.Latitude,
                 b.Longitude,
                 b.Status,
                 b.CreatedAt))
             .ToListAsync(cancellationToken);
+
+        return new(filter.PageNumber, filter.PageSize,
+            (int)Math.Ceiling((double)count / filter.PageSize), list);
+    }
 }

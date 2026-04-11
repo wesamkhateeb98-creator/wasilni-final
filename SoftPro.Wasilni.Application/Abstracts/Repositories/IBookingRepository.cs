@@ -1,13 +1,14 @@
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Trips;
 
 namespace SoftPro.Wasilni.Application.Abstracts.Repositories;
 
 public interface IBookingRepository : IRepository<BookingEntity>
 {
-    /// <summary>Admin: all bookings filtered by optional status and/or lineId, ordered by Date.</summary>
-    Task<List<GetAdminBookingModel>> GetBookingsForAdminAsync(BookingStatus? status, int? lineId, CancellationToken cancellationToken);
+    /// <summary>Admin: paged bookings filtered by optional status and/or lineId, ordered by Date.</summary>
+    Task<Page<GetAdminBookingModel>> GetBookingsForAdminAsync(GetAdminBookingsFilterModel filter, CancellationToken cancellationToken);
 
     /// <summary>Returns the passenger's single active (Waiting) booking, regardless of line.</summary>
     Task<BookingEntity?> GetActiveByPassengerAsync(int passengerId, CancellationToken cancellationToken);

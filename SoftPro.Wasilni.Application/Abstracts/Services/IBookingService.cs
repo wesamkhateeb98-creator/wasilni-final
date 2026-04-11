@@ -1,4 +1,5 @@
 using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Domain.Models.Trips;
 
@@ -7,8 +8,8 @@ namespace SoftPro.Wasilni.Application.Abstracts.Services;
 public interface IBookingService
 {
     // ─── Admin ────────────────────────────────────────────────────────────────
-    /// <summary>Returns all bookings filtered by optional status and/or lineId, ordered by Date.</summary>
-    Task<List<GetAdminBookingModel>> GetBookingsForAdminAsync(BookingStatus? status, int? lineId, CancellationToken cancellationToken);
+    /// <summary>Returns paged bookings filtered by optional status and/or lineId, ordered by Date.</summary>
+    Task<Page<GetAdminBookingModel>> GetBookingsForAdminAsync(GetAdminBookingsFilterModel filter, CancellationToken cancellationToken);
 
     // ─── Driver ───────────────────────────────────────────────────────────────
     /// <summary>Returns all waiting bookings on the driver's current line.</summary>

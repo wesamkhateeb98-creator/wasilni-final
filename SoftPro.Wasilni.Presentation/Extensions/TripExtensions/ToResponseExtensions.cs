@@ -1,3 +1,4 @@
+using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Domain.Models.Trips;
 using SoftPro.Wasilni.Presentation.Models.Response.Bus;
@@ -17,7 +18,11 @@ public static class ToResponseExtensions
                model.Status.ToString(), model.CreatedAt);
 
     public static GetAdminBookingResponse ToResponse(this GetAdminBookingModel model)
-        => new(model.BookingId, model.PassengerId, model.PassengerName, model.LineId,
+        => new(model.BookingId, model.PassengerId, model.PassengerName, model.LineId, model.LineName,
                model.Date, model.Latitude, model.Longitude,
                model.Status.ToString(), model.CreatedAt);
+
+    public static Page<GetAdminBookingResponse> ToResponse(this Page<GetAdminBookingModel> page)
+        => new(page.PageNumber, page.PageSize, page.TotalPages,
+               page.Content.Select(m => m.ToResponse()).ToList());
 }

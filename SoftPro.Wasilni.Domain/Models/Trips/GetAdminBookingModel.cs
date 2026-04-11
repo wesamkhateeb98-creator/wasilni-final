@@ -7,6 +7,7 @@ public record GetAdminBookingModel(
     int           PassengerId,
     string        PassengerName,
     int           LineId,
+    string        LineName,
     DateOnly      Date,
     double        Latitude,
     double        Longitude,

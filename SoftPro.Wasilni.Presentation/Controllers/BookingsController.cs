@@ -4,13 +4,14 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Trips;
 using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
 using SoftPro.Wasilni.Presentation.Hubs;
 using SoftPro.Wasilni.Presentation.Hubs.Helpers;
-using SoftPro.Wasilni.Presentation.Models.Request.Trip;
+using SoftPro.Wasilni.Presentation.Models.Request.Booking;
 using SoftPro.Wasilni.Presentation.Models.Response;
 using SoftPro.Wasilni.Presentation.Models.Response.Trip;
 
@@ -29,15 +30,15 @@ public class BookingsController(
 
     [HttpGet]
     [Authorize(Roles = nameof(Role.Admin))]
-    public async Task<ListResponse<GetAdminBookingResponse>> GetBookingsAsync(
-        [FromQuery] BookingStatus? status,
-        [FromQuery] int? lineId,
+    public async Task<Page<GetAdminBookingResponse>> GetBookingsAsync(
+        [FromQuery] GetAdminBookingsRequest request,
         CancellationToken cancellationToken)
     {
-        List<GetAdminBookingModel> models =
-            await bookingService.GetBookingsForAdminAsync(status, lineId, cancellationToken);
+        Page<GetAdminBookingModel> page = await bookingService.GetBookingsForAdminAsync(
+            new(request.PageNumber, request.PageSize, request.Status, request.LineId),
+            cancellationToken);
 
-        return new([.. models.Select(m => m.ToResponse())]);
+        return page.ToResponse();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
