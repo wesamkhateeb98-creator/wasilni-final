@@ -7,7 +7,6 @@ using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Accounts;
-using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.AccountExtensions;
 using SoftPro.Wasilni.Presentation.Models.Request.Account;
 using SoftPro.Wasilni.Presentation.Models.Response;

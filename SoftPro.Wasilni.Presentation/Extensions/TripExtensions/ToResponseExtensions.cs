@@ -15,4 +15,9 @@ public static class ToResponseExtensions
         => new(model.Id, model.LineId, model.PassengerId, model.Date,
                model.Latitude, model.Longitude,
                model.Status.ToString(), model.CreatedAt);
+
+    public static GetAdminBookingResponse ToResponse(this GetAdminBookingModel model)
+        => new(model.BookingId, model.PassengerId, model.PassengerName, model.LineId,
+               model.Date, model.Latitude, model.Longitude,
+               model.Status.ToString(), model.CreatedAt);
 }

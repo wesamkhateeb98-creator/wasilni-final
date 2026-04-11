@@ -15,6 +15,12 @@ namespace SoftPro.Wasilni.Application.Services;
 
 public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBookingService
 {
+    // ─── Admin ────────────────────────────────────────────────────────────────
+
+    public Task<List<GetAdminBookingModel>> GetBookingsForAdminAsync(
+        BookingStatus? status, int? lineId, CancellationToken cancellationToken)
+        => unitOfWork.BookingRepository.GetBookingsForAdminAsync(status, lineId, cancellationToken);
+
     // ─── Driver ───────────────────────────────────────────────────────────────
 
     public async Task<List<GetBookingModel>> GetBookingForLineAsync(int driverId, CancellationToken cancellationToken)

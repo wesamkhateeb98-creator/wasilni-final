@@ -3,7 +3,6 @@ using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Infrastructure.Extensions;
 using SoftPro.Wasilni.Presentation.ActionFilters;
 using SoftPro.Wasilni.Presentation.Extensions;
-using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Filters;
 using SoftPro.Wasilni.Presentation.Middlewares;
 

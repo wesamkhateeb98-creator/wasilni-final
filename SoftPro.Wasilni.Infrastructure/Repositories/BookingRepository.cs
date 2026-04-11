@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SoftPro.Wasilni.Application.Abstracts.Repositories;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Models.Trips;
 using SoftPro.Wasilni.Infrastructure.Persistence;
 
 namespace SoftPro.Wasilni.Infrastructure.Repositories;
@@ -37,4 +38,22 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
 
     public Task<BookingEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken)
         => dbContext.Bookings.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
+
+    public Task<List<GetAdminBookingModel>> GetBookingsForAdminAsync(
+        BookingStatus? status, int? lineId, CancellationToken cancellationToken)
+        => dbContext.Bookings
+            .Where(b => status  == null || b.Status == status)
+            .Where(b => lineId  == null || b.LineId == lineId)
+            .OrderBy(b => b.Date)
+            .Select(b => new GetAdminBookingModel(
+                b.Id,
+                b.PassengerId,
+                b.Passenger.Name,
+                b.LineId,
+                b.Date,
+                b.Latitude,
+                b.Longitude,
+                b.Status,
+                b.CreatedAt))
+            .ToListAsync(cancellationToken);
 }

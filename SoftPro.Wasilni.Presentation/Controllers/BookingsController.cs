@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Trips;
@@ -10,7 +9,6 @@ using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
 using SoftPro.Wasilni.Presentation.Hubs;
-using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Hubs.Helpers;
 using SoftPro.Wasilni.Presentation.Models.Request.Trip;
 using SoftPro.Wasilni.Presentation.Models.Response;
@@ -25,6 +23,23 @@ public class BookingsController(
     IBookingService bookingService,
     IHubContext<TrackingHub> hubContext) : BaseController
 {
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ADMIN endpoints
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    [HttpGet]
+    [Authorize(Roles = nameof(Role.Admin))]
+    public async Task<ListResponse<GetAdminBookingResponse>> GetBookingsAsync(
+        [FromQuery] BookingStatus? status,
+        [FromQuery] int? lineId,
+        CancellationToken cancellationToken)
+    {
+        List<GetAdminBookingModel> models =
+            await bookingService.GetBookingsForAdminAsync(status, lineId, cancellationToken);
+
+        return new([.. models.Select(m => m.ToResponse())]);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // DRIVER endpoints
     // ═══════════════════════════════════════════════════════════════════════════

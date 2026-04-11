@@ -2,14 +2,14 @@ namespace SoftPro.Wasilni.Domain.Entities;
 
 public class DailyRidershipEntity : IEntity
 {
-    public int      LineId         { get; private set; }
-    public int      BusId          { get; private set; }
-    public DateOnly Day            { get; private set; }
-    public int      NumberOfRiders { get; private set; }
-    public byte[]   RowVersion     { get; private set; } = [];
+    public int LineId { get; private set; }
+    public int BusId { get; private set; }
+    public DateOnly Day { get; private set; }
+    public int NumberOfRiders { get; private set; }
+    public byte[] RowVersion { get; private set; } = [];
 
     public LineEntity Line { get; private set; } = null!;
-    public BusEntity  Bus  { get; private set; } = null!;
+    public BusEntity Bus { get; private set; } = null!;
 
     private DailyRidershipEntity() { }
 
