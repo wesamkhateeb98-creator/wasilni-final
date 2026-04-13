@@ -1,7 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.SignalR;
 
-namespace SoftPro.Wasilni.Presentation.Filters;
+namespace SoftPro.Wasilni.Presentation.ActionFilters.Hub;
 
 public class HubValidationFilter(IServiceProvider serviceProvider) : IHubFilter
 {

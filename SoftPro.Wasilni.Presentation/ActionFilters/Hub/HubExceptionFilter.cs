@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using SoftPro.Wasilni.Domain.Exceptions.Abstraction;
 using System.Text.Json;
 
-namespace SoftPro.Wasilni.Presentation.Filters;
+namespace SoftPro.Wasilni.Presentation.ActionFilters.Hub;
 
 public class HubExceptionFilter : IHubFilter
 {
@@ -23,7 +23,7 @@ public class HubExceptionFilter : IHubFilter
 
             throw new HubException(JsonSerializer.Serialize(new
             {
-                type   = "Validation Error",
+                type = "Validation Error",
                 detail = "One or more validation errors occurred.",
                 errors
             }));
@@ -33,7 +33,7 @@ public class HubExceptionFilter : IHubFilter
             var details = provider.GetProblemDetails();
             throw new HubException(JsonSerializer.Serialize(new
             {
-                type   = details.Type,
+                type = details.Type,
                 detail = details.Detail ?? details.Title ?? ex.Message
             }));
         }
@@ -45,7 +45,7 @@ public class HubExceptionFilter : IHubFilter
         {
             throw new HubException(JsonSerializer.Serialize(new
             {
-                type   = "Internal Server Error",
+                type = "Internal Server Error",
                 detail = ex.Message
             }));
         }

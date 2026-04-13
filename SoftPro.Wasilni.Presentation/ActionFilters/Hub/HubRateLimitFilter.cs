@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Domain.Exceptions;
 using System.Security.Claims;
 
-namespace SoftPro.Wasilni.Presentation.Filters;
+namespace SoftPro.Wasilni.Presentation.ActionFilters.Hub;
 
 public class HubRateLimitFilter(IMemoryCache cache) : IHubFilter
 {

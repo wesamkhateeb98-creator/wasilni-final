@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.SignalR;
 using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Infrastructure.Extensions;
 using SoftPro.Wasilni.Presentation.ActionFilters;
+using SoftPro.Wasilni.Presentation.ActionFilters.Hub;
 using SoftPro.Wasilni.Presentation.Extensions;
-using SoftPro.Wasilni.Presentation.Filters;
 using SoftPro.Wasilni.Presentation.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
