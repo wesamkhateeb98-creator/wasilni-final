@@ -1,7 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using SoftPro.Wasilni.Domain.Options;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -12,7 +10,8 @@ namespace SoftPro.Wasilni.Domain.Helper;
 public class AuthHelper()
 {
     public static DateTime GetExpirationDate(JwtOption jwtOption)
-        => DateTime.UtcNow.AddHours(3).AddDays(jwtOption.DurationExpiredInDayJWT);
+        //=> DateTime.UtcNow.AddHours(3).AddDays(jwtOption.DurationExpiredInDayJWT);
+        => DateTime.UtcNow.AddSeconds(20);
 
     public static bool Equals(byte[] first, byte[] second)
         => Encoding.UTF8.GetString(first) == Encoding.UTF8.GetString(second);

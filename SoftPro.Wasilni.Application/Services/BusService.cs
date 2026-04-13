@@ -6,12 +6,11 @@ using SoftPro.Wasilni.Application.Cache;
 using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
-using Permission = SoftPro.Wasilni.Domain.Enums.Permission;
 using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Domain.Models.Reports;
-using SoftPro.Wasilni.Domain.Models.Trips;
+using Permission = SoftPro.Wasilni.Domain.Enums.Permission;
 
 namespace SoftPro.Wasilni.Application.Services;
 
@@ -61,7 +60,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
     public async Task<int> DeleteAsync(int id, CancellationToken cancellationToken)
     {
-        BusEntity bus = await unitOfWork.BusRepository.GetWithRequestByIdAsync(id, cancellationToken)
+        BusEntity bus = await unitOfWork.BusRepository.GetByIdAsync(id, cancellationToken)
             ?? throw new NotFoundException(Phrases.BusNotFound);
 
         await unitOfWork.Transaction(async () =>
