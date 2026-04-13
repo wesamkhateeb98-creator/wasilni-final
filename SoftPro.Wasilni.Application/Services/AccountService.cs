@@ -1,4 +1,4 @@
-﻿using Domain.Resources;
+using Domain.Resources;
 using Microsoft.Extensions.Options;
 using SoftPro.Wasilni.Application.Abstracts;
 using SoftPro.Wasilni.Application.Abstracts.Repositories;
@@ -16,6 +16,8 @@ namespace SoftPro.Wasilni.Application.Services;
 
 public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsAppRepository, IOptions<JwtOption> jwtOption) : IAccountService
 {
+    private int RefreshDays => jwtOption.Value.RefreshTokenDurationDays;
+
     public async Task<Page<SearchByPhoneNumberModel>> GetByPhonenumberAsync(int pageNumber, int pageSize, string? phonenumber, CancellationToken cancellationToken)
        => await unitOfWork.AccountRepository.GetByFilter(pageNumber, pageSize, phonenumber, cancellationToken);
 
@@ -35,13 +37,13 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 
         List<Claim> claims = account.GetClaim();
 
-        account.ChangeRefreshToken(AuthHelper.GenerateRefreshToken());
+        account.ChangeRefreshToken(AuthHelper.GenerateRefreshToken(), RefreshDays);
 
         await unitOfWork.CompleteAsync(cancellationToken);
 
         var (token, expirationDate) = AuthHelper.GenerateToken(claims, jwtOption.Value);
 
-        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.FCMToken);
+        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.Permission);
     }
 
     public async Task<int> SignUpAsync(RegisterModel registerModel, CancellationToken cancellationToken)
@@ -49,42 +51,22 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         bool isExists = await unitOfWork.AccountRepository.ExistsPhoneNumberAsync(registerModel.Phonenumber, cancellationToken);
 
         if (isExists)
-        {
             throw new AlreadyExistsException(Phrases.PhonenumberAlreadyExsits);
-        }
 
         byte[] salt = AuthHelper.GenerateSalt();
-
         byte[] passwordHashed = AuthHelper.HashPasswordWithSalt(registerModel.Password, salt);
-
         string refreshToken = AuthHelper.GenerateRefreshToken();
-
-        //string code = AuthHelper.GenerateCode();
         string code = "000000";
-        AccountEntity account = AccountEntity.Create(registerModel, passwordHashed, salt, refreshToken, code);
+
+        AccountEntity account = AccountEntity.Create(registerModel, passwordHashed, salt, refreshToken, code, RefreshDays);
 
         if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow.AddHours(3) > account.CodeExpiration.Value.AddMinutes(30))
-        {
             account.SetCountCode(3);
-        }
 
         account.SetCodeExpiration(DateTime.UtcNow.AddHours(3).AddMinutes(10));
-
         account.MinusCountCode();
-        //try
-        //{
-        //    if (account.Code is not null)
-        //        await WhatsAppRepository.SendCode(account.PhoneNumber, account.Code);
-        //}
-        //catch (Exception ex)
-        //{
-        //    throw new AuthenticationFailureException(ex.Message);
-        //}
-
-
 
         await unitOfWork.AccountRepository.AddAsync(account, cancellationToken);
-
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return account.Id;
@@ -99,24 +81,17 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
             throw new FailedPreconditionException(Phrases.AccountAlreadyConfirmed);
 
         if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow.AddHours(3) > account.CodeExpiration.Value.AddMinutes(30))
-        {
             account.SetCountCode(3);
-        }
 
         if (account.SendCodeCount <= 0)
             throw new FailedPreconditionException(Phrases.SendCodeMoreTime);
 
         string code = AuthHelper.GenerateCode();
-
         account.SetCode(code);
-
         account.SetCodeExpiration(DateTime.UtcNow.AddHours(3).AddMinutes(10));
-
         account.MinusCountCode();
 
         await unitOfWork.CompleteAsync(cancellationToken);
-
-        //May be need to add cretical log
 
         try
         {
@@ -143,15 +118,14 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
             throw new FailedPreconditionException(Phrases.CannotMatchCode);
 
         account.ConfirmAccount();
-        account.ChangeRefreshToken(AuthHelper.GenerateRefreshToken());
+        account.ChangeRefreshToken(AuthHelper.GenerateRefreshToken(), RefreshDays);
 
         await unitOfWork.CompleteAsync(cancellationToken);
 
         List<Claim> claims = account.GetClaim();
-
         var (token, expirationDate) = AuthHelper.GenerateToken(claims, jwtOption.Value);
 
-        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.FCMToken);
+        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.Permission);
     }
 
     public async Task<int> ChangePasswordAsync(int id, string oldPassword, string newPassword, CancellationToken cancellationToken)
@@ -169,7 +143,6 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
             throw new FailedPreconditionException(Phrases.NewPasswordNoChanged);
 
         account.SetPassword(newHashPassword);
-
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return account.Id;
@@ -184,7 +157,6 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
             throw new FailedPreconditionException(Phrases.AccountDataNoChanged);
 
         account.SetName(username);
-
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return account.Id;
@@ -196,19 +168,17 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
             ?? throw new UnauthorizedException(Phrases.InvalidIdOrRefreshToken);
 
         if (account.RefreshTokenExpiresAt < DateTime.UtcNow)
-            throw new UnauthorizedException(Phrases.InvalidIdOrRefreshToken);
+            throw new ForbiddenException(Phrases.RefreshTokenExpired);
 
         if (!account.Confirmed)
             throw new FailedPreconditionException(Phrases.AccountNotConfirmed);
 
         List<Claim> claims = account.GetClaim();
-
         var (token, expirationDate) = AuthHelper.GenerateToken(claims, jwtOption.Value);
 
-        account.ChangeRefreshToken(AuthHelper.GenerateRefreshToken());
-
+        account.ChangeRefreshToken(AuthHelper.GenerateRefreshToken(), RefreshDays);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.FCMToken);
+        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.Permission);
     }
 }

@@ -20,6 +20,7 @@ public static class BusEntityExtensions
         => new(booking.Id,
                booking.LineId,
                booking.PassengerId,
+               booking.Passenger?.Name ?? string.Empty,
                booking.Date,
                booking.Latitude,
                booking.Longitude,

@@ -32,9 +32,19 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
                      b.Status      == BookingStatus.Waiting,
                 cancellationToken);
 
-    public Task<List<BookingEntity>> GetWaitingByLineAsync(int lineId, CancellationToken cancellationToken)
+    public Task<List<GetBookingModel>> GetWaitingByLineAsync(int lineId, CancellationToken cancellationToken)
         => dbContext.Bookings
             .Where(b => b.LineId == lineId && b.Status == BookingStatus.Waiting)
+            .Select(b => new GetBookingModel(
+                b.Id,
+                b.LineId,
+                b.PassengerId,
+                b.Passenger.Name,
+                b.Date,
+                b.Latitude,
+                b.Longitude,
+                b.Status,
+                b.CreatedAt))
             .ToListAsync(cancellationToken);
 
     public Task<BookingEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken)

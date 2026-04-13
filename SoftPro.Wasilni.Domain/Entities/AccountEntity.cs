@@ -1,4 +1,4 @@
-﻿using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Accounts;
 
 namespace SoftPro.Wasilni.Domain.Entities;
@@ -6,7 +6,6 @@ namespace SoftPro.Wasilni.Domain.Entities;
 public class AccountEntity : IEntity
 {
     public string Name { get; private set; }
-    public string FCMToken { get; private set; }
     public string PhoneNumber { get; private set; }
     public byte[] Password { get; private set; }
     public byte[] Salt { get; private set; }
@@ -16,11 +15,10 @@ public class AccountEntity : IEntity
     public DateTime? CodeExpiration { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public Role Role { get; private set; }
+    public Permission? Permission { get; private set; }
     public string RefreshToken { get; private set; }
     public DateTime RefreshTokenExpiresAt { get; private set; }
     public Guid Key { get; private set; }
-
-    private const int RefreshTokenDurationDays = 30;
 
     private AccountEntity() { }
 
@@ -37,7 +35,6 @@ public class AccountEntity : IEntity
         bool confirmed,
         string refreshToken,
         DateTime refreshTokenExpiresAt,
-        string fCMToken,
         Guid idempotencyKey)
     {
         Name = name;
@@ -52,11 +49,10 @@ public class AccountEntity : IEntity
         Confirmed = confirmed;
         RefreshToken = refreshToken;
         RefreshTokenExpiresAt = refreshTokenExpiresAt;
-        FCMToken = fCMToken;
         Key = idempotencyKey;
     }
 
-    public static AccountEntity Create(RegisterModel registerModel, byte[] passwordHashed, byte[] salt, string refreshToken, string code)
+    public static AccountEntity Create(RegisterModel registerModel, byte[] passwordHashed, byte[] salt, string refreshToken, string code, int refreshTokenDurationDays)
         => new(
             registerModel.Username,
             registerModel.Phonenumber,
@@ -69,8 +65,7 @@ public class AccountEntity : IEntity
             registerModel.Role,
             false,
             refreshToken,
-            DateTime.UtcNow.AddDays(RefreshTokenDurationDays),
-            registerModel.FCMToken,
+            DateTime.UtcNow.AddDays(refreshTokenDurationDays),
             registerModel.key);
 
     public void SetCountCode(int codeCount)
@@ -91,6 +86,7 @@ public class AccountEntity : IEntity
         SendCodeCount = 3;
         Confirmed = true;
     }
+
     public bool ChangeData(string username)
         => string.Equals(Name, username, StringComparison.OrdinalIgnoreCase);
 
@@ -100,12 +96,15 @@ public class AccountEntity : IEntity
     public void SetName(string name)
         => Name = name;
 
-    public void ChangeRefreshToken(string refreshToken)
+    public void ChangeRefreshToken(string refreshToken, int durationDays)
     {
         RefreshToken = refreshToken;
-        RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(RefreshTokenDurationDays);
+        RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(durationDays);
     }
 
-    public void SetFCMToken(string fCMToken)
-        => FCMToken = fCMToken;
+    public void SetPermission(Permission permission)
+        => Permission = permission;
+
+    public void ClearPermission()
+        => Permission = null;
 }

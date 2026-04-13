@@ -29,8 +29,7 @@ builder.Services.AddRateLimiting();
 builder.Services
     .RegisterApplication()
     .RegisterInfrastructure(builder.Configuration)
-    .RegisterPresentation(builder.Configuration)
-    /*.RegisterFirebase(builder.Configuration)*/;
+    .RegisterPresentation(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

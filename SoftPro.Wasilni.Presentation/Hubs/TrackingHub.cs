@@ -4,7 +4,9 @@ using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
 using SoftPro.Wasilni.Domain.Models.Buses;
+using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
+using Permission = SoftPro.Wasilni.Domain.Enums.Permission;
 using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.TripExtensions;
 using SoftPro.Wasilni.Presentation.Hubs.Helpers;
@@ -34,7 +36,7 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     // ─── Driver: Activate bus ─────────────────────────────────────────────────
 
-    [HasBus]
+    [HasPermission(Permission.Driver)]
     public async Task ActiveBus()
     {
         var ct = Context.ConnectionAborted;
@@ -52,7 +54,7 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     // ─── Driver: Deactivate bus ───────────────────────────────────────────────
 
-    [HasBus]
+    [HasPermission(Permission.Driver)]
     public async Task InactiveBus()
     {
         var ct = Context.ConnectionAborted;
@@ -68,7 +70,7 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     // ─── Driver: Send GPS location ────────────────────────────────────────────
 
-    [HasBus]
+    [HasPermission(Permission.Driver)]
     public async Task UpdateLocation(UpdateLocationHubRequest request)
     {
         var ct = Context.ConnectionAborted;

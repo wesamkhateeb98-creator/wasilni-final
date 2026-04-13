@@ -4,12 +4,13 @@ using System.Security.Claims;
 
 namespace SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 
-public class HasBusAuthorizationHandler : AuthorizationHandler<HasBusRequirement>
+public class HasPermissionAuthorizationHandler : AuthorizationHandler<HasPermissionRequirement>
 {
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
-        HasBusRequirement requirement)
+        HasPermissionRequirement requirement)
     {
+        // Admin always passes
         var roleClaim = context.User.FindFirst(ClaimTypes.Role);
         if (roleClaim is not null
             && Enum.TryParse(roleClaim.Value, out Role role)
@@ -22,7 +23,7 @@ public class HasBusAuthorizationHandler : AuthorizationHandler<HasBusRequirement
         var permissionClaim = context.User.FindFirst("Permission");
         if (permissionClaim is not null
             && Enum.TryParse(permissionClaim.Value, out Permission permission)
-            && permission == Permission.Driver)
+            && permission == requirement.Permission)
         {
             context.Succeed(requirement);
         }

@@ -1,5 +1,5 @@
-﻿using SoftPro.Wasilni.Domain.Enums;
+using SoftPro.Wasilni.Domain.Enums;
 
 namespace SoftPro.Wasilni.Domain.Models.Accounts;
 
-public record LoginModelExtended(int Id, string PhoneNumber, string Name, string Token, DateTime ExpirationDate, Role Role, string RefreshToken, string FCMToken);
+public record LoginModelExtended(int Id, string PhoneNumber, string Name, string Token, DateTime ExpirationDate, Role Role, string RefreshToken, Permission? Permission);

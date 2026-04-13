@@ -13,7 +13,7 @@ public static class ToResponseExtensions
                model.Status.ToString(), model.Latitude, model.Longitude, model.ActiveSince);
 
     public static GetBookingResponse ToResponse(this GetBookingModel model)
-        => new(model.Id, model.LineId, model.PassengerId, model.Date,
+        => new(model.Id, model.LineId, model.PassengerId, model.PassengerName, model.Date,
                model.Latitude, model.Longitude,
                model.Status.ToString(), model.CreatedAt);
 

@@ -1,6 +1,4 @@
-﻿using FirebaseAdmin;
-using FluentValidation;
-using Google.Apis.Auth.OAuth2;
+﻿using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -8,8 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Options;
-using System.Text;
 using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
+using System.Text;
 
 namespace SoftPro.Wasilni.Presentation.Extensions;
 
@@ -113,9 +111,15 @@ public static class RegistrationExtensions
 
             options.AddPolicy(HasBusAttribute.PolicyName,
                 policy => policy.Requirements.Add(new HasBusRequirement()));
+
+            foreach (var permission in Enum.GetValues<Permission>())
+                options.AddPolicy(
+                    $"{HasPermissionAttribute.PolicyPrefix}{permission}",
+                    policy => policy.Requirements.Add(new HasPermissionRequirement(permission)));
         });
 
         services.AddSingleton<IAuthorizationHandler, HasBusAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationHandler, HasPermissionAuthorizationHandler>();
         return services;
     }
 
@@ -150,34 +154,4 @@ public static class RegistrationExtensions
             });
         });
 
-    public static IServiceCollection RegisterFirebase(this IServiceCollection services, IConfiguration configuration)
-    {
-        if (FirebaseApp.DefaultInstance == null)
-        {
-            string json;
-
-            // جرّب أولاً من Environment Variable (مناسب لـ Render)
-            var firebaseEnv = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIAL");
-            if (!string.IsNullOrEmpty(firebaseEnv))
-            {
-                json = firebaseEnv;
-            }
-            else
-            {
-                // Fallback على User Secrets / appsettings.json (محلي)
-                var firebaseJson = configuration.GetSection("Firebase")
-                    .GetChildren()
-                    .ToDictionary(x => x.Key, x => x.Value);
-
-                json = System.Text.Json.JsonSerializer.Serialize(firebaseJson);
-            }
-
-            FirebaseApp.Create(new AppOptions()
-            {
-                Credential = GoogleCredential.FromJson(json)
-            });
-        }
-
-        return services;
-    }
 }

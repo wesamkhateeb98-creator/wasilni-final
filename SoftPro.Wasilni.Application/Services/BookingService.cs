@@ -38,10 +38,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
             cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
 
-        List<BookingEntity> bookings =
-            await unitOfWork.BookingRepository.GetWaitingByLineAsync(ctx.LineId, cancellationToken);
-
-        return bookings.Select(b => b.ToModel()).ToList();
+        return await unitOfWork.BookingRepository.GetWaitingByLineAsync(ctx.LineId, cancellationToken);
     }
 
     public async Task<BookingActionResult> ConfirmBookingAsync(
@@ -113,7 +110,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         return new MyBookingResult(booking.Id, booking.LineId, booking.Line.Name);
     }
 
-    public async Task<int> AddBookingAsync(CreateBookingModel model, CancellationToken cancellationToken)
+    public async Task<AddBookingResult> AddBookingAsync(CreateBookingModel model, CancellationToken cancellationToken)
     {
         BookingEntity? book = await unitOfWork.BookingRepository.FindByIdempotencyKeyAsync(model.key, cancellationToken);
         if (book is not null)
@@ -125,11 +122,14 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         if (await unitOfWork.BookingRepository.HasActiveBookingAsync(model.PassengerId, cancellationToken))
             throw new AlreadyExistsException(Phrases.AlreadyBooked);
 
+        var passenger = await unitOfWork.AccountRepository.GetByIdAsync(model.PassengerId, cancellationToken)
+            ?? throw new NotFoundException(Phrases.NotFound);
+
         BookingEntity booking = BookingEntity.Create(model.LineId, model.PassengerId, model.Latitude, model.Longitude, model.key);
         await unitOfWork.BookingRepository.AddAsync(booking, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return booking.Id;
+        return new AddBookingResult(booking.Id, passenger.Name);
     }
 
     public async Task<BookingActionResult> CancelBookingAsync(int passengerId, CancellationToken cancellationToken)

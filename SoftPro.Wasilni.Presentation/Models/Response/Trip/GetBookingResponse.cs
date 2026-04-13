@@ -4,6 +4,7 @@ public record GetBookingResponse(
     int      Id,
     int      LineId,
     int      PassengerId,
+    string   PassengerName,
     DateOnly Date,
     double   Latitude,
     double   Longitude,

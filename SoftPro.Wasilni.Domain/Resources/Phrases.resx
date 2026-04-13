@@ -417,4 +417,7 @@
   <data name="InvalidKey" xml:space="preserve">
     <value>المفتاح غير صالح</value>
   </data>
+  <data name="RefreshTokenExpired" xml:space="preserve">
+    <value>انتهت صلاحية رمز التحديث، الرجاء تسجيل الدخول من جديد</value>
+  </data>
 </root>

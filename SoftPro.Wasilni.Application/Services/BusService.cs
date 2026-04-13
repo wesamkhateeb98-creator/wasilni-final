@@ -6,6 +6,7 @@ using SoftPro.Wasilni.Application.Cache;
 using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
+using Permission = SoftPro.Wasilni.Domain.Enums.Permission;
 using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Buses;
@@ -80,9 +81,10 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         if (bus.DriverId is not null)
             throw new FailedPreconditionException(Phrases.AssignedOtherDriver);
 
-        if (await unitOfWork.AccountRepository.GetByIdAsync(driverId, cancellationToken) is null)
-            throw new NotFoundException(Phrases.DriverNotFound);
+        AccountEntity driver = await unitOfWork.AccountRepository.GetByIdAsync(driverId, cancellationToken)
+            ?? throw new NotFoundException(Phrases.DriverNotFound);
 
+        driver.SetPermission(Permission.Driver);
         bus.AssignDriverId(driverId);
 
         await unitOfWork.CompleteAsync(cancellationToken);
@@ -98,6 +100,10 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         if (bus.DriverId is null)
             throw new FailedPreconditionException(Phrases.DriverNotFound);
 
+        AccountEntity driver = await unitOfWork.AccountRepository.GetByIdAsync(bus.DriverId.Value, cancellationToken)
+            ?? throw new NotFoundException(Phrases.DriverNotFound);
+
+        driver.ClearPermission();
         bus.UnassignDriver();
 
         await unitOfWork.CompleteAsync(cancellationToken);

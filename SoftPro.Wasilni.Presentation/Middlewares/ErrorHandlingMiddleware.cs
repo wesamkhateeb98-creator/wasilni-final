@@ -14,6 +14,7 @@ namespace SoftPro.Wasilni.Presentation.Middlewares
         {
             try
             {
+                logger.LogWarning("*****************************Request");
                 await _next(context);
             }
             catch (Exception ex) when (ex is IProblemDetailsProvider provider)
@@ -45,7 +46,7 @@ namespace SoftPro.Wasilni.Presentation.Middlewares
                 "Unauthorization" => HttpStatusCode.Unauthorized,
                 "Invalid Arguement" => HttpStatusCode.BadRequest,
                 "Failed Precondition" => HttpStatusCode.PreconditionFailed,
-                "Too Many Requests"   => HttpStatusCode.TooManyRequests,
+                "Too Many Requests" => HttpStatusCode.TooManyRequests,
                 _ => HttpStatusCode.InternalServerError
             };
 

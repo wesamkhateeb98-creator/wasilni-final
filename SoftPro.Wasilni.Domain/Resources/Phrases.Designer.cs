@@ -951,5 +951,11 @@ namespace Domain.Resources
                 return ResourceManager.GetString("InvalidKey", resourceCulture);
             }
         }
+
+        public static string RefreshTokenExpired {
+            get {
+                return ResourceManager.GetString("RefreshTokenExpired", resourceCulture);
+            }
+        }
     }
 }

@@ -6,6 +6,7 @@ public record GetBookingModel(
     int           Id,
     int           LineId,
     int           PassengerId,
+    string        PassengerName,
     DateOnly      Date,
     double        Latitude,
     double        Longitude,

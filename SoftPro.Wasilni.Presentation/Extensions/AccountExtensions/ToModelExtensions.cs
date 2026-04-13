@@ -11,7 +11,6 @@ public static class ToModelExtensions
             registerRequest.Username,
             registerRequest.Phonenumber,
             registerRequest.Password,
-            registerRequest.FCMToken,
             Role.Passenger,
             registerRequest.key);
 

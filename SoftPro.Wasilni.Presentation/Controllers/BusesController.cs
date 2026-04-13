@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
+using Permission = SoftPro.Wasilni.Domain.Enums.Permission;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
@@ -75,7 +76,7 @@ public class BusesController(IBusService busService, IHubContext<TrackingHub> hu
 
     [HttpGet("my-info")]
     [Authorize]
-    [HasBus]
+    [HasPermission(Permission.Driver)]
     public async Task<DriverBusInfoResponse> GetBusInfoAsync(CancellationToken cancellationToken)
     {
         int driverId = User.GetId();
@@ -85,7 +86,7 @@ public class BusesController(IBusService busService, IHubContext<TrackingHub> hu
 
     [HttpPost("adjust-anonymous")]
     [Authorize]
-    [HasBus]
+    [HasPermission(Permission.Driver)]
     public async Task<AdjustAnonymousResponse> AdjustAnonymousAsync(
         [FromBody] AdjustAnonymousRequest request,
         CancellationToken cancellationToken)

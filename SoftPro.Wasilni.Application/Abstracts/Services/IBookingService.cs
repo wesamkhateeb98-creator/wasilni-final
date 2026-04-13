@@ -26,6 +26,6 @@ public interface IBookingService
 
     // ─── Passenger ────────────────────────────────────────────────────────────
     Task<MyBookingResult?> GetMyBookingAsync(int passengerId, CancellationToken cancellationToken);
-    Task<int> AddBookingAsync(CreateBookingModel model, CancellationToken cancellationToken);
+    Task<AddBookingResult> AddBookingAsync(CreateBookingModel model, CancellationToken cancellationToken);
     Task<BookingActionResult> CancelBookingAsync(int passengerId, CancellationToken cancellationToken);
 }

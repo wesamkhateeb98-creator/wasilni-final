@@ -34,7 +34,7 @@ public static class ToResponseExtensions
             loginModelExtended.ExpirationDate,
             loginModelExtended.Role,
             loginModelExtended.RefreshToken,
-            loginModelExtended.FCMToken
+            loginModelExtended.Permission
             );
     private static SearchByPhonenumberResponse ToResponse(this SearchByPhoneNumberModel searchByPhoneNumber)
         => new(searchByPhoneNumber.Id, searchByPhoneNumber.Name, searchByPhoneNumber.Phonenumber);

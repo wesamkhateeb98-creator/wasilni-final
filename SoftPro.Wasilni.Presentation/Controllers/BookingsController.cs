@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models;
+using Permission = SoftPro.Wasilni.Domain.Enums.Permission;
 using SoftPro.Wasilni.Domain.Models.Trips;
 using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
@@ -47,7 +48,7 @@ public class BookingsController(
 
     [HttpPost("confirm-rider")]
     [Authorize]
-    [HasBus]
+    [HasPermission(Permission.Driver)]
     public async Task<IdResponse> ConfirmRiderAsync(CancellationToken cancellationToken)
     {
         int driverId = User.GetId();
@@ -57,7 +58,7 @@ public class BookingsController(
 
     [HttpGet("line")]
     [Authorize]
-    [HasBus]
+    [HasPermission(Permission.Driver)]
     public async Task<List<GetBookingResponse>> GetBookingForLineAsync(
         CancellationToken cancellationToken)
     {
@@ -70,7 +71,7 @@ public class BookingsController(
 
     [HttpPut("{id}/confirm")]
     [Authorize]
-    [HasBus]
+    [HasPermission(Permission.Driver)]
     public async Task<IdResponse> ConfirmBookingAsync(
         [FromRoute] int id,
         CancellationToken cancellationToken)
@@ -88,7 +89,7 @@ public class BookingsController(
 
     [HttpPut("{id}/no-show")]
     [Authorize]
-    [HasBus]
+    [HasPermission(Permission.Driver)]
     public async Task<IdResponse> MarkNoShowAsync(
         [FromRoute] int id,
         CancellationToken cancellationToken)
@@ -127,12 +128,13 @@ public class BookingsController(
         CancellationToken cancellationToken)
     {
         int passengerId = User.GetId();
-        int bookingId = await bookingService.AddBookingAsync(
+        AddBookingResult result = await bookingService.AddBookingAsync(
             new CreateBookingModel(lineId, passengerId, request.Latitude, request.Longitude, request.key), cancellationToken);
 
         // Notify all active drivers on this line
         var notification = new GetBookingResponse(
-            bookingId, lineId, passengerId,
+            result.BookingId, lineId, passengerId,
+            result.PassengerName,
             DateOnly.FromDateTime(DateTime.UtcNow),
             request.Latitude, request.Longitude,
             BookingStatus.Waiting.ToString(),
@@ -142,7 +144,7 @@ public class BookingsController(
             .Group(TrackingGroups.LineBooking(lineId))
             .OnBookingAddedAsync(notification, cancellationToken);
 
-        return new(bookingId);
+        return new(result.BookingId);
     }
 
     [HttpDelete("cancel")]

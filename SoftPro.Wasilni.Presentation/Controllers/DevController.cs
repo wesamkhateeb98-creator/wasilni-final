@@ -16,7 +16,6 @@ public class DevController(AppDbContext dbContext) : BaseController
 {
     private const string DefaultPassword = "Password@123";
     private const string AdminPassword = "Admin@123";
-    private const string DevFcm = "dev-fcm-token";
 
     private static readonly string[] Colors = ["White", "Blue", "Silver", "Yellow", "Red", "Green", "Orange", "Black", "Gray", "Beige"];
     private static readonly BusType[] BusTypes = [BusType.Bolman, BusType.Van, BusType.Servece];
@@ -128,11 +127,12 @@ public class DevController(AppDbContext dbContext) : BaseController
     {
         byte[] salt = AuthHelper.GenerateSalt();
         var account = AccountEntity.Create(
-            new RegisterModel(name, phone, password, DevFcm, role, key: Guid.NewGuid()),
+            new RegisterModel(name, phone, password, role, key: Guid.NewGuid()),
             AuthHelper.HashPasswordWithSalt(password, salt),
             salt,
             AuthHelper.GenerateRefreshToken(),
-            "000000");
+            "000000",
+            7);
 
         account.ConfirmAccount();
         return account;
