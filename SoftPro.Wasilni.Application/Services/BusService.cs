@@ -193,12 +193,26 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
             cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
 
-        // delta = 1 راكب ركب، delta = -1 راكب نزل — نسجّل على الـ DailyRidership مباشرة
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
-        int count = await unitOfWork.DailyRidershipRepository.AdjustAsync(
-            new IncrementRidershipModel(ctx.LineId, ctx.BusId, today), delta, cancellationToken);
 
-        return new AdjustAnonymousResult(ctx.BusId, ctx.LineId, count);
+        // Get or create
+        var ridership = await unitOfWork.DailyRidershipRepository
+            .GetOrCreateAsync(new IncrementRidershipModel(ctx.LineId, ctx.BusId, today), cancellationToken);
+
+        if (ridership is null)
+        {
+
+            ridership = DailyRidershipEntity.Create(ctx.LineId, ctx.BusId, today);
+
+        }
+
+        ridership.AdjustRiders(delta);
+
+        await unitOfWork.DailyRidershipRepository.AddAsync(ridership, cancellationToken);
+
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return new AdjustAnonymousResult(ctx.BusId, ctx.LineId, ridership.NumberOfRiders);
     }
 
 }
