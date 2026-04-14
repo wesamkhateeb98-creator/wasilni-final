@@ -4,6 +4,7 @@ using SoftPro.Wasilni.Application.Abstracts;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
 using SoftPro.Wasilni.Application.Extensions;
+using SoftPro.Wasilni.Application.Helpers;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Exceptions;
@@ -58,6 +59,13 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
             ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
             cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
+        
+        if(GeoHelper.Distance(booking.Latitude,booking.Longitude,)>100)
+        {
+            //Phrases.InvalidDistanceBetweenDriverAndPassenger
+            throw new FailedPreconditionException("المسافة بين السائق و الراكب اكبر من 100 متر");
+        }
+
 
         booking.MarkPickedUp();
         await unitOfWork.CompleteAsync(cancellationToken);
@@ -92,6 +100,12 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
 
         if (booking.LineId != ctx.LineId)
             throw new ForbiddenException(Phrases.Forbidden);
+
+        if (GeoHelper.Distance(booking.Latitude, booking.Longitude,) > 100)
+        {
+            //Phrases.InvalidDistanceBetweenDriverAndPassenger
+            throw new FailedPreconditionException("المسافة بين السائق و الراكب اكبر من 100 متر");
+        }
 
         booking.Cancel();
         await unitOfWork.CompleteAsync(cancellationToken);
