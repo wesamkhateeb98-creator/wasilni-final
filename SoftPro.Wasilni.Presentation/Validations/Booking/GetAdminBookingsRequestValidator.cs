@@ -15,6 +15,7 @@ public class GetAdminBookingsRequestValidator : AbstractValidator<GetAdminBookin
 
         RuleFor(x => x.PageSize)
             .GreaterThan(0)
+            .LessThanOrEqualTo(100)
             .WithName(Title.PageSize);
 
         RuleFor(x => x.LineId)

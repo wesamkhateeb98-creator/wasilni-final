@@ -61,6 +61,7 @@ public class DevController(AppDbContext dbContext) : BaseController
         for (int i = 1; i <= 200; i++)
         {
             var driver = CreateAccount($"Driver {i}", $"0911{i:D6}", DefaultPassword, Role.Passenger);
+            driver.SetPermission(Permission.Driver);
             drivers.Add(driver);
         }
         await dbContext.Accounts.AddRangeAsync(drivers, cancellationToken);
@@ -76,6 +77,7 @@ public class DevController(AppDbContext dbContext) : BaseController
                 Type: BusTypes[rng.Next(BusTypes.Length)],
                 key: Guid.NewGuid()));
             bus.AssignDriverId(drivers[i].Id);
+            drivers[i].SetPermission(Permission.Driver);
             buses.Add(bus);
         }
         await dbContext.Buses.AddRangeAsync(buses, cancellationToken);

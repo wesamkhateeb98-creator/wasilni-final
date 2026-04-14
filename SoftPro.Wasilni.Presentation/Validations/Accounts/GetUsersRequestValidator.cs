@@ -15,7 +15,7 @@ public class GetUsersRequestValidator : AbstractValidator<GetUsersRequest>
 
         RuleFor(x => x.PageSize)
             .GreaterThan(0)
-            .LessThanOrEqualTo(10)
+            .LessThanOrEqualTo(100)
             .WithName(Title.PageSize)
             .WithMessage(Phrases.InvalidPageSize);
     }

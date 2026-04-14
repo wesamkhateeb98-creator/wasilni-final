@@ -15,7 +15,7 @@ public class GetLinesRequestValidator : AbstractValidator<GetLinesRequest>
 
         RuleFor(x => x.PageSize)
             .GreaterThan(0)
-            .LessThanOrEqualTo(50)
+            .LessThanOrEqualTo(100)
             .WithName(Title.PageSize);
 
         RuleFor(x => x.Name)

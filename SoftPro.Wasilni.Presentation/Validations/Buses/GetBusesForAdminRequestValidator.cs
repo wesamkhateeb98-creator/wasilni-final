@@ -15,6 +15,7 @@ public class GetBusesForAdminRequestValidator : AbstractValidator<GetBusesForAdm
 
         RuleFor(x => x.PageSize)
             .GreaterThan(0)
+            .LessThanOrEqualTo(100)
             .WithName(Title.PageSize);
 
         RuleFor(x => x.Type)
