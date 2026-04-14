@@ -20,7 +20,7 @@ public class WhatsAppRepository(HttpClient httpClient) : IWhatsAppRepository
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         // Send POST request
-        var response = await httpClient.PostAsync("https://whatsapp-web-otp-wy1q.onrender.com/whatsapp/send/", content);
+        var response = await httpClient.PostAsync("https://whatsapp-web-otp-production-c90b.up.railway.app/whatsapp/send", content);
 
         // Throw if not successful
         response.EnsureSuccessStatusCode();

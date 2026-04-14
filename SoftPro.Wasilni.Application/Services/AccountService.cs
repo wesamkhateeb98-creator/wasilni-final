@@ -56,18 +56,30 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         byte[] salt = AuthHelper.GenerateSalt();
         byte[] passwordHashed = AuthHelper.HashPasswordWithSalt(registerModel.Password, salt);
         string refreshToken = AuthHelper.GenerateRefreshToken();
-        string code = "000000";
+        string code = AuthHelper.GenerateCode();
 
         AccountEntity account = AccountEntity.Create(registerModel, passwordHashed, salt, refreshToken, code, RefreshDays);
 
         if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow.AddHours(3) > account.CodeExpiration.Value.AddMinutes(30))
             account.SetCountCode(3);
 
+
+        try
+        {
+            await WhatsAppRepository.SendCode(registerModel.Phonenumber, code);
+        }
+        catch (Exception ex)
+        {
+            throw new FailedPreconditionException(ex.Message);
+        }
+
         account.SetCodeExpiration(DateTime.UtcNow.AddHours(3).AddMinutes(10));
         account.MinusCountCode();
 
         await unitOfWork.AccountRepository.AddAsync(account, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
+
+        
 
         return account.Id;
     }
