@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using SoftPro.Wasilni.Domain.Exceptions;
 
@@ -43,8 +44,20 @@ public class ValidatorActionFilter(IServiceProvider serviceProvider) : IActionFi
 
             if (!validationResult.IsValid)
             {
-                throw new InvalidArguementException(
-                    validationResult.Errors.Select(x => (x.PropertyName, x.ErrorMessage)).ToList());
+                var errors = validationResult.Errors
+                    .GroupBy(x => x.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).Distinct().ToArray());
+
+                context.Result = new BadRequestObjectResult(new
+                {
+                    title = "Validation Error",
+                    type = "Invalid Arguement",
+                    status = StatusCodes.Status400BadRequest,
+                    detail = "One or more validation errors occurred.",
+                    extensions = errors
+                });
+
+                return;
             }
         }
     }
