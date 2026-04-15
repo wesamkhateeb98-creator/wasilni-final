@@ -6,7 +6,7 @@ using SoftPro.Wasilni.Domain.Exceptions;
 
 namespace SoftPro.Wasilni.Presentation.ActionFilters;
 
-public class ValidatorActionFilter(IServiceProvider serviceProvider) : IActionFilter
+public class ValidatorActionFilter : IActionFilter
 {
     public void OnActionExecuted(ActionExecutedContext context)
     {
@@ -21,16 +21,7 @@ public class ValidatorActionFilter(IServiceProvider serviceProvider) : IActionFi
 
             var inputType = argument.Value.GetType();
             var validatorType = typeof(IValidator<>).MakeGenericType(inputType);
-            IValidator? validator;
-
-            try
-            {
-                validator = serviceProvider.GetService(validatorType) as IValidator;
-            }
-            catch
-            {
-                continue;
-            }
+            IValidator? validator = context.HttpContext.RequestServices.GetService(validatorType) as IValidator;
 
             if (validator is null)
                 continue;

@@ -16,17 +16,17 @@ public class RegisterPassengerRequestValidator : AbstractValidator<SignupPasseng
             .WithName(Title.Username)
             .WithMessage(Phrases.InvalidUsername);
 
-        RuleFor(x => x.Phonenumber)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .Must(x => !string.IsNullOrWhiteSpace(x) && Regex.IsMatch(x, PresentationConsts.phonenumberExpression))
-            .WithName(Title.Phonenumber)
-            .WithMessage(Phrases.InvalidPhonenumber);
+        //RuleFor(x => x.Phonenumber)
+        //    .Cascade(CascadeMode.Stop)
+        //    .NotEmpty()
+        //    .Must(x => !string.IsNullOrWhiteSpace(x) && Regex.IsMatch(x, PresentationConsts.phonenumberExpression))
+        //    .WithName(Title.Phonenumber)
+        //    .WithMessage(Phrases.InvalidPhonenumber);
 
-        //RuleFor(x => x.Password)
-        //    .Must(x => Regex.IsMatch(x, PresentationConsts.passwordExpression))
-        //    .WithName(Title.Password)
-        //    .WithMessage(Phrases.InvalidPassword);
+        RuleFor(x => x.Password)
+            .Must(x => Regex.IsMatch(x, PresentationConsts.passwordExpression))
+            .WithName(Title.Password)
+            .WithMessage(Phrases.InvalidPassword);
 
         RuleFor(x => x.Password)
             .Cascade(CascadeMode.Stop)
@@ -35,9 +35,9 @@ public class RegisterPassengerRequestValidator : AbstractValidator<SignupPasseng
             .WithName(Title.Password)
             .WithMessage(Phrases.InvalidPassword);
 
-        RuleFor(x => x.key)
-            .NotEqual(Guid.Empty)
-            .WithMessage(Phrases.InvalidKey);
+        //RuleFor(x => x.key)
+        //    .NotEqual(Guid.Empty)
+        //    .WithMessage(Phrases.InvalidKey);
 
     }
 }
