@@ -3,13 +3,11 @@ using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
-using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Application.Helpers;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Models;
-using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Domain.Models.Reports;
 using SoftPro.Wasilni.Domain.Models.Trips;
 
@@ -59,14 +57,14 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
             ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
             cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
-        
+
         if (!cache.TryGetValue(BusCacheKeys.DriverLocation(driverId), out (double Latitude, double Longitude) busLocation))
-            throw new FailedPreconditionException("موقع الباص غير متوفر");
+            throw new FailedPreconditionException("موقع الباص غير متوفر"); // Todo: Set message in Phrases resource
 
         if (GeoHelper.Distance(booking.Latitude, booking.Longitude, busLocation.Latitude, busLocation.Longitude) > 100)
         {
             //Phrases.InvalidDistanceBetweenDriverAndPassenger
-            throw new FailedPreconditionException("المسافة بين السائق و الراكب اكبر من 100 متر");
+            throw new FailedPreconditionException("المسافة بين السائق و الراكب اكبر من 100 متر");// Todo: Set message in Phrases resource
         }
 
 
@@ -105,12 +103,12 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
             throw new ForbiddenException(Phrases.Forbidden);
 
         if (!cache.TryGetValue(BusCacheKeys.DriverLocation(driverId), out (double Latitude, double Longitude) busLocation))
-            throw new FailedPreconditionException("موقع الباص غير متوفر");
+            throw new FailedPreconditionException("موقع الباص غير متوفر");// Todo: Set message in Phrases resource
 
         if (GeoHelper.Distance(booking.Latitude, booking.Longitude, busLocation.Latitude, busLocation.Longitude) > 100)
         {
             //Phrases.InvalidDistanceBetweenDriverAndPassenger
-            throw new FailedPreconditionException("المسافة بين السائق و الراكب اكبر من 100 متر");
+            throw new FailedPreconditionException("المسافة بين السائق و الراكب اكبر من 100 متر");// Todo: Set message in Phrases resource
         }
 
         booking.Cancel();
@@ -163,21 +161,5 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return new BookingActionResult(booking.Id, lineId);
-    }
-
-    public async Task<int> ConfirmRiderAsync(int driverId, CancellationToken cancellationToken)
-    {
-        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
-        {
-            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
-                ?? throw new NotFoundException(Phrases.BusNotFound);
-
-            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
-            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
-        }
-
-        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
-        return await unitOfWork.DailyRidershipRepository.IncrementAsync(
-            new IncrementRidershipModel(ctx.LineId, ctx.BusId, today), cancellationToken);
     }
 }

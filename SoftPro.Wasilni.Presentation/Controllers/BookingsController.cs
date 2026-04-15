@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.SignalR;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models;
-using Permission = SoftPro.Wasilni.Domain.Enums.Permission;
 using SoftPro.Wasilni.Domain.Models.Trips;
 using SoftPro.Wasilni.Presentation.ActionFilters.Authorization;
 using SoftPro.Wasilni.Presentation.Extensions;
@@ -15,6 +14,7 @@ using SoftPro.Wasilni.Presentation.Hubs.Helpers;
 using SoftPro.Wasilni.Presentation.Models.Request.Booking;
 using SoftPro.Wasilni.Presentation.Models.Response;
 using SoftPro.Wasilni.Presentation.Models.Response.Trip;
+using Permission = SoftPro.Wasilni.Domain.Enums.Permission;
 
 namespace SoftPro.Wasilni.Presentation.Controllers;
 
@@ -45,16 +45,6 @@ public class BookingsController(
     // ═══════════════════════════════════════════════════════════════════════════
     // DRIVER endpoints
     // ═══════════════════════════════════════════════════════════════════════════
-
-    [HttpPost("confirm-rider")]
-    [Authorize]
-    [HasPermission(Permission.Driver)]
-    public async Task<IdResponse> ConfirmRiderAsync(CancellationToken cancellationToken)
-    {
-        int driverId = User.GetId();
-        int count = await bookingService.ConfirmRiderAsync(driverId, cancellationToken);
-        return new IdResponse(count);
-    }
 
     [HttpGet("line")]
     [Authorize]
