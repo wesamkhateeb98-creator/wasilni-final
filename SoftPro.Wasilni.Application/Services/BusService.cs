@@ -197,7 +197,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
         // Get or create
         var ridership = await unitOfWork.DailyRidershipRepository
-            .GetOrCreateAsync(new IncrementRidershipModel(ctx.LineId, ctx.BusId, today), cancellationToken);
+            .GetByLineIdAndBusIdAsync(new IncrementRidershipModel(ctx.LineId, ctx.BusId, today), cancellationToken);
 
         if (ridership is null)
         {

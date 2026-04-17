@@ -423,4 +423,7 @@
   <data name="InvalidDistanceBetweenDriverAndPassenger" xml:space="preserve">
     <value>المسافة بين السائق و الراكب اكبر من 100 متر</value>
   </data>
+  <data name="BusLocationNotAvailable" xml:space="preserve">
+    <value>موقع الباص غير متوفر</value>
+  </data>
 </root>

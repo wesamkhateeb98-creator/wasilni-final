@@ -957,5 +957,17 @@ namespace Domain.Resources
                 return ResourceManager.GetString("RefreshTokenExpired", resourceCulture);
             }
         }
+
+        public static string InvalidDistanceBetweenDriverAndPassenger {
+            get {
+                return ResourceManager.GetString("InvalidDistanceBetweenDriverAndPassenger", resourceCulture);
+            }
+        }
+
+        public static string BusLocationNotAvailable {
+            get {
+                return ResourceManager.GetString("BusLocationNotAvailable", resourceCulture);
+            }
+        }
     }
 }

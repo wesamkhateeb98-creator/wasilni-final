@@ -9,7 +9,7 @@ namespace SoftPro.Wasilni.Infrastructure.Repositories;
 public class DailyRidershipRepository(AppDbContext dbContext)
     : Repository<DailyRidershipEntity>(dbContext), IDailyRidershipRepository
 {
-    public Task<DailyRidershipEntity?> GetOrCreateAsync(IncrementRidershipModel model, CancellationToken cancellationToken)
+    public Task<DailyRidershipEntity?> GetByLineIdAndBusIdAsync(IncrementRidershipModel model, CancellationToken cancellationToken)
         => dbContext.DailyRiderships
             .FirstOrDefaultAsync(
                 r => r.LineId == model.LineId && r.BusId == model.BusId && r.Day == model.Day,

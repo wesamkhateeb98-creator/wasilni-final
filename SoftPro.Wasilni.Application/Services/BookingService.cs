@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Cache;
-using SoftPro.Wasilni.Application.Helpers;
+using SoftPro.Wasilni.Domain.Helper;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Exceptions;
@@ -62,7 +62,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
 
         // Get or create
         var ridership = await unitOfWork.DailyRidershipRepository
-            .GetOrCreateAsync(new IncrementRidershipModel(booking.LineId, ctx.BusId, today), cancellationToken);
+            .GetByLineIdAndBusIdAsync(new IncrementRidershipModel(booking.LineId, ctx.BusId, today), cancellationToken);
 
         if (ridership is null)
         {
@@ -72,15 +72,13 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
 
         // Increment
         if (!cache.TryGetValue(BusCacheKeys.DriverLocation(driverId), out (double Latitude, double Longitude) busLocation))
-            throw new FailedPreconditionException("موقع الباص غير متوفر"); // Todo: Set message in Phrases resource
+            throw new FailedPreconditionException(Phrases.BusLocationNotAvailable);
 
         if (GeoHelper.Distance(booking.Latitude, booking.Longitude, busLocation.Latitude, busLocation.Longitude) > 100)
-        {
-            //Phrases.InvalidDistanceBetweenDriverAndPassenger
-            throw new FailedPreconditionException("المسافة بين السائق و الراكب اكبر من 100 متر");// Todo: Set message in Phrases resource
-        }
+            throw new FailedPreconditionException(Phrases.InvalidDistanceBetweenDriverAndPassenger);
 
         booking.MarkPickedUp();
+
         ridership.IncrementRiders();
 
         // Complete
@@ -114,13 +112,10 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
             throw new ForbiddenException(Phrases.Forbidden);
 
         if (!cache.TryGetValue(BusCacheKeys.DriverLocation(driverId), out (double Latitude, double Longitude) busLocation))
-            throw new FailedPreconditionException("موقع الباص غير متوفر");// Todo: Set message in Phrases resource
+            throw new FailedPreconditionException(Phrases.BusLocationNotAvailable);
 
         if (GeoHelper.Distance(booking.Latitude, booking.Longitude, busLocation.Latitude, busLocation.Longitude) > 100)
-        {
-            //Phrases.InvalidDistanceBetweenDriverAndPassenger
-            throw new FailedPreconditionException("المسافة بين السائق و الراكب اكبر من 100 متر");// Todo: Set message in Phrases resource
-        }
+            throw new FailedPreconditionException(Phrases.InvalidDistanceBetweenDriverAndPassenger);
 
         booking.Cancel();
         await unitOfWork.CompleteAsync(cancellationToken);

@@ -1,4 +1,4 @@
-namespace SoftPro.Wasilni.Application.Helpers;
+namespace SoftPro.Wasilni.Domain.Helper;
 
 /// <summary>
 /// Geographic utilities (WGS-84 coordinate system).
