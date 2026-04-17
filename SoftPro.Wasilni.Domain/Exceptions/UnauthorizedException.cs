@@ -1,4 +1,5 @@
-﻿using SoftPro.Wasilni.Domain.Exceptions.Abstraction;
+﻿using System.Net;
+using SoftPro.Wasilni.Domain.Exceptions.Abstraction;
 
 namespace SoftPro.Wasilni.Domain.Exceptions;
 
@@ -9,5 +10,6 @@ public class UnauthorizedException(string message) : Exception, IProblemDetailsP
         {
             Title = message,
             Type = "Unauthorization",
+            StatusCode = HttpStatusCode.Unauthorized,
         };
 }

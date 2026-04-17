@@ -9,10 +9,6 @@ namespace SoftPro.Wasilni.Domain.Helper;
 
 public class AuthHelper()
 {
-    public static DateTime GetExpirationDate(JwtOption jwtOption)
-        //=> DateTime.UtcNow.AddHours(3).AddDays(jwtOption.DurationExpiredInDayJWT);
-        => DateTime.UtcNow.AddSeconds(20);
-
     public static bool Equals(byte[] first, byte[] second)
         => Encoding.UTF8.GetString(first) == Encoding.UTF8.GetString(second);
 
@@ -21,7 +17,7 @@ public class AuthHelper()
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(jwtOption.keyJwt);
 
-        DateTime expirationDate = DateTime.UtcNow.AddHours(3).AddMinutes(jwtOption.DurationExpiredInMinutesJWT);
+        DateTime expirationDate = DateTime.UtcNow.AddMinutes(jwtOption.DurationExpiredInMinutesJWT);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {

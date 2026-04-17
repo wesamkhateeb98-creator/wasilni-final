@@ -17,7 +17,7 @@ public class LineService(IUnitOfWork unitOfWork) : ILineService
         if (line is not null)
             throw new AlreadyExistsException(Phrases.LineAlreadyExists);
 
-        LineEntity? existing = unitOfWork.LineRepository.GetLineByName(model.Name, cancellationToken);
+        LineEntity? existing = await unitOfWork.LineRepository.GetLineByName(model.Name, cancellationToken);
         if (existing is not null) throw new AlreadyExistsException(Phrases.LineAlreadyExists);
 
         LineEntity newLine = LineEntity.Create(model);

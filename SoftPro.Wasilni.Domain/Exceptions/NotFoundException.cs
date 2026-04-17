@@ -1,4 +1,5 @@
-﻿using SoftPro.Wasilni.Domain.Exceptions.Abstraction;
+﻿using System.Net;
+using SoftPro.Wasilni.Domain.Exceptions.Abstraction;
 
 namespace SoftPro.Wasilni.Domain.Exceptions;
 
@@ -9,5 +10,6 @@ public class NotFoundException(string message) : Exception, IProblemDetailsProvi
         {
             Title = message,
             Type = "Not Found",
+            StatusCode = HttpStatusCode.NotFound,
         };
 }

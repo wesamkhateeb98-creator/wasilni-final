@@ -60,18 +60,16 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 
         AccountEntity account = AccountEntity.Create(registerModel, passwordHashed, salt, refreshToken, code, RefreshDays);
 
-        if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow.AddHours(3) > account.CodeExpiration.Value.AddMinutes(30))
+        if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow > account.CodeExpiration.Value.AddMinutes(30))
             account.SetCountCode(3);
 
-
-
-        account.SetCodeExpiration(DateTime.UtcNow.AddHours(3).AddMinutes(10));
+        account.SetCodeExpiration(DateTime.UtcNow.AddMinutes(10));
         account.MinusCountCode();
 
         await unitOfWork.AccountRepository.AddAsync(account, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        bool sendSucceeded = await WhatsAppRepository.SendCode(registerModel.Phonenumber, code);
+        bool sendSucceeded = await WhatsAppRepository.SendCode(registerModel.Phonenumber, code, cancellationToken);
         if (!sendSucceeded)
             throw new FailedPreconditionException(Phrases.SendCodeFailed);
 
@@ -86,7 +84,7 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         if (account.Confirmed)
             throw new FailedPreconditionException(Phrases.AccountAlreadyConfirmed);
 
-        if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow.AddHours(3) > account.CodeExpiration.Value.AddMinutes(30))
+        if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow > account.CodeExpiration.Value.AddMinutes(30))
             account.SetCountCode(3);
 
         if (account.SendCodeCount <= 0)
@@ -96,13 +94,14 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 
         account.SetCode(code);
 
-        account.SetCodeExpiration(DateTime.UtcNow.AddHours(3).AddMinutes(10));
+        account.SetCodeExpiration(DateTime.UtcNow.AddMinutes(10));
 
         account.MinusCountCode();
 
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        bool sendSucceeded = await WhatsAppRepository.SendCode(account.PhoneNumber, account.Code!);
+        bool sendSucceeded = await WhatsAppRepository.SendCode(account.PhoneNumber, code, cancellationToken);
+
         if (!sendSucceeded)
             throw new FailedPreconditionException(Phrases.SendCodeFailed);
 

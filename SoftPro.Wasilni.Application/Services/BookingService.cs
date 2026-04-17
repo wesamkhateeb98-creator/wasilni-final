@@ -15,6 +15,24 @@ namespace SoftPro.Wasilni.Application.Services;
 
 public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBookingService
 {
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private async Task<DriverContextCache> GetDriverContextAsync(int driverId, CancellationToken ct)
+    {
+        if (cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) && ctx is not null)
+            return ctx;
+
+        BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, ct)
+            ?? throw new NotFoundException(Phrases.BusNotFound);
+
+        if (bus.Status != BusStatus.Active)
+            throw new FailedPreconditionException(Phrases.BusNotOnRoad);
+
+        ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
+        cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
+        return ctx;
+    }
+
     // ─── Admin ────────────────────────────────────────────────────────────────
 
     public Task<Page<GetAdminBookingModel>> GetBookingsForAdminAsync(
@@ -25,18 +43,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
 
     public async Task<List<GetBookingModel>> GetBookingForLineAsync(int driverId, CancellationToken cancellationToken)
     {
-        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
-        {
-            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
-                ?? throw new NotFoundException(Phrases.BusNotFound);
-
-            if (bus.Status != BusStatus.Active)
-                throw new FailedPreconditionException(Phrases.BusNotOnRoad);
-
-            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
-            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
-        }
-
+        var ctx = await GetDriverContextAsync(driverId, cancellationToken);
         return await unitOfWork.BookingRepository.GetWaitingByLineAsync(ctx.LineId, cancellationToken);
     }
 
@@ -49,14 +56,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         if (booking.Status != BookingStatus.Waiting)
             throw new FailedPreconditionException(Phrases.AlreadyBooked);
 
-        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
-        {
-            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
-                ?? throw new NotFoundException(Phrases.BusNotFound);
-
-            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
-            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
-        }
+        var ctx = await GetDriverContextAsync(driverId, cancellationToken);
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -96,17 +96,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         if (booking.Status != BookingStatus.Waiting)
             throw new FailedPreconditionException(Phrases.AlreadyBooked);
 
-        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
-        {
-            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
-                ?? throw new NotFoundException(Phrases.BusNotFound);
-
-            if (bus.Status != BusStatus.Active)
-                throw new FailedPreconditionException(Phrases.BusNotOnRoad);
-
-            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
-            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
-        }
+        var ctx = await GetDriverContextAsync(driverId, cancellationToken);
 
         if (booking.LineId != ctx.LineId)
             throw new ForbiddenException(Phrases.Forbidden);

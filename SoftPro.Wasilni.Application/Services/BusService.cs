@@ -16,6 +16,24 @@ namespace SoftPro.Wasilni.Application.Services;
 
 public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusService
 {
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private async Task<DriverContextCache> GetDriverContextAsync(int driverId, CancellationToken ct)
+    {
+        if (cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) && ctx is not null)
+            return ctx;
+
+        BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, ct)
+            ?? throw new NotFoundException(Phrases.BusNotFound);
+
+        if (bus.Status != BusStatus.Active)
+            throw new FailedPreconditionException(Phrases.BusNotOnRoad);
+
+        ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
+        cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
+        return ctx;
+    }
+
     // ─── Admin CRUD ───────────────────────────────────────────────────────────
 
     public Task<Page<GetBusesForAdminModel>> GetBusesForAdminAsync(GetBusForAdminModel inputModel, CancellationToken cancellationToken)
@@ -133,9 +151,6 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
             ?? throw new NotFoundException(Phrases.BusNotFound);
 
-        //if (bus.Status == BusStatus.Active)
-        //    throw new FailedPreconditionException(Phrases.BusAlreadyActive);
-
         if (bus.LineId is null)
             throw new FailedPreconditionException(Phrases.LineNotFound);
 
@@ -152,9 +167,6 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
             ?? throw new NotFoundException(Phrases.BusNotFound);
 
-        //if (bus.Status != BusStatus.Active)
-        //    throw new FailedPreconditionException(Phrases.BusNotOnRoad);
-
         bus.Deactivate();
         await unitOfWork.CompleteAsync(cancellationToken);
 
@@ -165,33 +177,13 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
     public async Task<UpdateLocationResult> UpdateLocationAsync(UpdateBusLocationModel model, CancellationToken cancellationToken)
     {
-        if (!cache.TryGetValue(BusCacheKeys.DriverContext(model.DriverId), out DriverContextCache? ctx) || ctx is null)
-        {
-            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(model.DriverId, cancellationToken)
-                ?? throw new NotFoundException(Phrases.BusNotFound);
-
-            if (bus.Status != BusStatus.Active)
-                throw new FailedPreconditionException(Phrases.BusNotOnRoad);
-
-            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
-            cache.Set(BusCacheKeys.DriverContext(model.DriverId), ctx);
-        }
+        var ctx = await GetDriverContextAsync(model.DriverId, cancellationToken);
         return new UpdateLocationResult(ctx.BusId, ctx.LineId);
     }
 
     public async Task<AdjustAnonymousResult> AdjustAnonymousAsync(int driverId, int delta, CancellationToken cancellationToken)
     {
-        if (!cache.TryGetValue(BusCacheKeys.DriverContext(driverId), out DriverContextCache? ctx) || ctx is null)
-        {
-            BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
-                ?? throw new NotFoundException(Phrases.BusNotFound);
-
-            if (bus.Status != BusStatus.Active)
-                throw new FailedPreconditionException(Phrases.BusNotOnRoad);
-
-            ctx = new DriverContextCache(bus.Id, bus.LineId!.Value);
-            cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
-        }
+        var ctx = await GetDriverContextAsync(driverId, cancellationToken);
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -201,9 +193,7 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
 
         if (ridership is null)
         {
-
             ridership = DailyRidershipEntity.Create(ctx.LineId, ctx.BusId, today);
-
         }
 
         ridership.AdjustRiders(delta);

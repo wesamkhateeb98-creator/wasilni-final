@@ -63,7 +63,7 @@ public class AccountEntity : IEntity
             code,
             null,
             3,
-            DateTime.UtcNow.AddHours(3),
+            DateTime.UtcNow,
             registerModel.Role,
             false,
             refreshToken,

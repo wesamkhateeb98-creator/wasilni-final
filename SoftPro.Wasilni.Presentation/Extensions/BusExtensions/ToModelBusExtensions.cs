@@ -22,7 +22,7 @@ public static class ToModelBusExtensions
                 model.PageNumber,
                 model.PageSize,
                 model.TotalPages,
-                model.Content.Select(x => x.ToResponse()).ToList()
+                [.. model.Content.Select(x => x.ToResponse())]
             );
 
     public static GetBusesResponse ToResponse(this GetBusesModel model)
@@ -41,7 +41,7 @@ public static class ToModelBusExtensions
                 model.PageNumber,
                 model.PageSize,
                 model.TotalPages,
-                model.Content.Select(x => x.ToResponse()).ToList()
+                [.. model.Content.Select(x => x.ToResponse())]
             );
 
     public static GetBusesForAdminResponse ToResponse(this GetBusesForAdminModel model)
@@ -67,11 +67,11 @@ public static class ToModelBusExtensions
             PageNumber: model.PageNumber,
             PageSize: model.PageSize,
             TotalPages: model.TotalPages,
-            Content: model.Content
+            Content: [.. model.Content
                 .Select(x =>
                     new GetBusRequestsForDriverResponse(
                         x.RequestId,x.OwnerId, x.OwnerName, x.OwnerPhonenumber, x.BusId, x.Type, x.Plate,x.percentDriver/*,x.RequestBusStatus*/
-                        )).ToList()
+                        ))]
         );
 
     public static Page<GetBusRequestsForOwnerResponse> ToResponse(this Page<GetBusRequestsForOwnerModel> model)
@@ -80,11 +80,11 @@ public static class ToModelBusExtensions
             PageNumber: model.PageNumber,
             PageSize: model.PageSize,
             TotalPages: model.TotalPages,
-            Content: model.Content
+            Content: [.. model.Content
                 .Select(x =>
                     new GetBusRequestsForOwnerResponse(
                         x.RequestId,x.DriverId, x.DriverName, x.DriverPhonenumber, x.BusId, x.Type, x.Plate,x.percentOwner/*,x.RequestBusStatus*/
-                        )).ToList()
+                        ))]
         );
 
 }

@@ -2,5 +2,5 @@
 
 public interface IWhatsAppRepository
 {
-    public Task<bool> SendCode(string phonenumber, string code);
+    public Task<bool> SendCode(string phonenumber, string code, CancellationToken cancellationToken);
 }

@@ -7,11 +7,11 @@ namespace SoftPro.Wasilni.Infrastructure.Repositories;
 
 public class WhatsAppRepository(HttpClient httpClient, ILogger logger) : IWhatsAppRepository
 {
-    public async Task<bool> SendCode(string phonenumber, string code)
+    public async Task<bool> SendCode(string phonenumber, string code, CancellationToken cancellationToken)
     {
         try
         {
-            httpClient.DefaultRequestHeaders.Add("x-password", "0937712618");
+            httpClient.DefaultRequestHeaders.Add("x-password", "0937712618"); // Todo : Phonenumber add from this service ??!!
             var payload = new
             {
                 phone = string.Concat("963", phonenumber.AsSpan(1)),
@@ -23,7 +23,7 @@ public class WhatsAppRepository(HttpClient httpClient, ILogger logger) : IWhatsA
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             // Send POST request
-            var response = await httpClient.PostAsync("https://whatsapp-web-otp-production-c90b.up.railway.app/whatsapp/send", content);
+            var response = await httpClient.PostAsync("https://whatsapp-web-otp-production-c90b.up.railway.app/whatsapp/send", content, cancellationToken);
 
             // Throw if not successful
             response.EnsureSuccessStatusCode();

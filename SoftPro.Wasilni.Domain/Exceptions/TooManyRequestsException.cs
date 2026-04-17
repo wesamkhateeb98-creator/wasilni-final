@@ -1,3 +1,4 @@
+using System.Net;
 using SoftPro.Wasilni.Domain.Exceptions.Abstraction;
 
 namespace SoftPro.Wasilni.Domain.Exceptions;
@@ -12,8 +13,9 @@ public class TooManyRequestsException : Exception, IProblemDetailsProvider
     public ServiceProblemDetails GetProblemDetails()
         => new ServiceProblemDetails
         {
-            Title  = _message,
-            Detail = _message,
-            Type   = "Too Many Requests",
+            Title      = _message,
+            Detail     = _message,
+            Type       = "Too Many Requests",
+            StatusCode = HttpStatusCode.TooManyRequests,
         };
 }

@@ -1,4 +1,5 @@
-﻿using SoftPro.Wasilni.Domain.Exceptions.Abstraction;
+﻿using System.Net;
+using SoftPro.Wasilni.Domain.Exceptions.Abstraction;
 
 namespace SoftPro.Wasilni.Domain.Exceptions;
 
@@ -9,5 +10,6 @@ public class FailedPreconditionException(string message) : Exception, IProblemDe
         {
             Title = message,
             Type = "Failed Precondition",
+            StatusCode = HttpStatusCode.PreconditionFailed,
         };
 }

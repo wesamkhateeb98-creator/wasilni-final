@@ -9,8 +9,8 @@ namespace SoftPro.Wasilni.Infrastructure.Repositories;
 
 public class LineRepository(AppDbContext dbContext) : Repository<LineEntity>(dbContext), ILineRepository
 {
-    public LineEntity? GetLineByName(string name, CancellationToken cancellationToken)
-        => dbContext.Lines.FirstOrDefault(x => x.Name == name);
+    public Task<LineEntity?> GetLineByName(string name, CancellationToken cancellationToken)
+        => dbContext.Lines.FirstOrDefaultAsync(x => x.Name == name);
 
     public async Task<Page<GetLineModel>> GetLinesAsync(GetLinesFilterModel filter, CancellationToken cancellationToken)
     {

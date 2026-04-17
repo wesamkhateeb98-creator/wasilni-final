@@ -38,26 +38,17 @@ namespace SoftPro.Wasilni.Presentation.Middlewares
         private static async Task WriteError(HttpContext context, IProblemDetailsProvider provider)
         {
             var problemDetails = provider.GetProblemDetails();
-            var statusCode = problemDetails.Type switch
-            {
-                "Not Found" => HttpStatusCode.NotFound,
-                "Already Exists" => HttpStatusCode.Conflict,
-                "Forbidden" => HttpStatusCode.Forbidden,
-                "Unauthorization" => HttpStatusCode.Unauthorized,
-                "Invalid Arguement" => HttpStatusCode.BadRequest,
-                "Failed Precondition" => HttpStatusCode.PreconditionFailed,
-                "Too Many Requests" => HttpStatusCode.TooManyRequests,
-                _ => HttpStatusCode.InternalServerError
-            };
 
-            context.Response.StatusCode = (int)statusCode;
+            var statusCode = (int)problemDetails.StatusCode;
+
+            context.Response.StatusCode = statusCode;
             context.Response.ContentType = "application/json";
 
             var response = new
             {
                 title = problemDetails.Title,
                 type = problemDetails.Type,
-                status = (int)statusCode,
+                status = statusCode,
                 detail = problemDetails.Detail,
                 instance = problemDetails.Instance,
                 extensions = problemDetails.Extensions.Count > 0 ? problemDetails.Extensions : null
