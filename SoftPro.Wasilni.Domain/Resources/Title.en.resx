@@ -243,10 +243,10 @@
   <data name="Points" xml:space="preserve">
     <value>Points</value>
   </data>
-  <data name="Delta" xml:space="preserve">
-    <value>Delta</value>
-  </data>
   <data name="Order" xml:space="preserve">
     <value>Order</value>
+  </data>
+  <data name="Delta" xml:space="preserve">
+    <value>Delta</value>
   </data>
 </root>

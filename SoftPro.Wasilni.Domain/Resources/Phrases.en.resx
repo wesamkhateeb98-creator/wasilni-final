@@ -417,7 +417,16 @@
   <data name="InvalidKey" xml:space="preserve">
     <value>Invalid idempotency key</value>
   </data>
+  <data name="RefreshTokenExpired" xml:space="preserve">
+    <value>The update code has expired, please log in again.</value>
+  </data>
   <data name="InvalidDistanceBetweenDriverAndPassenger" xml:space="preserve">
     <value>InvalidDistanceBetweenDriverAndPassenger</value>
+  </data>
+  <data name="BusLocationNotAvailable" xml:space="preserve">
+    <value>The bus location is unavailable.</value>
+  </data>
+  <data name="SendCodeFailed" xml:space="preserve">
+    <value>Verification code failed to send, please try again later</value>
   </data>
 </root>

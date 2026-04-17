@@ -797,5 +797,65 @@ namespace Sawwah.Api.Domain.Resources {
                 return ResourceManager.GetString("YouHaveNotSentCode", resourceCulture);
             }
         }
+
+        public static string AlreadyBooked {
+            get { return ResourceManager.GetString("AlreadyBooked", resourceCulture); }
+        }
+
+        public static string BookingNotFound {
+            get { return ResourceManager.GetString("BookingNotFound", resourceCulture); }
+        }
+
+        public static string BusAlreadyActive {
+            get { return ResourceManager.GetString("BusAlreadyActive", resourceCulture); }
+        }
+
+        public static string BusLocationNotAvailable {
+            get { return ResourceManager.GetString("BusLocationNotAvailable", resourceCulture); }
+        }
+
+        public static string InvalidDateRange {
+            get { return ResourceManager.GetString("InvalidDateRange", resourceCulture); }
+        }
+
+        public static string InvalidDelta {
+            get { return ResourceManager.GetString("InvalidDelta", resourceCulture); }
+        }
+
+        public static string InvalidDistanceBetweenDriverAndPassenger {
+            get { return ResourceManager.GetString("InvalidDistanceBetweenDriverAndPassenger", resourceCulture); }
+        }
+
+        public static string InvalidKey {
+            get { return ResourceManager.GetString("InvalidKey", resourceCulture); }
+        }
+
+        public static string InvalidReportType {
+            get { return ResourceManager.GetString("InvalidReportType", resourceCulture); }
+        }
+
+        public static string NotYourBooking {
+            get { return ResourceManager.GetString("NotYourBooking", resourceCulture); }
+        }
+
+        public static string NotYourBus {
+            get { return ResourceManager.GetString("NotYourBus", resourceCulture); }
+        }
+
+        public static string RefreshTokenExpired {
+            get { return ResourceManager.GetString("RefreshTokenExpired", resourceCulture); }
+        }
+
+        public static string SendCodeFailed {
+            get { return ResourceManager.GetString("SendCodeFailed", resourceCulture); }
+        }
+
+        public static string TripAlreadyEnded {
+            get { return ResourceManager.GetString("TripAlreadyEnded", resourceCulture); }
+        }
+
+        public static string TripNotActive {
+            get { return ResourceManager.GetString("TripNotActive", resourceCulture); }
+        }
     }
 }

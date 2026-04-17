@@ -383,5 +383,23 @@ namespace Sawwah.Api.Domain.Resources {
                 return ResourceManager.GetString("Username", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to التغيير.
+        /// </summary>
+        public static string Delta {
+            get {
+                return ResourceManager.GetString("Delta", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الطلب.
+        /// </summary>
+        public static string Order {
+            get {
+                return ResourceManager.GetString("Order", resourceCulture);
+            }
+        }
     }
 }

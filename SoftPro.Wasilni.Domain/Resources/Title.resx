@@ -248,6 +248,9 @@
   <data name="Points" xml:space="preserve">
     <value>النقاط</value>
   </data>
+  <data name="Order" xml:space="preserve">
+    <value>الطلب</value>
+  </data>
   <data name="Delta" xml:space="preserve">
     <value>التغيير</value>
   </data>

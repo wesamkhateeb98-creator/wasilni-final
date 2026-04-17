@@ -384,4 +384,49 @@
   <data name="PointsRequired" xml:space="preserve">
     <value>يجب إضافة نقطة واحدة على الأقل</value>
   </data>
+  <data name="BusAlreadyActive" xml:space="preserve">
+    <value>الباص في رحلة نشطة بالفعل</value>
+  </data>
+  <data name="NotYourBus" xml:space="preserve">
+    <value>هذا الباص غير مخصص لك</value>
+  </data>
+  <data name="TripAlreadyEnded" xml:space="preserve">
+    <value>الرحلة منتهية بالفعل</value>
+  </data>
+  <data name="InvalidDelta" xml:space="preserve">
+    <value>القيمة يجب أن تكون 1 أو -1 فقط</value>
+  </data>
+  <data name="BookingNotFound" xml:space="preserve">
+    <value>الحجز غير موجود</value>
+  </data>
+  <data name="AlreadyBooked" xml:space="preserve">
+    <value>لديك حجز نشط بالفعل على هذه الرحلة</value>
+  </data>
+  <data name="NotYourBooking" xml:space="preserve">
+    <value>هذا الحجز ليس لك</value>
+  </data>
+  <data name="TripNotActive" xml:space="preserve">
+    <value>الرحلة غير نشطة</value>
+  </data>
+  <data name="InvalidReportType" xml:space="preserve">
+    <value>نوع التقرير غير صحيح</value>
+  </data>
+  <data name="InvalidDateRange" xml:space="preserve">
+    <value>تاريخ البداية يجب أن يكون قبل تاريخ النهاية</value>
+  </data>
+  <data name="InvalidKey" xml:space="preserve">
+    <value>المفتاح غير صالح</value>
+  </data>
+  <data name="RefreshTokenExpired" xml:space="preserve">
+    <value>انتهت صلاحية رمز التحديث، الرجاء تسجيل الدخول من جديد</value>
+  </data>
+  <data name="InvalidDistanceBetweenDriverAndPassenger" xml:space="preserve">
+    <value>المسافة بين السائق و الراكب اكبر من 100 متر</value>
+  </data>
+  <data name="BusLocationNotAvailable" xml:space="preserve">
+    <value>موقع الباص غير متوفر</value>
+  </data>
+  <data name="SendCodeFailed" xml:space="preserve">
+    <value>فشل إرسال رمز التحقق، الرجاء المحاولة لاحقاً</value>
+  </data>
 </root>

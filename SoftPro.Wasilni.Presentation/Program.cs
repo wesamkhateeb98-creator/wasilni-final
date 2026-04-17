@@ -8,8 +8,6 @@ using SoftPro.Wasilni.Presentation.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers(x =>
 {
     x.Filters.Add<ValidatorActionFilter>();
@@ -18,9 +16,9 @@ builder.Services.AddControllers(x =>
 builder.Services.AddSignalR(o => o.EnableDetailedErrors = true)
                 .AddHubOptions<SoftPro.Wasilni.Presentation.Hubs.TrackingHub>(o =>
                 {
-                    o.AddFilter<HubExceptionFilter>();    // ① outermost — catches & formats all errors
-                    o.AddFilter<HubRateLimitFilter>();    // ② rate limits per-user per-method
-                    o.AddFilter<HubValidationFilter>();   // ③ inner — validates args then calls method
+                    o.AddFilter<HubExceptionFilter>();
+                    o.AddFilter<HubRateLimitFilter>();
+                    o.AddFilter<HubValidationFilter>();
                 });
 
 builder.Services.AddMemoryCache();
