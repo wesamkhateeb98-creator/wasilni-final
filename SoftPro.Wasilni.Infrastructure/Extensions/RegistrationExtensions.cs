@@ -14,8 +14,8 @@ public static class RegistrationExtensions
     public static IServiceCollection RegisterInfrastructure(this IServiceCollection services, IConfiguration configuration)
         => services
             .RegisterDatabase(configuration)
-            .AddScoped<IUnitOfWork, UnitOfWork>()
             .AddHttpClient()
+            .AddScoped<IUnitOfWork, UnitOfWork>()
             .AddScoped<IWhatsAppRepository, WhatsAppRepository>();
 
     private static IServiceCollection RegisterDatabase(this IServiceCollection services, IConfiguration configuration)

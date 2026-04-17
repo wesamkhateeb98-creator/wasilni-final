@@ -14,7 +14,6 @@ namespace SoftPro.Wasilni.Presentation.Middlewares
         {
             try
             {
-                logger.LogWarning("*****************************Request");
                 await _next(context);
             }
             catch (Exception ex) when (ex is IProblemDetailsProvider provider)

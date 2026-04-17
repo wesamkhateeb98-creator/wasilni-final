@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateDaabase : Migration
+    public partial class CreateDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

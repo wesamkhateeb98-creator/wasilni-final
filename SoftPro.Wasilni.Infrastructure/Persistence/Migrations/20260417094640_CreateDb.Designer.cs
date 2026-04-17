@@ -12,8 +12,8 @@ using SoftPro.Wasilni.Infrastructure.Persistence;
 namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260414204316_CreateDaabase")]
-    partial class CreateDaabase
+    [Migration("20260417094640_CreateDb")]
+    partial class CreateDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

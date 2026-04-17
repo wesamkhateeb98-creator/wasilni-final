@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace SoftPro.Wasilni.Infrastructure.Repositories;
 
-public class WhatsAppRepository(HttpClient httpClient, ILogger logger) : IWhatsAppRepository
+public class WhatsAppRepository(HttpClient httpClient, ILogger<WhatsAppRepository> logger) : IWhatsAppRepository
 {
     public async Task<bool> SendCode(string phonenumber, string code, CancellationToken cancellationToken)
     {
