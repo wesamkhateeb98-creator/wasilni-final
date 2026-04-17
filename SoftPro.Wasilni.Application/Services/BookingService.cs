@@ -103,6 +103,15 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         if (booking.LineId != ctx.LineId)
             throw new ForbiddenException(Phrases.Forbidden);
 
+        if (!cache.TryGetValue(BusCacheKeys.DriverLocation(driverId), out (double Latitude, double Longitude) busLocation))
+            throw new FailedPreconditionException("موقع الباص غير متوفر");// Todo: Set message in Phrases resource
+
+        if (GeoHelper.Distance(booking.Latitude, booking.Longitude, busLocation.Latitude, busLocation.Longitude) > 100)
+        {
+            //Phrases.InvalidDistanceBetweenDriverAndPassenger
+            throw new FailedPreconditionException("المسافة بين السائق و الراكب اكبر من 100 متر");// Todo: Set message in Phrases resource
+        }
+
         booking.Cancel();
         await unitOfWork.CompleteAsync(cancellationToken);
 

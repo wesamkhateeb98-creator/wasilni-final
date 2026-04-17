@@ -35,7 +35,8 @@ public class AccountEntity : IEntity
         bool confirmed,
         string refreshToken,
         DateTime refreshTokenExpiresAt,
-        Guid idempotencyKey)
+        Guid idempotencyKey
+        )
     {
         Name = name;
         PhoneNumber = phoneNumber;
@@ -50,6 +51,7 @@ public class AccountEntity : IEntity
         RefreshToken = refreshToken;
         RefreshTokenExpiresAt = refreshTokenExpiresAt;
         Key = idempotencyKey;
+        Permission = Enums.Permission.Passenger;
     }
 
     public static AccountEntity Create(RegisterModel registerModel, byte[] passwordHashed, byte[] salt, string refreshToken, string code, int refreshTokenDurationDays)
@@ -66,7 +68,8 @@ public class AccountEntity : IEntity
             false,
             refreshToken,
             DateTime.UtcNow.AddDays(refreshTokenDurationDays),
-            registerModel.key);
+            registerModel.key
+            );
 
     public void SetCountCode(int codeCount)
         => SendCodeCount = codeCount;

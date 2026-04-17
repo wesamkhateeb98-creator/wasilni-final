@@ -1,6 +1,5 @@
 ﻿using Domain.Resources;
 using FluentValidation;
-using SoftPro.Wasilni.Presentation;
 using SoftPro.Wasilni.Presentation.Models.Request.Account;
 using System.Text.RegularExpressions;
 
@@ -11,23 +10,34 @@ public class RegisterPassengerRequestValidator : AbstractValidator<SignupPasseng
     public RegisterPassengerRequestValidator()
     {
         RuleFor(x => x.Username)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
             .Length(1, 20)
             .WithName(Title.Username)
             .WithMessage(Phrases.InvalidUsername);
 
-        RuleFor(x => x.Phonenumber)
-            .Must(x => Regex.IsMatch(x, PresentationConsts.phonenumberExpression))
-            .WithName(Title.Phonenumber)
-            .WithMessage(Phrases.InvalidPhonenumber);
+        //RuleFor(x => x.Phonenumber)
+        //    .Cascade(CascadeMode.Stop)
+        //    .NotEmpty()
+        //    .Must(x => !string.IsNullOrWhiteSpace(x) && Regex.IsMatch(x, PresentationConsts.phonenumberExpression))
+        //    .WithName(Title.Phonenumber)
+        //    .WithMessage(Phrases.InvalidPhonenumber);
 
         RuleFor(x => x.Password)
             .Must(x => Regex.IsMatch(x, PresentationConsts.passwordExpression))
             .WithName(Title.Password)
             .WithMessage(Phrases.InvalidPassword);
 
-        RuleFor(x => x.key)
-            .NotEqual(Guid.Empty)
-            .WithMessage(Phrases.InvalidKey);
+        RuleFor(x => x.Password)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+            .Must(password => !string.IsNullOrWhiteSpace(password) && Regex.IsMatch(password, PresentationConsts.passwordExpression))
+            .WithName(Title.Password)
+            .WithMessage(Phrases.InvalidPassword);
+
+        //RuleFor(x => x.key)
+        //    .NotEqual(Guid.Empty)
+        //    .WithMessage(Phrases.InvalidKey);
 
     }
 }

@@ -1,11 +1,12 @@
 ﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using SoftPro.Wasilni.Domain.Exceptions;
 
 
 namespace SoftPro.Wasilni.Presentation.ActionFilters;
 
-public class ValidatorActionFilter(IServiceProvider serviceProvider) : IActionFilter
+public class ValidatorActionFilter : IActionFilter
 {
     public void OnActionExecuted(ActionExecutedContext context)
     {
@@ -20,16 +21,7 @@ public class ValidatorActionFilter(IServiceProvider serviceProvider) : IActionFi
 
             var inputType = argument.Value.GetType();
             var validatorType = typeof(IValidator<>).MakeGenericType(inputType);
-            IValidator? validator;
-
-            try
-            {
-                validator = serviceProvider.GetService(validatorType) as IValidator;
-            }
-            catch
-            {
-                continue;
-            }
+            IValidator? validator = context.HttpContext.RequestServices.GetService(validatorType) as IValidator;
 
             if (validator is null)
                 continue;
@@ -43,8 +35,20 @@ public class ValidatorActionFilter(IServiceProvider serviceProvider) : IActionFi
 
             if (!validationResult.IsValid)
             {
-                throw new InvalidArguementException(
-                    validationResult.Errors.Select(x => (x.PropertyName, x.ErrorMessage)).ToList());
+                var errors = validationResult.Errors
+                    .GroupBy(x => x.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).Distinct().ToArray());
+
+                context.Result = new BadRequestObjectResult(new
+                {
+                    title = "Validation Error",
+                    type = "Invalid Arguement",
+                    status = StatusCodes.Status400BadRequest,
+                    detail = "One or more validation errors occurred.",
+                    extensions = errors
+                });
+
+                return;
             }
         }
     }

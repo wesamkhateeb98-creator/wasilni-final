@@ -79,6 +79,8 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
         UpdateLocationResult result = await busService.UpdateLocationAsync(
             new UpdateBusLocationModel(driverId, request.Latitude, request.Longitude), ct);
 
+        cache.Set(BusCacheKeys.DriverLocation(driverId), (request.Latitude, request.Longitude));
+
         await Clients.Group(TrackingGroups.Line(result.LineId))
                      .OnLocationUpdatedAsync(result.BusId, request.Latitude, request.Longitude, ct);
     }

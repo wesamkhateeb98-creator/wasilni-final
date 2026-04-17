@@ -12,8 +12,8 @@ using SoftPro.Wasilni.Infrastructure.Persistence;
 namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260407215833_CreateDb")]
-    partial class CreateDb
+    [Migration("20260414204316_CreateDaabase")]
+    partial class CreateDaabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,10 +45,6 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("FCMToken")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid>("Key")
                         .HasColumnType("uniqueidentifier");
 
@@ -59,6 +55,9 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                     b.Property<byte[]>("Password")
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
+
+                    b.Property<int?>("Permission")
+                        .HasColumnType("int");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()

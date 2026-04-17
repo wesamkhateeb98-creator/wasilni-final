@@ -11,34 +11,34 @@ namespace SoftPro.Wasilni.Presentation.Hubs.Helpers;
 public static class TrackingHubEvents
 {
     // ─── Event names ──────────────────────────────────────────────────────────
-    private const string BusActivated          = "OnBusActivated";
-    private const string BusDeactivated        = "OnBusDeactivated";
-    private const string LocationUpdated       = "OnLocationUpdated";
+    private const string BusActivated = "OnBusActivated";
+    private const string BusDeactivated = "OnBusDeactivated";
+    private const string LocationUpdated = "OnLocationUpdated";
     private const string AnonymousCountUpdated = "OnAnonymousCountUpdated";
-    private const string BookingAdded          = "OnBookingAdded";
-    private const string BookingCancelled      = "OnBookingCancelled";
-    private const string BookingStatusChanged  = "OnBookingStatusChanged";
+    private const string BookingAdded = "OnBookingAdded";
+    private const string BookingCancelled = "OnBookingCancelled";
+    private const string BookingStatusChanged = "OnBookingStatusChanged";
 
     // ─── OnBusActivated ───────────────────────────────────────────────────────
     public static Task OnBusActivatedAsync(
-        this IClientProxy  clients,
+        this IClientProxy clients,
         GetActiveBusResponse payload,
-        CancellationToken  ct = default)
+        CancellationToken ct = default)
         => clients.SendAsync(BusActivated, payload, ct);
 
     // ─── OnBusDeactivated ─────────────────────────────────────────────────────
     public static Task OnBusDeactivatedAsync(
         this IClientProxy clients,
-        int               busId,
+        int busId,
         CancellationToken ct = default)
         => clients.SendAsync(BusDeactivated, new { busId }, ct);
 
     // ─── OnLocationUpdated ────────────────────────────────────────────────────
     public static Task OnLocationUpdatedAsync(
         this IClientProxy clients,
-        int               busId,
-        double            latitude,
-        double            longitude,
+        int busId,
+        double latitude,
+        double longitude,
         CancellationToken ct = default)
         => clients.SendAsync(LocationUpdated,
                new { busId, latitude, longitude, updatedAt = DateTime.UtcNow }, ct);
@@ -46,24 +46,17 @@ public static class TrackingHubEvents
     // ─── OnAnonymousCountUpdated ──────────────────────────────────────────────
     public static Task OnAnonymousCountUpdatedAsync(
         this IClientProxy clients,
-        int               busId,
-        int               count,
+        int busId,
+        int count,
         CancellationToken ct = default)
         => clients.SendAsync(AnonymousCountUpdated, new { busId, count }, ct);
 
     // ─── OnBookingAdded (driver receives) ─────────────────────────────────────
     public static Task OnBookingAddedAsync(
-        this IClientProxy  clients,
-        GetBookingResponse booking,
-        CancellationToken  ct = default)
-        => clients.SendAsync(BookingAdded, booking, ct);
-
-    // ─── OnBookingCancelled (driver receives, passenger cancels) ──────────────
-    public static Task OnBookingCancelledAsync(
         this IClientProxy clients,
-        int               bookingId,
+        GetBookingResponse booking,
         CancellationToken ct = default)
-        => clients.SendAsync(BookingCancelled, new { bookingId }, ct);
+        => clients.SendAsync(BookingAdded, booking, ct);
 
     // ─── OnBookingStatusChanged (all drivers on line — confirmed / no-show) ───
     /// <summary>
@@ -73,8 +66,8 @@ public static class TrackingHubEvents
     /// </summary>
     public static Task OnBookingStatusChangedAsync(
         this IClientProxy clients,
-        int               bookingId,
-        string            status,
+        int bookingId,
+        string status,
         CancellationToken ct = default)
         => clients.SendAsync(BookingStatusChanged, new { bookingId, status }, ct);
 }
