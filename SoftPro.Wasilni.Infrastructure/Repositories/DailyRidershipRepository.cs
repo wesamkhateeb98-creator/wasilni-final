@@ -9,24 +9,6 @@ namespace SoftPro.Wasilni.Infrastructure.Repositories;
 public class DailyRidershipRepository(AppDbContext dbContext)
     : Repository<DailyRidershipEntity>(dbContext), IDailyRidershipRepository
 {
-    public async Task<int> IncrementAsync(IncrementRidershipModel model, CancellationToken cancellationToken)
-    {
-        DailyRidershipEntity? ridership = await dbContext.DailyRiderships
-            .FirstOrDefaultAsync(
-                r => r.LineId == model.LineId && r.BusId == model.BusId && r.Day == model.Day,
-                cancellationToken);
-
-        if (ridership is null)
-        {
-            ridership = DailyRidershipEntity.Create(model.LineId, model.BusId, model.Day);
-            dbContext.DailyRiderships.Add(ridership);
-        }
-
-        ridership.IncrementRiders();
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ridership.NumberOfRiders;
-    }
-
     public Task<DailyRidershipEntity?> GetOrCreateAsync(IncrementRidershipModel model, CancellationToken cancellationToken)
         => dbContext.DailyRiderships
             .FirstOrDefaultAsync(

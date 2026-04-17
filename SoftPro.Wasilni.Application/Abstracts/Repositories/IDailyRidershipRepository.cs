@@ -5,7 +5,6 @@ namespace SoftPro.Wasilni.Application.Abstracts.Repositories;
 
 public interface IDailyRidershipRepository : IRepository<DailyRidershipEntity>
 {
-    Task<int> IncrementAsync(IncrementRidershipModel model, CancellationToken cancellationToken);
     Task<DailyRidershipEntity?> GetOrCreateAsync(IncrementRidershipModel model, CancellationToken cancellationToken);
 
     Task<List<DailyRidershipEntity>> GetDailyAsync(GetDailyFilterModel filter, CancellationToken cancellationToken);

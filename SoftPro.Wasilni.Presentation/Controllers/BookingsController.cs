@@ -74,6 +74,10 @@ public class BookingsController(
             .Group(TrackingGroups.LineBooking(result.LineId))
             .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.PickedUp.ToString(), cancellationToken);
 
+        await hubContext.Clients
+            .User(result.PassengerId.ToString())
+            .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.PickedUp.ToString(), cancellationToken);
+
         return new IdResponse(result.BookingId);
     }
 
@@ -90,6 +94,10 @@ public class BookingsController(
 
         await hubContext.Clients
             .Group(TrackingGroups.LineBooking(result.LineId))
+            .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
+
+        await hubContext.Clients
+            .User(result.PassengerId.ToString())
             .OnBookingStatusChangedAsync(result.BookingId, BookingStatus.Cancelled.ToString(), cancellationToken);
 
         return new IdResponse(result.BookingId);

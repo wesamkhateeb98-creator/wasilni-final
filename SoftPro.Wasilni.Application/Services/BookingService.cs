@@ -57,14 +57,26 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
             cache.Set(BusCacheKeys.DriverContext(driverId), ctx);
         }
 
+        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        // Get or create
+        var ridership = await unitOfWork.DailyRidershipRepository
+            .GetOrCreateAsync(new IncrementRidershipModel(booking.LineId, ctx.BusId, today), cancellationToken);
+
+        if (ridership is null)
+        {
+            ridership = DailyRidershipEntity.Create(booking.LineId, ctx.BusId, today);
+            await unitOfWork.DailyRidershipRepository.AddAsync(ridership, cancellationToken);
+        }
+
+        // Increment
         booking.MarkPickedUp();
+        ridership.IncrementRiders();
+
+        // Complete
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
-        await unitOfWork.DailyRidershipRepository.IncrementAsync(
-            new IncrementRidershipModel(booking.LineId, ctx.BusId, today), cancellationToken);
-
-        return new BookingActionResult(booking.Id, booking.LineId);
+        return new BookingActionResult(booking.Id, booking.LineId, booking.PassengerId);
     }
 
     public async Task<BookingActionResult> MarkNoShowAsync(
@@ -94,7 +106,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         booking.Cancel();
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return new BookingActionResult(booking.Id, booking.LineId);
+        return new BookingActionResult(booking.Id, booking.LineId, booking.PassengerId);
     }
 
     // ─── Passenger ────────────────────────────────────────────────────────────
@@ -140,6 +152,6 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         booking.Cancel();
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return new BookingActionResult(booking.Id, lineId);
+        return new BookingActionResult(booking.Id, lineId, passengerId);
     }
 }
