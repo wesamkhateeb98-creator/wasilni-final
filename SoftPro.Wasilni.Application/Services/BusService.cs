@@ -194,11 +194,10 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         if (ridership is null)
         {
             ridership = DailyRidershipEntity.Create(ctx.LineId, ctx.BusId, today);
+            await unitOfWork.DailyRidershipRepository.AddAsync(ridership, cancellationToken);
         }
 
         ridership.AdjustRiders(delta);
-
-        await unitOfWork.DailyRidershipRepository.AddAsync(ridership, cancellationToken);
 
         await unitOfWork.CompleteAsync(cancellationToken);
 
