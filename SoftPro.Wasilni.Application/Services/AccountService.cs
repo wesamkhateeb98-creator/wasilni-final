@@ -64,14 +64,6 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
             account.SetCountCode(3);
 
 
-        try
-        {
-            await WhatsAppRepository.SendCode(registerModel.Phonenumber, code);
-        }
-        catch (Exception ex)
-        {
-            throw new FailedPreconditionException(ex.Message);
-        }
 
         account.SetCodeExpiration(DateTime.UtcNow.AddHours(3).AddMinutes(10));
         account.MinusCountCode();
@@ -79,7 +71,9 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         await unitOfWork.AccountRepository.AddAsync(account, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        
+        bool sendSucceeded = await WhatsAppRepository.SendCode(registerModel.Phonenumber, code);
+        if (!sendSucceeded)
+            throw new FailedPreconditionException(Phrases.SendCodeFailed);
 
         return account.Id;
     }
@@ -99,21 +93,18 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
             throw new FailedPreconditionException(Phrases.SendCodeMoreTime);
 
         string code = AuthHelper.GenerateCode();
+
         account.SetCode(code);
+
         account.SetCodeExpiration(DateTime.UtcNow.AddHours(3).AddMinutes(10));
+
         account.MinusCountCode();
 
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        try
-        {
-            if (account.Code is not null)
-                await WhatsAppRepository.SendCode(account.PhoneNumber, account.Code);
-        }
-        catch (Exception ex)
-        {
-            throw new FailedPreconditionException(ex.Message);
-        }
+        bool sendSucceeded = await WhatsAppRepository.SendCode(account.PhoneNumber, account.Code!);
+        if (!sendSucceeded)
+            throw new FailedPreconditionException(Phrases.SendCodeFailed);
 
         return account.Id;
     }

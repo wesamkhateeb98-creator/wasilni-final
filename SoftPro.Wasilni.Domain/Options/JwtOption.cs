@@ -12,7 +12,7 @@ public class JwtOption
     [Required]
     public required string IssuerJwt { get; set; }
     [Required]
-    public required int DurationExpiredInDayJWT { get; set; }
+    public required int DurationExpiredInMinutesJWT { get; set; }
     [Required]
     public required int RefreshTokenDurationDays { get; set; }
 }

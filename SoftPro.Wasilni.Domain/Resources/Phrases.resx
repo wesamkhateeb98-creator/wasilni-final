@@ -426,4 +426,7 @@
   <data name="BusLocationNotAvailable" xml:space="preserve">
     <value>موقع الباص غير متوفر</value>
   </data>
+  <data name="SendCodeFailed" xml:space="preserve">
+    <value>فشل إرسال رمز التحقق، الرجاء المحاولة لاحقاً</value>
+  </data>
 </root>

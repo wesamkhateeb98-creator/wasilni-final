@@ -969,5 +969,11 @@ namespace Domain.Resources
                 return ResourceManager.GetString("BusLocationNotAvailable", resourceCulture);
             }
         }
+
+        public static string SendCodeFailed {
+            get {
+                return ResourceManager.GetString("SendCodeFailed", resourceCulture);
+            }
+        }
     }
 }
