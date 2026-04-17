@@ -81,8 +81,8 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         AccountEntity account = await unitOfWork.AccountRepository.GetMatchPhonenumber(phonenumber, cancellationToken)
             ?? throw new NotFoundException(Phrases.NotFound);
 
-        if (account.Confirmed)
-            throw new FailedPreconditionException(Phrases.AccountAlreadyConfirmed);
+        //if (account.Confirmed)
+        //    throw new FailedPreconditionException(Phrases.AccountAlreadyConfirmed);
 
         if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow > account.CodeExpiration.Value.AddMinutes(30))
             account.SetCountCode(3);
@@ -145,6 +145,31 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
             throw new FailedPreconditionException(Phrases.NewPasswordNoChanged);
 
         account.SetPassword(newHashPassword);
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return account.Id;
+    }
+
+    public async Task<int> ResetPasswordAsync(string phonenumber, string code, string newPassword, CancellationToken cancellationToken)
+    {
+        AccountEntity account = await unitOfWork.AccountRepository.GetMatchPhonenumber(phonenumber, cancellationToken)
+            ?? throw new NotFoundException(Phrases.NotFound);
+
+        if (account.Code is null)
+            throw new FailedPreconditionException(Phrases.YouHaveNotSentCode);
+
+        if (account.Code != code || !account.CodeExpiration.HasValue || DateTime.UtcNow > account.CodeExpiration.Value)
+            throw new FailedPreconditionException(Phrases.CannotMatchCode);
+
+        byte[] newHashPassword = AuthHelper.HashPasswordWithSalt(newPassword, account.Salt);
+
+        if (newHashPassword.SequenceEqual(account.Password))
+            throw new FailedPreconditionException(Phrases.NewPasswordNoChanged);
+
+        account.SetPassword(newHashPassword);
+        account.SetCode(null);
+        account.SetCodeExpiration(null);
+
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return account.Id;

@@ -76,7 +76,7 @@ public class AccountEntity : IEntity
 
     public void MinusCountCode() => SendCodeCount--;
 
-    public void SetCode(string code)
+    public void SetCode(string? code)
         => Code = code;
 
     public void SetCodeExpiration(DateTime? dateTime)

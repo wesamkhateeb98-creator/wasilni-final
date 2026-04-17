@@ -82,6 +82,14 @@ public class AccountsController(IAccountService accountService) : BaseController
         return new(id);
     }
 
+    [HttpPatch("reset-password")]
+    [EnableRateLimiting(RateLimitPolicies.Login)]
+    public async Task<IdResponse> ResetPasswordAsync([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        int id = await accountService.ResetPasswordAsync(request.Phonenumber, request.Code, request.NewPassword, cancellationToken);
+        return new(id);
+    }
+
     [HttpPatch("update-profile")]
     [Authorize]
     public async Task<IdResponse> UpdateProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
