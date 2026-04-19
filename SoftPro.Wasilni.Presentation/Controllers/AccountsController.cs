@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using SoftPro.Wasilni.Presentation.Extensions;
-using Microsoft.Extensions.Caching.Memory;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Accounts;
+using SoftPro.Wasilni.Presentation.Extensions;
 using SoftPro.Wasilni.Presentation.Extensions.AccountExtensions;
 using SoftPro.Wasilni.Presentation.Models.Request.Account;
 using SoftPro.Wasilni.Presentation.Models.Response;
@@ -60,9 +59,9 @@ public class AccountsController(IAccountService accountService) : BaseController
 
     [HttpPost("send-code")]
     [EnableRateLimiting(RateLimitPolicies.Login)]
-    public async Task<IdResponse> SendCodeAsync([FromBody]SendCodeRequest request , CancellationToken cancellationToken)
+    public async Task<IdResponse> SendCodeAsync([FromBody] SendCodeRequest request, CancellationToken cancellationToken)
     {
-        int id = await accountService.SendCodeAsync(request.Phonenumber, cancellationToken);
+        int id = await accountService.SendCodeAsync(request.Phonenumber, request.Purpose, cancellationToken);
         return new(id);
     }
 
@@ -70,7 +69,7 @@ public class AccountsController(IAccountService accountService) : BaseController
     [EnableRateLimiting(RateLimitPolicies.Login)]
     public async Task<TokenResponse> VerifyAccountAsync([FromBody] ConfirmCodeRequest request, CancellationToken cancellationToken)
     {
-        LoginModelExtended loginModelExtended = await accountService.VerifyAccountAsync(request.Phonenumber, request.Code , cancellationToken);
+        LoginModelExtended loginModelExtended = await accountService.VerifyAccountAsync(request.Phonenumber, request.Code, cancellationToken);
         return loginModelExtended.ToResponse();
     }
 
@@ -78,7 +77,7 @@ public class AccountsController(IAccountService accountService) : BaseController
     [Authorize]
     public async Task<IdResponse> ChangePasswordAsync([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
     {
-        int id = await accountService.ChangePasswordAsync(User.GetId(), request.OldPassword,request.NewPassword, cancellationToken);
+        int id = await accountService.ChangePasswordAsync(User.GetId(), request.OldPassword, request.NewPassword, cancellationToken);
         return new(id);
     }
 
@@ -98,7 +97,3 @@ public class AccountsController(IAccountService accountService) : BaseController
         return new(id);
     }
 }
-
-//Todo: Polly
-//Rate limit
-// in memory

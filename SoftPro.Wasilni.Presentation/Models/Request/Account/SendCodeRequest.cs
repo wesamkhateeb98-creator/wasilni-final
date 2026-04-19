@@ -1,3 +1,5 @@
-﻿namespace SoftPro.Wasilni.Presentation.Models.Request.Account;
+﻿using SoftPro.Wasilni.Domain.Enums;
 
-public record SendCodeRequest(string Phonenumber);
+namespace SoftPro.Wasilni.Presentation.Models.Request.Account;
+
+public record SendCodeRequest(string Phonenumber, SendCodePurpose Purpose);

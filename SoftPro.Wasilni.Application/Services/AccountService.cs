@@ -5,6 +5,7 @@ using SoftPro.Wasilni.Application.Abstracts.Repositories;
 using SoftPro.Wasilni.Application.Abstracts.Services;
 using SoftPro.Wasilni.Application.Extensions;
 using SoftPro.Wasilni.Domain.Entities;
+using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Exceptions;
 using SoftPro.Wasilni.Domain.Helper;
 using SoftPro.Wasilni.Domain.Models;
@@ -69,20 +70,21 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         await unitOfWork.AccountRepository.AddAsync(account, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        bool sendSucceeded = await WhatsAppRepository.SendCode(registerModel.Phonenumber, code, cancellationToken);
-        if (!sendSucceeded)
-            throw new FailedPreconditionException(Phrases.SendCodeFailed);
+        await WhatsAppRepository.SendCode(registerModel.Phonenumber, code, cancellationToken);
 
         return account.Id;
     }
 
-    public async Task<int> SendCodeAsync(string phonenumber, CancellationToken cancellationToken)
+    public async Task<int> SendCodeAsync(string phonenumber, SendCodePurpose purpose, CancellationToken cancellationToken)
     {
         AccountEntity account = await unitOfWork.AccountRepository.GetMatchPhonenumber(phonenumber, cancellationToken)
             ?? throw new NotFoundException(Phrases.NotFound);
 
-        //if (account.Confirmed)
-        //    throw new FailedPreconditionException(Phrases.AccountAlreadyConfirmed);
+        if (purpose == SendCodePurpose.Verify && account.Confirmed)
+            throw new FailedPreconditionException(Phrases.AccountAlreadyConfirmed);
+
+        if (purpose == SendCodePurpose.ResetPassword && !account.Confirmed)
+            throw new FailedPreconditionException(Phrases.AccountNotConfirmed);
 
         if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow > account.CodeExpiration.Value.AddMinutes(30))
             account.SetCountCode(3);
