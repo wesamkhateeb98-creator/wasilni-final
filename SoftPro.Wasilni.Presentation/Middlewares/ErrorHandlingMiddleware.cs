@@ -36,6 +36,8 @@ namespace SoftPro.Wasilni.Presentation.Middlewares
 
         private static async Task WriteError(HttpContext context, IProblemDetailsProvider provider)
         {
+            if (context.Response.HasStarted) return;
+
             var problemDetails = provider.GetProblemDetails();
 
             var statusCode = (int)problemDetails.StatusCode;
@@ -62,6 +64,8 @@ namespace SoftPro.Wasilni.Presentation.Middlewares
 
         private static async Task WriteGenericError(HttpContext context, string message)
         {
+            if (context.Response.HasStarted) return;
+
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
 

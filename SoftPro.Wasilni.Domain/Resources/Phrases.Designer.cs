@@ -975,5 +975,11 @@ namespace Domain.Resources
                 return ResourceManager.GetString("SendCodeFailed", resourceCulture);
             }
         }
+
+        public static string SendCodeMessage {
+            get {
+                return ResourceManager.GetString("SendCodeMessage", resourceCulture);
+            }
+        }
     }
 }

@@ -1,16 +1,19 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Domain.Resources;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SoftPro.Wasilni.Application.Abstracts.Repositories;
 using System.Text;
 using System.Text.Json;
 
 namespace SoftPro.Wasilni.Infrastructure.Repositories;
 
-public class WhatsAppRepository(HttpClient httpClient, ILogger<WhatsAppRepository> logger) : IWhatsAppRepository
+public class WhatsAppRepository(HttpClient httpClient, ILogger<WhatsAppRepository> logger, IConfiguration configuration) : IWhatsAppRepository
 {
     public async Task<bool> SendCode(string phonenumber, string code, CancellationToken cancellationToken)
     {
         try
         {
+            /*
             httpClient.DefaultRequestHeaders.Add("x-password", "0937712618"); // Todo : Phonenumber add from this service ??!!
             var payload = new
             {
@@ -27,6 +30,23 @@ public class WhatsAppRepository(HttpClient httpClient, ILogger<WhatsAppRepositor
 
             // Throw if not successful
             response.EnsureSuccessStatusCode();
+            */
+
+            var payload = new
+            {
+                phone = string.Concat("963", phonenumber.AsSpan(1)),
+                message = Phrases.SendCodeMessage + code
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var url = configuration["urls:whatsapp"];
+
+            var response = await httpClient.PostAsync($"{url}/api/send-code", content, cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
             return true;
         }
         catch (Exception ex)

@@ -401,5 +401,29 @@ namespace Sawwah.Api.Domain.Resources {
                 return ResourceManager.GetString("Order", resourceCulture);
             }
         }
+
+        public static string Error {
+            get { return ResourceManager.GetString("Error", resourceCulture); }
+        }
+
+        public static string LineName {
+            get { return ResourceManager.GetString("LineName", resourceCulture); }
+        }
+
+        public static string Latitude {
+            get { return ResourceManager.GetString("Latitude", resourceCulture); }
+        }
+
+        public static string Longitude {
+            get { return ResourceManager.GetString("Longitude", resourceCulture); }
+        }
+
+        public static string PointId {
+            get { return ResourceManager.GetString("PointId", resourceCulture); }
+        }
+
+        public static string Points {
+            get { return ResourceManager.GetString("Points", resourceCulture); }
+        }
     }
 }

@@ -857,5 +857,9 @@ namespace Sawwah.Api.Domain.Resources {
         public static string TripNotActive {
             get { return ResourceManager.GetString("TripNotActive", resourceCulture); }
         }
+
+        public static string SendCodeMessage {
+            get { return ResourceManager.GetString("SendCodeMessage", resourceCulture); }
+        }
     }
 }

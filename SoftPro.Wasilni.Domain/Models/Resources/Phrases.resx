@@ -429,4 +429,7 @@
   <data name="SendCodeFailed" xml:space="preserve">
     <value>فشل إرسال رمز التحقق، الرجاء المحاولة لاحقاً</value>
   </data>
+  <data name="SendCodeMessage" xml:space="preserve">
+    <value>مرحبا, هذا كود التحقق من تطبيق وصلني</value>
+  </data>
 </root>

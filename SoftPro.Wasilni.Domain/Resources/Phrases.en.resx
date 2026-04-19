@@ -429,4 +429,7 @@
   <data name="SendCodeFailed" xml:space="preserve">
     <value>Verification code failed to send, please try again later</value>
   </data>
+  <data name="SendCodeMessage" xml:space="preserve">
+    <value>"Hello this is you verification code for Tawsela :"</value>
+  </data>
 </root>

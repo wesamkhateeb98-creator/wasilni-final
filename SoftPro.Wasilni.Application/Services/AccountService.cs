@@ -89,8 +89,8 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow > account.CodeExpiration.Value.AddMinutes(30))
             account.SetCountCode(3);
 
-        if (account.SendCodeCount <= 0)
-            throw new FailedPreconditionException(Phrases.SendCodeMoreTime);
+        //if (account.SendCodeCount <= 0)
+        //throw new FailedPreconditionException(Phrases.SendCodeMoreTime);
 
         string code = AuthHelper.GenerateCode();
 
