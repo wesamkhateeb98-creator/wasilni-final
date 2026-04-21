@@ -981,5 +981,17 @@ namespace Domain.Resources
                 return ResourceManager.GetString("SendCodeMessage", resourceCulture);
             }
         }
+
+        public static string NoActiveBusOnLine {
+            get {
+                return ResourceManager.GetString("NoActiveBusOnLine", resourceCulture);
+            }
+        }
+
+        public static string HasPendingBookings {
+            get {
+                return ResourceManager.GetString("HasPendingBookings", resourceCulture);
+            }
+        }
     }
 }

@@ -50,6 +50,11 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
     public Task<BookingEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken)
         => dbContext.Bookings.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
 
+    public Task<bool> HasWaitingBookingsByLineAsync(int lineId, CancellationToken cancellationToken)
+        => dbContext.Bookings.AnyAsync(
+            b => b.LineId == lineId && b.Status == BookingStatus.Waiting,
+            cancellationToken);
+
     public async Task<Page<GetAdminBookingModel>> GetBookingsForAdminAsync(
         GetAdminBookingsFilterModel filter, CancellationToken cancellationToken)
     {

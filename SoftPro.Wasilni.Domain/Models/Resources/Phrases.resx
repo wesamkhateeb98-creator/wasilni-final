@@ -432,4 +432,10 @@
   <data name="SendCodeMessage" xml:space="preserve">
     <value>مرحبا, هذا كود التحقق من تطبيق وصلني</value>
   </data>
+  <data name="NoActiveBusOnLine" xml:space="preserve">
+    <value>لا يوجد باص نشط على هذا الخط</value>
+  </data>
+  <data name="HasPendingBookings" xml:space="preserve">
+    <value>يوجد حجوزات معلقة، لا يمكن إيقاف تشغيل الباص</value>
+  </data>
 </root>

@@ -133,6 +133,9 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         if (!await unitOfWork.LineRepository.AnyAsync(model.LineId, cancellationToken))
             throw new NotFoundException(Phrases.LineNotFound);
 
+        if (!await unitOfWork.BusRepository.HasActiveBusOnLineAsync(model.LineId, cancellationToken))
+            throw new FailedPreconditionException(Phrases.NoActiveBusOnLine);
+
         if (await unitOfWork.BookingRepository.HasActiveBookingAsync(model.PassengerId, cancellationToken))
             throw new AlreadyExistsException(Phrases.AlreadyBooked);
 

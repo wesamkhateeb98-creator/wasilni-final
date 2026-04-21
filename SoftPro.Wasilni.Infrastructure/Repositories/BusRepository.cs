@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SoftPro.Wasilni.Application.Abstracts.Repositories;
 using SoftPro.Wasilni.Domain.Entities;
+using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models;
 using SoftPro.Wasilni.Domain.Models.Buses;
 using SoftPro.Wasilni.Infrastructure.Persistence;
@@ -69,4 +70,9 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
 
     public Task<BusEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken)
         => dbContext.Buses.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
+
+    public Task<bool> HasActiveBusOnLineAsync(int lineId, CancellationToken cancellationToken)
+        => dbContext.Buses.AnyAsync(
+            x => x.LineId == lineId && x.Status == BusStatus.Active,
+            cancellationToken);
 }

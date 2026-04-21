@@ -167,6 +167,9 @@ public class BusService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBusServic
         BusEntity bus = await unitOfWork.BusRepository.GetByDriverIdAsync(driverId, cancellationToken)
             ?? throw new NotFoundException(Phrases.BusNotFound);
 
+        if (bus.LineId.HasValue && await unitOfWork.BookingRepository.HasWaitingBookingsByLineAsync(bus.LineId.Value, cancellationToken))
+            throw new FailedPreconditionException(Phrases.HasPendingBookings);
+
         bus.Deactivate();
         await unitOfWork.CompleteAsync(cancellationToken);
 

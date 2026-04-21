@@ -22,4 +22,7 @@ public interface IBookingRepository : IRepository<BookingEntity>
     /// <summary>All <see cref="BookingStatus.Waiting"/> bookings on a given line, with passenger name.</summary>
     Task<List<GetBookingModel>> GetWaitingByLineAsync(int lineId, CancellationToken cancellationToken);
     Task<BookingEntity?> FindByIdempotencyKeyAsync(Guid key, CancellationToken cancellationToken);
+
+    /// <summary>Returns true if the line has at least one Waiting booking.</summary>
+    Task<bool> HasWaitingBookingsByLineAsync(int lineId, CancellationToken cancellationToken);
 }
