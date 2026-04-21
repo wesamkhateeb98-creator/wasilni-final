@@ -432,4 +432,10 @@
   <data name="SendCodeMessage" xml:space="preserve">
     <value>"Hello this is you verification code for Tawsela :"</value>
   </data>
+  <data name="NoActiveBusOnLine" xml:space="preserve">
+    <value>There is no active bus service on this route.</value>
+  </data>
+  <data name="HasPendingBookings" xml:space="preserve">
+    <value>There are pending reservations; the bus cannot be turned off.</value>
+  </data>
 </root>
