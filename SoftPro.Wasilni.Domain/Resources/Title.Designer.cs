@@ -40,7 +40,7 @@ namespace Domain.Resources
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SoftPro.Wasilni.Domain.Models.Resources.Title", typeof(Title).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SoftPro.Wasilni.Domain.Resources.Title", typeof(Title).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -161,11 +161,29 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to التغيير.
+        /// </summary>
+        public static string Delta {
+            get {
+                return ResourceManager.GetString("Delta", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to الاسم بالإنكليزي.
         /// </summary>
         public static string EnglishName {
             get {
                 return ResourceManager.GetString("EnglishName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to خطأ.
+        /// </summary>
+        public static string Error {
+            get {
+                return ResourceManager.GetString("Error", resourceCulture);
             }
         }
         
@@ -215,6 +233,15 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to خط العرض.
+        /// </summary>
+        public static string Latitude {
+            get {
+                return ResourceManager.GetString("Latitude", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to معرف الخط.
         /// </summary>
         public static string LineId {
@@ -224,11 +251,29 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to اسم الخط.
+        /// </summary>
+        public static string LineName {
+            get {
+                return ResourceManager.GetString("LineName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to الموقع.
         /// </summary>
         public static string Location {
             get {
                 return ResourceManager.GetString("Location", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to خط الطول.
+        /// </summary>
+        public static string Longitude {
+            get {
+                return ResourceManager.GetString("Longitude", resourceCulture);
             }
         }
         
@@ -256,6 +301,15 @@ namespace Domain.Resources
         public static string OldPassword {
             get {
                 return ResourceManager.GetString("OldPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to الطلب.
+        /// </summary>
+        public static string Order {
+            get {
+                return ResourceManager.GetString("Order", resourceCulture);
             }
         }
         
@@ -323,6 +377,24 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to معرف النقطة.
+        /// </summary>
+        public static string PointId {
+            get {
+                return ResourceManager.GetString("PointId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to النقاط.
+        /// </summary>
+        public static string Points {
+            get {
+                return ResourceManager.GetString("Points", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to الكود.
         /// </summary>
         public static string RefreshToken {
@@ -375,76 +447,56 @@ namespace Domain.Resources
                 return ResourceManager.GetString("TripWillGo", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to اسم العائلة.
+        /// </summary>
+        public static string LastName
+        {
+            get
+            {
+                return ResourceManager.GetString("LastName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to تاريخ الميلاد.
+        /// </summary>
+        public static string DateOfBirth
+        {
+            get
+            {
+                return ResourceManager.GetString("DateOfBirth", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الجنس.
+        /// </summary>
+        public static string Gender
+        {
+            get
+            {
+                return ResourceManager.GetString("Gender", resourceCulture);
+            }
+        }
+        /// <summary>
+        ///   Looks up a localized string similar to الاسم الأول.
+        /// </summary>
+        public static string FirstName
+        {
+            get
+            {
+                return ResourceManager.GetString("FirstName", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to الأسم.
         /// </summary>
         public static string Username {
             get {
                 return ResourceManager.GetString("Username", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to خطأ.
-        /// </summary>
-        public static string Error {
-            get {
-                return ResourceManager.GetString("Error", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to اسم الخط.
-        /// </summary>
-        public static string LineName {
-            get {
-                return ResourceManager.GetString("LineName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to خط العرض.
-        /// </summary>
-        public static string Latitude {
-            get {
-                return ResourceManager.GetString("Latitude", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to خط الطول.
-        /// </summary>
-        public static string Longitude {
-            get {
-                return ResourceManager.GetString("Longitude", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to معرف النقطة.
-        /// </summary>
-        public static string PointId {
-            get {
-                return ResourceManager.GetString("PointId", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to النقاط.
-        /// </summary>
-        public static string Points {
-            get {
-                return ResourceManager.GetString("Points", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to التغيير.
-        /// </summary>
-        public static string Delta {
-            get {
-                return ResourceManager.GetString("Delta", resourceCulture);
             }
         }
     }

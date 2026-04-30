@@ -246,6 +246,18 @@
   <data name="Order" xml:space="preserve">
     <value>Order</value>
   </data>
+	<data name="FirstName" xml:space="preserve">
+  <value>First Name</value>
+</data>
+	<data name="LastName" xml:space="preserve">
+  <value>Last Name</value>
+</data>
+	<data name="DateOfBirth" xml:space="preserve">
+  <value>Date Of Birth</value>
+</data>
+	<data name="Gender" xml:space="preserve">
+  <value>Gender</value>
+</data>
   <data name="Delta" xml:space="preserve">
     <value>Delta</value>
   </data>

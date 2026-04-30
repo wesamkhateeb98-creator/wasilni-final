@@ -40,7 +40,7 @@ namespace Domain.Resources
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SoftPro.Wasilni.Domain.Models.Resources.Phrases", typeof(Phrases).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SoftPro.Wasilni.Domain.Resources.Phrases", typeof(Phrases).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -116,11 +116,47 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to لديك حجز نشط بالفعل على هذه الرحلة.
+        /// </summary>
+        public static string AlreadyBooked {
+            get {
+                return ResourceManager.GetString("AlreadyBooked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to هناك سائق آخر على الباص..
         /// </summary>
         public static string AssignedOtherDriver {
             get {
                 return ResourceManager.GetString("AssignedOtherDriver", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to الحجز غير موجود.
+        /// </summary>
+        public static string BookingNotFound {
+            get {
+                return ResourceManager.GetString("BookingNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to الباص في رحلة نشطة بالفعل.
+        /// </summary>
+        public static string BusAlreadyActive {
+            get {
+                return ResourceManager.GetString("BusAlreadyActive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to موقع الباص غير متوفر.
+        /// </summary>
+        public static string BusLocationNotAvailable {
+            get {
+                return ResourceManager.GetString("BusLocationNotAvailable", resourceCulture);
             }
         }
         
@@ -251,6 +287,15 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to يوجد حجوزات معلقة، لا يمكن إيقاف تشغيل الباص.
+        /// </summary>
+        public static string HasPendingBookings {
+            get {
+                return ResourceManager.GetString("HasPendingBookings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to سأكون سعيدا بتعاوني معك.
         /// </summary>
         public static string IGladToBeWithYouSir {
@@ -350,6 +395,33 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to تاريخ البداية يجب أن يكون قبل تاريخ النهاية.
+        /// </summary>
+        public static string InvalidDateRange {
+            get {
+                return ResourceManager.GetString("InvalidDateRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to القيمة يجب أن تكون 1 أو -1 فقط.
+        /// </summary>
+        public static string InvalidDelta {
+            get {
+                return ResourceManager.GetString("InvalidDelta", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to المسافة بين السائق و الراكب اكبر من 100 متر.
+        /// </summary>
+        public static string InvalidDistanceBetweenDriverAndPassenger {
+            get {
+                return ResourceManager.GetString("InvalidDistanceBetweenDriverAndPassenger", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to الأسم الإنكليزي غير صالح.
         /// </summary>
         public static string InvalidEnglishName {
@@ -413,6 +485,24 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to المفتاح غير صالح.
+        /// </summary>
+        public static string InvalidKey {
+            get {
+                return ResourceManager.GetString("InvalidKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to خط العرض يجب أن يكون بين -90 و 90.
+        /// </summary>
+        public static string InvalidLatitude {
+            get {
+                return ResourceManager.GetString("InvalidLatitude", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to خطأ في معرف الخط.
         /// </summary>
         public static string InvalidLineId {
@@ -422,11 +512,29 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to اسم الخط غير صالح.
+        /// </summary>
+        public static string InvalidLineName {
+            get {
+                return ResourceManager.GetString("InvalidLineName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to الموقع غير صالح.
         /// </summary>
         public static string InvalidLocation {
             get {
                 return ResourceManager.GetString("InvalidLocation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to خط الطول يجب أن يكون بين -180 و 180.
+        /// </summary>
+        public static string InvalidLongitude {
+            get {
+                return ResourceManager.GetString("InvalidLongitude", resourceCulture);
             }
         }
         
@@ -503,6 +611,15 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to معرف النقطة غير صالح.
+        /// </summary>
+        public static string InvalidPointId {
+            get {
+                return ResourceManager.GetString("InvalidPointId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to لا يمكن إنزال الرحلة بعد 45 ساعة من التاريخ الحالي.
         /// </summary>
         public static string InvalidQuitTime {
@@ -517,6 +634,15 @@ namespace Domain.Resources
         public static string InvalidRefreshToken {
             get {
                 return ResourceManager.GetString("InvalidRefreshToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to نوع التقرير غير صحيح.
+        /// </summary>
+        public static string InvalidReportType {
+            get {
+                return ResourceManager.GetString("InvalidReportType", resourceCulture);
             }
         }
         
@@ -620,6 +746,15 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to لا يوجد باص نشط على هذا الخط.
+        /// </summary>
+        public static string NoActiveBusOnLine {
+            get {
+                return ResourceManager.GetString("NoActiveBusOnLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ليس سائقا من الأصل.
         /// </summary>
         public static string NotDriver {
@@ -634,6 +769,24 @@ namespace Domain.Resources
         public static string NotFound {
             get {
                 return ResourceManager.GetString("NotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to هذا الحجز ليس لك.
+        /// </summary>
+        public static string NotYourBooking {
+            get {
+                return ResourceManager.GetString("NotYourBooking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to هذا الباص غير مخصص لك.
+        /// </summary>
+        public static string NotYourBus {
+            get {
+                return ResourceManager.GetString("NotYourBus", resourceCulture);
             }
         }
         
@@ -661,6 +814,42 @@ namespace Domain.Resources
         public static string PlateAlreadyExists {
             get {
                 return ResourceManager.GetString("PlateAlreadyExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to النقطة غير موجودة.
+        /// </summary>
+        public static string PointNotFound {
+            get {
+                return ResourceManager.GetString("PointNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to يجب إضافة نقطة واحدة على الأقل.
+        /// </summary>
+        public static string PointsRequired {
+            get {
+                return ResourceManager.GetString("PointsRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to لا يمكن حذف هذا السجل لأنه مستخدم من قبل كيانات أخرى. يرجى إزالة التبعيات أولاً..
+        /// </summary>
+        public static string RecordInUse {
+            get {
+                return ResourceManager.GetString("RecordInUse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to انتهت صلاحية رمز التحديث، الرجاء تسجيل الدخول من جديد.
+        /// </summary>
+        public static string RefreshTokenExpired {
+            get {
+                return ResourceManager.GetString("RefreshTokenExpired", resourceCulture);
             }
         }
         
@@ -710,6 +899,24 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to فشل إرسال رمز التحقق، الرجاء المحاولة لاحقاً.
+        /// </summary>
+        public static string SendCodeFailed {
+            get {
+                return ResourceManager.GetString("SendCodeFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to مرحبا, هذا كود التحقق من تطبيق وصلني.
+        /// </summary>
+        public static string SendCodeMessage {
+            get {
+                return ResourceManager.GetString("SendCodeMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to لقد قمت بإرسال الرمز أكثر من مرة, الرجاح المحاولة بعد مدة من الزمن..
         /// </summary>
         public static string SendCodeMoreTime {
@@ -737,6 +944,15 @@ namespace Domain.Resources
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to الرحلة منتهية بالفعل.
+        /// </summary>
+        public static string TripAlreadyEnded {
+            get {
+                return ResourceManager.GetString("TripAlreadyEnded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to هناك رحلة موجودة بالفعل.
         /// </summary>
         public static string TripAlreadyExists {
@@ -751,6 +967,15 @@ namespace Domain.Resources
         public static string TripAlreadyGone {
             get {
                 return ResourceManager.GetString("TripAlreadyGone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to الرحلة غير نشطة.
+        /// </summary>
+        public static string TripNotActive {
+            get {
+                return ResourceManager.GetString("TripNotActive", resourceCulture);
             }
         }
         
@@ -789,208 +1014,57 @@ namespace Domain.Resources
                 return ResourceManager.GetString("UsernameOrPasswordIsInvalid", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to اسم العائلة غير صالح.
+        /// </summary>
+        public static string InvalidLastName
+        {
+            get
+            {
+                return ResourceManager.GetString("InvalidLastName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to تاريخ الميلاد غير صالح.
+        /// </summary>
+        public static string InvalidDateOfBirth
+        {
+            get
+            {
+                return ResourceManager.GetString("InvalidDateOfBirth", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الجنس غير صالح.
+        /// </summary>
+        public static string InvalidGender
+        {
+            get
+            {
+                return ResourceManager.GetString("InvalidGender", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الاسم الأول غير صالح.
+        /// </summary>
+        public static string InvalidFirstName
+        {
+            get
+            {
+                return ResourceManager.GetString("InvalidFirstName", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to انت لم ترسل كود اصلا.
         /// </summary>
         public static string YouHaveNotSentCode {
             get {
                 return ResourceManager.GetString("YouHaveNotSentCode", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to لا يمكن حذف هذا السجل لأنه مستخدم من قبل كيانات أخرى.
-        /// </summary>
-        public static string RecordInUse {
-            get {
-                return ResourceManager.GetString("RecordInUse", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to اسم الخط غير صالح.
-        /// </summary>
-        public static string InvalidLineName {
-            get {
-                return ResourceManager.GetString("InvalidLineName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to خط العرض يجب أن يكون بين -90 و 90.
-        /// </summary>
-        public static string InvalidLatitude {
-            get {
-                return ResourceManager.GetString("InvalidLatitude", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to خط الطول يجب أن يكون بين -180 و 180.
-        /// </summary>
-        public static string InvalidLongitude {
-            get {
-                return ResourceManager.GetString("InvalidLongitude", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to معرف النقطة غير صالح.
-        /// </summary>
-        public static string InvalidPointId {
-            get {
-                return ResourceManager.GetString("InvalidPointId", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to النقطة غير موجودة.
-        /// </summary>
-        public static string PointNotFound {
-            get {
-                return ResourceManager.GetString("PointNotFound", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to يجب إضافة نقطة واحدة على الأقل.
-        /// </summary>
-        public static string PointsRequired {
-            get {
-                return ResourceManager.GetString("PointsRequired", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to الباص في رحلة نشطة بالفعل.
-        /// </summary>
-        public static string BusAlreadyActive {
-            get {
-                return ResourceManager.GetString("BusAlreadyActive", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to هذا الباص غير مخصص لك.
-        /// </summary>
-        public static string NotYourBus {
-            get {
-                return ResourceManager.GetString("NotYourBus", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to الرحلة منتهية بالفعل.
-        /// </summary>
-        public static string TripAlreadyEnded {
-            get {
-                return ResourceManager.GetString("TripAlreadyEnded", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to القيمة يجب أن تكون 1 أو -1 فقط.
-        /// </summary>
-        public static string InvalidDelta {
-            get {
-                return ResourceManager.GetString("InvalidDelta", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to الحجز غير موجود.
-        /// </summary>
-        public static string BookingNotFound {
-            get {
-                return ResourceManager.GetString("BookingNotFound", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to لديك حجز نشط بالفعل على هذه الرحلة.
-        /// </summary>
-        public static string AlreadyBooked {
-            get {
-                return ResourceManager.GetString("AlreadyBooked", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to هذا الحجز ليس لك.
-        /// </summary>
-        public static string NotYourBooking {
-            get {
-                return ResourceManager.GetString("NotYourBooking", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to الرحلة غير نشطة.
-        /// </summary>
-        public static string TripNotActive {
-            get {
-                return ResourceManager.GetString("TripNotActive", resourceCulture);
-            }
-        }
-
-        public static string InvalidReportType {
-            get {
-                return ResourceManager.GetString("InvalidReportType", resourceCulture);
-            }
-        }
-
-        public static string InvalidDateRange {
-            get {
-                return ResourceManager.GetString("InvalidDateRange", resourceCulture);
-            }
-        }
-
-        public static string InvalidKey {
-            get {
-                return ResourceManager.GetString("InvalidKey", resourceCulture);
-            }
-        }
-
-        public static string RefreshTokenExpired {
-            get {
-                return ResourceManager.GetString("RefreshTokenExpired", resourceCulture);
-            }
-        }
-
-        public static string InvalidDistanceBetweenDriverAndPassenger {
-            get {
-                return ResourceManager.GetString("InvalidDistanceBetweenDriverAndPassenger", resourceCulture);
-            }
-        }
-
-        public static string BusLocationNotAvailable {
-            get {
-                return ResourceManager.GetString("BusLocationNotAvailable", resourceCulture);
-            }
-        }
-
-        public static string SendCodeFailed {
-            get {
-                return ResourceManager.GetString("SendCodeFailed", resourceCulture);
-            }
-        }
-
-        public static string SendCodeMessage {
-            get {
-                return ResourceManager.GetString("SendCodeMessage", resourceCulture);
-            }
-        }
-
-        public static string NoActiveBusOnLine {
-            get {
-                return ResourceManager.GetString("NoActiveBusOnLine", resourceCulture);
-            }
-        }
-
-        public static string HasPendingBookings {
-            get {
-                return ResourceManager.GetString("HasPendingBookings", resourceCulture);
             }
         }
     }

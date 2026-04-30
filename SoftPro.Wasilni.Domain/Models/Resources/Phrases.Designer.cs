@@ -788,7 +788,51 @@ namespace Sawwah.Api.Domain.Resources {
                 return ResourceManager.GetString("UsernameOrPasswordIsInvalid", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to اسم العائلة غير صالح.
+        /// </summary>
+        public static string InvalidLastName
+        {
+            get
+            {
+                return ResourceManager.GetString("InvalidLastName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الاسم غير غير صالح. 
+        /// </summary>
+        public static string InvalidFirstName
+        {
+            get
+            {
+                return ResourceManager.GetString("InvalidFirstName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to تاريخ الميلاد غير صالح.
+        /// </summary>
+        public static string InvalidDateOfBirth
+        {
+            get
+            {
+                return ResourceManager.GetString("InvalidDateOfBirth", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الجنس غير صالح.
+        /// </summary>
+        public static string InvalidGender
+        {
+            get
+            {
+                return ResourceManager.GetString("InvalidGender", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to انت لم ترسل كود اصلا.
         /// </summary>

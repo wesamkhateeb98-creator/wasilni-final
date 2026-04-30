@@ -13,27 +13,27 @@ public class RegisterPassengerRequestValidator : AbstractValidator<SignupPasseng
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
             .Length(1, 20)
-            .WithName(Title.Username)
-            .WithMessage(Phrases.InvalidUsername);
+            .WithName(Title.FirstName)
+            .WithMessage(Phrases.InvalidFirstName);
 
         RuleFor(x => x.LastName)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
             .Length(1, 20)
-            .WithName(Title.Username)
-            .WithMessage(Phrases.InvalidUsername);
+            .WithName(Title.LastName)
+            .WithMessage(Phrases.InvalidLastName);
 
         RuleFor(x => x.DateOfBirth)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
             .LessThan(DateTime.Today)
-            .WithName(Title.Username)
-            .WithMessage(Phrases.InvalidUsername);
+            .WithName(Title.DateOfBirth)
+            .WithMessage(Phrases.InvalidDateOfBirth);
 
         RuleFor(x => x.Gender)
             .IsInEnum()
-            .WithName(Title.Username)
-            .WithMessage(Phrases.InvalidUsername);
+            .WithName(Title.Gender)
+            .WithMessage(Phrases.InvalidGender);
 
         //RuleFor(x => x.Phonenumber)
         //    .Cascade(CascadeMode.Stop)

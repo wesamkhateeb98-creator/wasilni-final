@@ -438,4 +438,16 @@
   <data name="HasPendingBookings" xml:space="preserve">
     <value>يوجد حجوزات معلقة، لا يمكن إيقاف تشغيل الباص</value>
   </data>
+	<data name="InvalidFirstName" xml:space="preserve">
+  <value>الاسم الأول غير صالح</value>
+</data>
+	<data name="InvalidLastName" xml:space="preserve">
+  <value>اسم العائلة غير صالح</value>
+</data>
+	<data name="InvalidDateOfBirth" xml:space="preserve">
+  <value>تاريخ الميلاد غير صالح</value>
+</data>
+	<data name="InvalidGender" xml:space="preserve">
+  <value>الجنس غير صالح</value>
+</data>
 </root>

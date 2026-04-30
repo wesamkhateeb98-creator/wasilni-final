@@ -363,4 +363,17 @@
   <data name="IGladToBeWithYouSir" xml:space="preserve">
     <value>I glad to be with you sir</value>
   </data>
+	<data name="InvalidFirstName" xml:space="preserve">
+    <value>First name is invalid</value>
+  </data>
+	<data name="InvalidLastName" xml:space="preserve">
+    <value>Last name is invalid</value>
+  </data>
+	<data name="InvalidDateOfBirth" xml:space="preserve">
+    <value>Date of birth is invalid</value>
+  </data>
+	<data name="InvalidGender" xml:space="preserve">
+    <value>Gender is invalid</value>
+  </data>
+
 </root>

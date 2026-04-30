@@ -402,6 +402,50 @@ namespace Sawwah.Api.Domain.Resources {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to اسم العائلة.
+        /// </summary>
+        public static string LastName
+        {
+            get
+            {
+                return ResourceManager.GetString("LastName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to تاريخ الميلاد.
+        /// </summary>
+        public static string DateOfBirth
+        {
+            get
+            {
+                return ResourceManager.GetString("DateOfBirth", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to الجنس.
+        /// </summary>
+        public static string Gender
+        {
+            get
+            {
+                return ResourceManager.GetString("Gender", resourceCulture);
+            }
+        }
+        /// <summary>
+        ///   Looks up a localized string similar to الاسم الأول.
+        /// </summary>
+        public static string FirstName
+        {
+            get
+            {
+                return ResourceManager.GetString("FirstName", resourceCulture);
+            }
+        }
+
+
         public static string Error {
             get { return ResourceManager.GetString("Error", resourceCulture); }
         }
