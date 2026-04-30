@@ -93,7 +93,7 @@ public class AccountsController(IAccountService accountService) : BaseController
     [Authorize]
     public async Task<IdResponse> UpdateProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        int id = await accountService.UpdateProfileAsync(User.GetId(), request.Username, cancellationToken);
+        int id = await accountService.UpdateProfileAsync(User.GetId(), request.FirstName, request.LastName, request.DateOfBirth, request.Gender, cancellationToken);
         return new(id);
     }
 }

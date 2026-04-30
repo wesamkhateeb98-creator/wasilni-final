@@ -13,6 +13,6 @@ public interface IAccountService
     Task<LoginModelExtended> VerifyAccountAsync(string phonenumber, string code, CancellationToken cancellationToken);
     Task<int> ChangePasswordAsync(int id, string oldPassword, string newPassword, CancellationToken cancellationToken);
     Task<int> ResetPasswordAsync(string phonenumber, string code, string newPassword, CancellationToken cancellationToken);
-    Task<int> UpdateProfileAsync(int v, string username, CancellationToken cancellationToken);
+    Task<int> UpdateProfileAsync(int id, string firstName, string lastName, DateTime dateOfBirth, Gender gender, CancellationToken cancellationToken);
     Task<LoginModelExtended> RefreshAsync(RefreshModel refreshModel, CancellationToken cancellationToken);
 }

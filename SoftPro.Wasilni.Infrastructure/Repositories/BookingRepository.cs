@@ -39,7 +39,8 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
                 b.Id,
                 b.LineId,
                 b.PassengerId,
-                b.Passenger.Name,
+                string.Join(" ", new[] { b.Passenger.FirstName, b.Passenger.LastName }
+                    .Where(value => !string.IsNullOrWhiteSpace(value))),
                 b.Date,
                 b.Latitude,
                 b.Longitude,
@@ -71,7 +72,8 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
             .Select(b => new GetAdminBookingModel(
                 b.Id,
                 b.PassengerId,
-                b.Passenger.Name,
+                string.Join(" ", new[] { b.Passenger.FirstName, b.Passenger.LastName }
+                    .Where(value => !string.IsNullOrWhiteSpace(value))),
                 b.LineId,
                 b.Line.Name,
                 b.Date,

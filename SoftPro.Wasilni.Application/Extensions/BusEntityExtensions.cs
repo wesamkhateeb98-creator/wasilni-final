@@ -20,7 +20,10 @@ public static class BusEntityExtensions
         => new(booking.Id,
                booking.LineId,
                booking.PassengerId,
-               booking.Passenger?.Name ?? string.Empty,
+               booking.Passenger is null
+                    ? string.Empty
+                    : string.Join(" ", new[] { booking.Passenger.FirstName, booking.Passenger.LastName }
+                        .Where(value => !string.IsNullOrWhiteSpace(value))),
                booking.Date,
                booking.Latitude,
                booking.Longitude,

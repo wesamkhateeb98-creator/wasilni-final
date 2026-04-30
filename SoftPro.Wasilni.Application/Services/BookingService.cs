@@ -146,7 +146,9 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         await unitOfWork.BookingRepository.AddAsync(booking, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return new AddBookingResult(booking.Id, passenger.Name);
+        var passengerName = string.Join(" ", new[] { passenger.FirstName, passenger.LastName }
+            .Where(value => !string.IsNullOrWhiteSpace(value)));
+        return new AddBookingResult(booking.Id, passengerName);
     }
 
     public async Task<BookingActionResult> CancelBookingAsync(int passengerId, CancellationToken cancellationToken)

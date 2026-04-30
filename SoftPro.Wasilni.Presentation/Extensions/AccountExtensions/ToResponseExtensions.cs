@@ -29,7 +29,10 @@ public static class ToResponseExtensions
         => new(
             loginModelExtended.Id,
             loginModelExtended.PhoneNumber,
-            loginModelExtended.Name,
+            loginModelExtended.FirstName,
+            loginModelExtended.LastName,
+            loginModelExtended.DateOfBirth,
+            loginModelExtended.Gender,
             loginModelExtended.Token,
             loginModelExtended.ExpirationDate,
             loginModelExtended.Role,
@@ -37,14 +40,14 @@ public static class ToResponseExtensions
             loginModelExtended.Permission
             );
     private static SearchByPhonenumberResponse ToResponse(this SearchByPhoneNumberModel searchByPhoneNumber)
-        => new(searchByPhoneNumber.Id, searchByPhoneNumber.Name, searchByPhoneNumber.Phonenumber);
+        => new(searchByPhoneNumber.Id, searchByPhoneNumber.FirstName, searchByPhoneNumber.LastName, searchByPhoneNumber.DateOfBirth, searchByPhoneNumber.Gender, searchByPhoneNumber.Phonenumber);
 
     public static Page<UserResponse> ToUserResponse(this Page<SearchByPhoneNumberModel> page)
         => new(
             page.PageNumber,
             page.PageSize,
             page.TotalPages,
-            page.Content.Select(x => new UserResponse(x.Id, x.Name, x.Phonenumber)).ToList()
+            page.Content.Select(x => new UserResponse(x.Id, x.FirstName, x.LastName, x.DateOfBirth, x.Gender, x.Phonenumber)).ToList()
         );
 
 }

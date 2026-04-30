@@ -324,13 +324,14 @@
       (seedData.passengers ?? []).forEach(p => {
         const tr = document.createElement('tr');
         tr.className = 'row';
-        tr.innerHTML = `<td>${esc(p.name)}</td><td>${esc(p.phone)}</td>`;
+        const fullName = [p.firstName, p.lastName].filter(Boolean).join(' ');
+        tr.innerHTML = `<td>${esc(fullName)}</td><td>${esc(p.phone)}</td>`;
         tr.onclick = () => {
           document.querySelectorAll('#seed-pass tr.row').forEach(x => x.classList.remove('sel'));
           tr.classList.add('sel');
           $('phone').value    = p.phone;
           $('password').value = 'Password@123';
-          log('info','AutoFill', `Passenger: ${p.name} (${p.phone})`);
+          log('info','AutoFill', `Passenger: ${fullName} (${p.phone})`);
         };
         ptb.appendChild(tr);
       });
@@ -689,7 +690,8 @@
       const lineId = driver?.lineId ?? 1;
 
       // 2. Login
-      dmProg(`Login: ${pass.name} (${pass.phone})`);
+      const passName = [pass.firstName, pass.lastName].filter(Boolean).join(' ');
+      dmProg(`Login: ${passName} (${pass.phone})`);
       $('phone').value    = pass.phone;
       $('password').value = 'Password@123';
       await login();

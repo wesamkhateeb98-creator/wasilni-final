@@ -44,7 +44,7 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 
         var (token, expirationDate) = AuthHelper.GenerateToken(claims, jwtOption.Value);
 
-        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.Permission);
+        return new(account.Id, account.PhoneNumber, account.FirstName, account.LastName, account.DateOfBirth, account.Gender, token, expirationDate, account.Role, account.RefreshToken, account.Permission);
     }
 
     public async Task<int> SignUpAsync(RegisterModel registerModel, CancellationToken cancellationToken)
@@ -129,7 +129,7 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         List<Claim> claims = account.GetClaim();
         var (token, expirationDate) = AuthHelper.GenerateToken(claims, jwtOption.Value);
 
-        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.Permission);
+        return new(account.Id, account.PhoneNumber, account.FirstName, account.LastName, account.DateOfBirth, account.Gender, token, expirationDate, account.Role, account.RefreshToken, account.Permission);
     }
 
     public async Task<int> ChangePasswordAsync(int id, string oldPassword, string newPassword, CancellationToken cancellationToken)
@@ -177,15 +177,17 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         return account.Id;
     }
 
-    public async Task<int> UpdateProfileAsync(int id, string username, CancellationToken cancellationToken)
+    public async Task<int> UpdateProfileAsync(int id, string firstName, string lastName, DateTime dateOfBirth, Gender gender, CancellationToken cancellationToken)
     {
         AccountEntity account = await unitOfWork.AccountRepository.GetByIdAsync(id, cancellationToken)
             ?? throw new NotFoundException(Phrases.NotFound);
 
-        if (account.ChangeData(username))
+        DateOnly dateOfBirthValue = DateOnly.FromDateTime(dateOfBirth);
+
+        if (account.ChangeData(firstName, lastName, dateOfBirthValue, gender))
             throw new FailedPreconditionException(Phrases.AccountDataNoChanged);
 
-        account.SetName(username);
+        account.SetProfile(firstName, lastName, dateOfBirthValue, gender);
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return account.Id;
@@ -208,6 +210,6 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         account.ChangeRefreshToken(AuthHelper.GenerateRefreshToken(), RefreshDays);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        return new(account.Id, account.PhoneNumber, account.Name, token, expirationDate, account.Role, account.RefreshToken, account.Permission);
+        return new(account.Id, account.PhoneNumber, account.FirstName, account.LastName, account.DateOfBirth, account.Gender, token, expirationDate, account.Role, account.RefreshToken, account.Permission);
     }
 }

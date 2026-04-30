@@ -859,8 +859,9 @@
       ul.innerHTML = '';
       (Array.isArray(list) ? list : []).forEach(u => {
         const li = document.createElement('li');
+        const fullName = [u.firstName, u.lastName].filter(Boolean).join(' ');
         li.innerHTML = `<span class="id-tag">#${u.id}</span>
-          <span class="lbl">${u.name ?? u.username ?? '—'} <span style="color:var(--muted)">${u.phoneNumber ?? ''}</span></span>
+          <span class="lbl">${fullName || '—'} <span style="color:var(--muted)">${u.phoneNumber ?? ''}</span></span>
           <span class="chip ${u.role === 1 ? 'chip-orange' : 'chip-sky'}">${u.role === 1 ? 'Admin' : 'User'}</span>`;
         ul.appendChild(li);
       });

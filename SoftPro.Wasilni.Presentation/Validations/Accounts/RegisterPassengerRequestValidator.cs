@@ -9,10 +9,29 @@ public class RegisterPassengerRequestValidator : AbstractValidator<SignupPasseng
 {
     public RegisterPassengerRequestValidator()
     {
-        RuleFor(x => x.Username)
+        RuleFor(x => x.FirstName)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
             .Length(1, 20)
+            .WithName(Title.Username)
+            .WithMessage(Phrases.InvalidUsername);
+
+        RuleFor(x => x.LastName)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+            .Length(1, 20)
+            .WithName(Title.Username)
+            .WithMessage(Phrases.InvalidUsername);
+
+        RuleFor(x => x.DateOfBirth)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+            .LessThan(DateTime.Today)
+            .WithName(Title.Username)
+            .WithMessage(Phrases.InvalidUsername);
+
+        RuleFor(x => x.Gender)
+            .IsInEnum()
             .WithName(Title.Username)
             .WithMessage(Phrases.InvalidUsername);
 

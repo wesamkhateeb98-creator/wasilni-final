@@ -8,8 +8,24 @@ public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequ
 {
     public UpdateProfileRequestValidator()
     {
-        RuleFor(x => x.Username)
+        RuleFor(x => x.FirstName)
             .Length(1, 20)
+            .WithName(Title.Username)
+            .WithMessage(Phrases.InvalidUsername);
+
+        RuleFor(x => x.LastName)
+            .Length(1, 20)
+            .WithName(Title.Username)
+            .WithMessage(Phrases.InvalidUsername);
+
+        RuleFor(x => x.DateOfBirth)
+            .NotEmpty()
+            .LessThan(DateTime.Today)
+            .WithName(Title.Username)
+            .WithMessage(Phrases.InvalidUsername);
+
+        RuleFor(x => x.Gender)
+            .IsInEnum()
             .WithName(Title.Username)
             .WithMessage(Phrases.InvalidUsername);
     }

@@ -1,3 +1,5 @@
-﻿namespace SoftPro.Wasilni.Presentation.Models.Request.Account;
+﻿using SoftPro.Wasilni.Domain.Enums;
 
-public record UpdateProfileRequest(string Username);
+namespace SoftPro.Wasilni.Presentation.Models.Request.Account;
+
+public record UpdateProfileRequest(string FirstName, string LastName, DateTime DateOfBirth, Gender Gender);

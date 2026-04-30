@@ -1,3 +1,5 @@
-﻿namespace SoftPro.Wasilni.Domain.Models.Accounts;
+﻿using SoftPro.Wasilni.Domain.Enums;
 
-public record SearchByPhoneNumberModel(int Id, string Name, string Phonenumber);
+namespace SoftPro.Wasilni.Domain.Models.Accounts;
+
+public record SearchByPhoneNumberModel(int Id, string FirstName, string LastName, DateOnly DateOfBirth, Gender Gender, string Phonenumber);

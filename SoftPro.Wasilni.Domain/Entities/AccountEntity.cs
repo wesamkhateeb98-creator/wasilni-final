@@ -5,7 +5,10 @@ namespace SoftPro.Wasilni.Domain.Entities;
 
 public class AccountEntity : IEntity
 {
-    public string Name { get; private set; }
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
+    public DateOnly DateOfBirth { get; private set; }
+    public Gender Gender { get; private set; }
     public string PhoneNumber { get; private set; }
     public byte[] Password { get; private set; }
     public byte[] Salt { get; private set; }
@@ -23,7 +26,10 @@ public class AccountEntity : IEntity
     private AccountEntity() { }
 
     public AccountEntity(
-        string name,
+        string firstName,
+        string lastName,
+        DateOnly dateOfBirth,
+        Gender gender,
         string phoneNumber,
         byte[] password,
         byte[] salt,
@@ -38,7 +44,10 @@ public class AccountEntity : IEntity
         Guid idempotencyKey
         )
     {
-        Name = name;
+        FirstName = firstName;
+        LastName = lastName;
+        DateOfBirth = dateOfBirth;
+        Gender = gender;
         PhoneNumber = phoneNumber;
         Password = password;
         Salt = salt;
@@ -56,7 +65,10 @@ public class AccountEntity : IEntity
 
     public static AccountEntity Create(RegisterModel registerModel, byte[] passwordHashed, byte[] salt, string refreshToken, string code, int refreshTokenDurationDays)
         => new(
-            registerModel.Username,
+            registerModel.FirstName,
+            registerModel.LastName,
+            DateOnly.FromDateTime(registerModel.DateOfBirth),
+            registerModel.Gender,
             registerModel.Phonenumber,
             passwordHashed,
             salt,
@@ -90,14 +102,22 @@ public class AccountEntity : IEntity
         Confirmed = true;
     }
 
-    public bool ChangeData(string username)
-        => string.Equals(Name, username, StringComparison.OrdinalIgnoreCase);
+    public bool ChangeData(string firstName, string lastName, DateOnly dateOfBirth, Gender gender)
+        => string.Equals(FirstName, firstName, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(LastName, lastName, StringComparison.OrdinalIgnoreCase)
+        && DateOfBirth == dateOfBirth
+        && Gender == gender;
 
     public void SetPassword(byte[] newHashPassword)
         => Password = newHashPassword;
 
-    public void SetName(string name)
-        => Name = name;
+    public void SetProfile(string firstName, string lastName, DateOnly dateOfBirth, Gender gender)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        DateOfBirth = dateOfBirth;
+        Gender = gender;
+    }
 
     public void ChangeRefreshToken(string refreshToken, int durationDays)
     {

@@ -8,7 +8,10 @@ public static class ToModelExtensions
 {
     public static RegisterModel ToModel(this SignupPassengerRequest registerRequest)
         => new(
-            registerRequest.Username,
+            registerRequest.FirstName,
+            registerRequest.LastName,
+            registerRequest.DateOfBirth,
+            registerRequest.Gender,
             registerRequest.Phonenumber,
             registerRequest.Password,
             Role.Passenger,

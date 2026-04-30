@@ -49,7 +49,12 @@ public class BusRepository(AppDbContext dbContext) : Repository<BusEntity>(dbCon
                  x.NumberOfSeats,
                  x.LineId,
                  x.LineId.HasValue ? x.LineEntity!.Name : null,
-                 x.DriverId.HasValue ? new(x.DriverId.Value, x.Driver!.Name) : null
+                 x.DriverId.HasValue
+                    ? new(
+                        x.DriverId.Value,
+                        string.Join(" ", new[] { x.Driver!.FirstName, x.Driver.LastName }
+                            .Where(value => !string.IsNullOrWhiteSpace(value))))
+                    : null
              ))
              .Skip((inputModel.pageNumber - 1) * inputModel.PageSize)
              .Take(inputModel.PageSize)

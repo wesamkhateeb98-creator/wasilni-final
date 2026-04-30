@@ -26,7 +26,7 @@ public class AccountRepository(AppDbContext dbContext) : Repository<AccountEntit
         List<SearchByPhoneNumberModel> accountInfo =
             await accounts
                 .OrderByDescending(x => x.CreatedAt)
-                .Select(x => new SearchByPhoneNumberModel(x.Id, x.Name, x.PhoneNumber))
+                .Select(x => new SearchByPhoneNumberModel(x.Id, x.FirstName, x.LastName, x.DateOfBirth, x.Gender, x.PhoneNumber))
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);

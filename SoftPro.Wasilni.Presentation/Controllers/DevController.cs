@@ -33,7 +33,7 @@ public class DevController(AppDbContext dbContext) : BaseController
         await dbContext.Lines.ExecuteDeleteAsync(cancellationToken);
 
         // ── 2. Admin ──────────────────────────────────────────────────────────
-        var admin = CreateAccount("Admin", "0900000000", AdminPassword, Role.Admin);
+        var admin = CreateAccount("Admin", "User", "0900000000", AdminPassword, Role.Admin);
         await dbContext.Accounts.AddAsync(admin, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -60,7 +60,7 @@ public class DevController(AppDbContext dbContext) : BaseController
 
         for (int i = 1; i <= 200; i++)
         {
-            var driver = CreateAccount($"Driver {i}", $"0911{i:D6}", DefaultPassword, Role.Passenger);
+            var driver = CreateAccount("Driver", $"{i}", $"0911{i:D6}", DefaultPassword, Role.Passenger);
             driver.SetPermission(Permission.Driver);
             drivers.Add(driver);
         }
@@ -87,7 +87,7 @@ public class DevController(AppDbContext dbContext) : BaseController
         var passengers = new List<AccountEntity>();
         for (int i = 1; i <= 10; i++)
         {
-            passengers.Add(CreateAccount($"Passenger {i}", $"0912{i:D6}", DefaultPassword, Role.Passenger));
+            passengers.Add(CreateAccount("Passenger", $"{i}", $"0912{i:D6}", DefaultPassword, Role.Passenger));
         }
         await dbContext.Accounts.AddRangeAsync(passengers, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -125,11 +125,11 @@ public class DevController(AppDbContext dbContext) : BaseController
         });
     }
 
-    private static AccountEntity CreateAccount(string name, string phone, string password, Role role)
+    private static AccountEntity CreateAccount(string firstName, string lastName, string phone, string password, Role role)
     {
         byte[] salt = AuthHelper.GenerateSalt();
         var account = AccountEntity.Create(
-            new RegisterModel(name, phone, password, role, key: Guid.NewGuid()),
+            new RegisterModel(firstName, lastName, DateTime.UtcNow.AddYears(-20), Gender.Male, phone, password, role, key: Guid.NewGuid()),
             AuthHelper.HashPasswordWithSalt(password, salt),
             salt,
             AuthHelper.GenerateRefreshToken(),

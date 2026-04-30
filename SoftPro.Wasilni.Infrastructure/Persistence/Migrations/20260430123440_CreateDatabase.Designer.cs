@@ -12,7 +12,7 @@ using SoftPro.Wasilni.Infrastructure.Persistence;
 namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260417205202_CreateDatabase")]
+    [Migration("20260430123440_CreateDatabase")]
     partial class CreateDatabase
     {
         /// <inheritdoc />
@@ -45,10 +45,20 @@ namespace SoftPro.Wasilni.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateOnly>("DateOfBirth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("Key")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
