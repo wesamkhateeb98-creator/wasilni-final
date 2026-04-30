@@ -6,7 +6,7 @@ public class BookingEntity : IEntity
 {
     public int LineId { get; private set; }
     public int PassengerId { get; private set; }
-    public DateOnly Date { get; private set; }
+    public DateOnly Date { get; private set; }  
     public double Latitude { get; private set; }
     public double Longitude { get; private set; }
     public BookingStatus Status { get; private set; }

@@ -17,12 +17,12 @@ public class ReportsController(IReportService reportService) : BaseController
         [FromRoute] int busId,
         [FromQuery] GetReportFilterRequest request,
         CancellationToken cancellationToken)
-        => reportService.GetAsync(new GetReportFilterModel(request.Type, request.From, request.To, null, busId), cancellationToken);
+        => reportService.GetAsync(new GetReportFilterModel(request.Type, request.From, request.To, null, busId,request.BeginDateOfBirth, request.EndDateOfBirth, request.Gender), cancellationToken);
 
     [HttpGet("line/{lineId}")]
     public Task<List<RidershipReportItem>> GetByLineAsync(
         [FromRoute] int lineId,
         [FromQuery] GetReportFilterRequest request,
         CancellationToken cancellationToken)
-        => reportService.GetAsync(new GetReportFilterModel(request.Type, request.From, request.To, lineId, null), cancellationToken);
+        => reportService.GetAsync(new GetReportFilterModel(request.Type, request.From, request.To, lineId, null, request.BeginDateOfBirth, request.EndDateOfBirth, request.Gender), cancellationToken);
 }
