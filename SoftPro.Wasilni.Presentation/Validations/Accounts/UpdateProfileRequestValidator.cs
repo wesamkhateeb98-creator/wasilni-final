@@ -9,24 +9,27 @@ public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequ
     public UpdateProfileRequestValidator()
     {
         RuleFor(x => x.FirstName)
+            .Cascade(CascadeMode.Stop)
             .Length(1, 20)
-            .WithName(Title.Username)
-            .WithMessage(Phrases.InvalidUsername);
+            .WithName(Title.FirstName)
+            .WithMessage(Phrases.InvalidFirstName);
 
         RuleFor(x => x.LastName)
+            .Cascade(CascadeMode.Stop)
             .Length(1, 20)
-            .WithName(Title.Username)
-            .WithMessage(Phrases.InvalidUsername);
+            .WithName(Title.LastName)
+            .WithMessage(Phrases.InvalidLastName);
 
         RuleFor(x => x.DateOfBirth)
-            .NotEmpty()
-            .LessThan(DateTime.Today)
-            .WithName(Title.Username)
-            .WithMessage(Phrases.InvalidUsername);
+            .Cascade(CascadeMode.Stop)
+            .LessThan(DateTime.Today.AddYears(-7))
+            .WithName(Title.DateOfBirth)
+            .WithMessage(Phrases.InvalidDateOfBirth);
 
         RuleFor(x => x.Gender)
             .IsInEnum()
-            .WithName(Title.Username)
-            .WithMessage(Phrases.InvalidUsername);
+            .WithName(Title.Gender)
+            .WithMessage(Phrases.InvalidGender);
+
     }
 }

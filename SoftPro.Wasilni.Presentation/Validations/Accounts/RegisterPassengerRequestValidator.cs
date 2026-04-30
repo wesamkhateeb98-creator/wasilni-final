@@ -26,7 +26,7 @@ public class RegisterPassengerRequestValidator : AbstractValidator<SignupPasseng
         RuleFor(x => x.DateOfBirth)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
-            .LessThan(DateTime.Today)
+            .LessThan(DateTime.Today.AddYears(-7))
             .WithName(Title.DateOfBirth)
             .WithMessage(Phrases.InvalidDateOfBirth);
 
