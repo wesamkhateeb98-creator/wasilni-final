@@ -18,6 +18,7 @@ public static class TrackingHubEvents
     private const string BookingAdded = "OnBookingAdded";
     private const string BookingCancelled = "OnBookingCancelled";
     private const string BookingStatusChanged = "OnBookingStatusChanged";
+    private const string AdminBookingAdded = "OnAdminBookingAdded";
 
     // ─── OnBusActivated ───────────────────────────────────────────────────────
     public static Task OnBusActivatedAsync(
@@ -70,4 +71,14 @@ public static class TrackingHubEvents
         string status,
         CancellationToken ct = default)
         => clients.SendAsync(BookingStatusChanged, new { bookingId, status }, ct);
+
+    // ─── OnAdminBookingAdded (admin receives in real-time) ───────────────────
+    /// <summary>
+    /// Notify all connected admins whenever a new booking is created.
+    /// </summary>
+    public static Task OnAdminBookingAddedAsync(
+        this IClientProxy clients,
+        object bookingData,
+        CancellationToken ct = default)
+        => clients.SendAsync(AdminBookingAdded, bookingData, ct);
 }

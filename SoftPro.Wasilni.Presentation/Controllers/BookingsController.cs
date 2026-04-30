@@ -32,14 +32,24 @@ public class BookingsController(
     [HttpGet]
     [Authorize(Roles = nameof(Role.Admin))]
     public async Task<Page<GetAdminBookingResponse>> GetBookingsAsync(
-        [FromQuery] GetAdminBookingsRequest request,
-        CancellationToken cancellationToken)
+      [FromQuery] GetAdminBookingsRequest request,
+      CancellationToken cancellationToken)
     {
         Page<GetAdminBookingModel> page = await bookingService.GetBookingsForAdminAsync(
             new(request.PageNumber, request.PageSize, request.Status, request.LineId),
             cancellationToken);
 
         return page.ToResponse();
+    }
+
+    // ─── Admin: Subscribe to bookings ─────────────────────────────────────────
+    [HttpGet("subscribe-admin")]
+    [Authorize(Roles = nameof(Role.Admin))]
+    public async Task SubscribeAdminToBookingsAsync(CancellationToken cancellationToken)
+    {
+        // This method is just a marker to help admin clients understand they should connect to hub
+        // The actual subscription happens in TrackingHub.OnConnectedAsync
+        await Task.CompletedTask;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

@@ -32,6 +32,13 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
             await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Line(ctx.LineId), Context.ConnectionAborted);
             await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.LineBooking(ctx.LineId), Context.ConnectionAborted);
         }
+
+        // Check if user is admin and add to admin notifications group
+        var rolesClaim = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        if (!string.IsNullOrEmpty(rolesClaim) && rolesClaim.Contains(nameof(Role.Admin)))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.Admin(), Context.ConnectionAborted);
+        }
     }
 
     // ─── Driver: Activate bus ─────────────────────────────────────────────────

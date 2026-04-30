@@ -4,4 +4,5 @@ public static class TrackingGroups
 {
     public static string Line(int lineId)        => $"line-{lineId}";
     public static string LineBooking(int lineId) => $"line-booking-{lineId}";
+    public static string Admin()  => "admin-notifications";
 }
