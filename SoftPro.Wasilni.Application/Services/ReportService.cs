@@ -19,10 +19,10 @@ public class ReportService(IUnitOfWork unitOfWork) : IReportService
     private async Task<List<RidershipReportItem>> GetDailyAsync(GetReportFilterModel filter, CancellationToken ct)
     {
         var dailyFilter = new GetDailyFilterModel(
-            DateOnly.FromDateTime(filter.From),
-            DateOnly.FromDateTime(filter.To),
-            filter.LineId,
-            filter.BusId);
+        DateOnly.FromDateTime(filter.From),
+        DateOnly.FromDateTime(filter.To),
+        filter.LineId, filter.BusId,
+        filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender);
 
         var entities = await unitOfWork.DailyRidershipRepository.GetDailyAsync(dailyFilter, ct);
 
@@ -42,9 +42,10 @@ public class ReportService(IUnitOfWork unitOfWork) : IReportService
     private async Task<List<RidershipReportItem>> GetMonthlyAsync(GetReportFilterModel filter, CancellationToken ct)
     {
         var monthlyFilter = new GetMonthlyFilterModel(
-            filter.From.Year, filter.From.Month,
-            filter.To.Year,   filter.To.Month,
-            filter.LineId,    filter.BusId);
+         filter.From.Year, filter.From.Month,
+         filter.To.Year, filter.To.Month,
+         filter.LineId, filter.BusId,
+         filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender);
 
         var results = await unitOfWork.DailyRidershipRepository.GetMonthlyAsync(monthlyFilter, ct);
 
@@ -56,8 +57,9 @@ public class ReportService(IUnitOfWork unitOfWork) : IReportService
     private async Task<List<RidershipReportItem>> GetYearlyAsync(GetReportFilterModel filter, CancellationToken ct)
     {
         var yearlyFilter = new GetYearlyFilterModel(
-            filter.From.Year, filter.To.Year,
-            filter.LineId,    filter.BusId);
+       filter.From.Year, filter.To.Year,
+       filter.LineId, filter.BusId,
+       filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender);
 
         var results = await unitOfWork.DailyRidershipRepository.GetYearlyAsync(yearlyFilter, ct);
 
@@ -65,4 +67,6 @@ public class ReportService(IUnitOfWork unitOfWork) : IReportService
             .Select(r => new RidershipReportItem(filter.LineId, filter.BusId, r.Year, null, null, r.TotalRiders))
             .ToList();
     }
+
+
 }

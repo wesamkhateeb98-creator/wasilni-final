@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SoftPro.Wasilni.Application.Abstracts.Repositories;
 using SoftPro.Wasilni.Domain.Entities;
+using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Reports;
 using SoftPro.Wasilni.Infrastructure.Persistence;
 
@@ -62,4 +63,7 @@ public class DailyRidershipRepository(AppDbContext dbContext)
 
         return grouped.Select(g => new YearlyRidershipResult(g.Year, g.Total)).ToList();
     }
+
+    private bool HasPassengerFilter(DateTime? begin, DateTime? end, Gender? gender)
+    => begin.HasValue || end.HasValue || gender.HasValue;
 }
