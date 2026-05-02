@@ -39,8 +39,7 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
                 b.Id,
                 b.LineId,
                 b.PassengerId,
-                string.Join(" ", new[] { b.Passenger.FirstName, b.Passenger.LastName }
-                    .Where(value => !string.IsNullOrWhiteSpace(value))),
+                (b.Passenger.FirstName + " " + b.Passenger.LastName).Trim(),
                 b.Date,
                 b.Latitude,
                 b.Longitude,
@@ -62,7 +61,7 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
         IQueryable<BookingEntity> query = dbContext.Bookings
             .Where(b => filter.Status == null || b.Status == filter.Status)
             .Where(b => filter.LineId == null || b.LineId == filter.LineId)
-            .OrderByDescending(b => b.Date);
+            .OrderByDescending(b => b.CreatedAt);
 
         int count = await query.CountAsync(cancellationToken);
 
@@ -72,8 +71,7 @@ public class BookingRepository(AppDbContext dbContext) : Repository<BookingEntit
             .Select(b => new GetAdminBookingModel(
                 b.Id,
                 b.PassengerId,
-                string.Join(" ", new[] { b.Passenger.FirstName, b.Passenger.LastName }
-                    .Where(value => !string.IsNullOrWhiteSpace(value))),
+                (b.Passenger.FirstName + " " + b.Passenger.LastName).Trim(),
                 b.LineId,
                 b.Line.Name,
                 b.Date,
