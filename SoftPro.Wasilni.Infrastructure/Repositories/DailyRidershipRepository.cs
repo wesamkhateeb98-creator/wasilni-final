@@ -23,7 +23,7 @@ public class DailyRidershipRepository(AppDbContext dbContext)
                 .Where(b => b.Date >= filter.From && b.Date <= filter.To);
 
             if (filter.LineId.HasValue) query = query.Where(b => b.LineId == filter.LineId.Value);
-            query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender);
+            query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
 
             return await query
                 .GroupBy(b => new { b.Date, b.LineId })
@@ -55,7 +55,7 @@ public class DailyRidershipRepository(AppDbContext dbContext)
                 .Where(b => b.Date >= from && b.Date <= to);
 
             if (filter.LineId.HasValue) query = query.Where(b => b.LineId == filter.LineId.Value);
-            query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender);
+            query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
 
             var grouped = await query
                 .GroupBy(b => new { b.Date.Year, b.Date.Month })
@@ -88,7 +88,7 @@ public class DailyRidershipRepository(AppDbContext dbContext)
                 .Where(b => b.Date.Year >= filter.FromYear && b.Date.Year <= filter.ToYear);
 
             if (filter.LineId.HasValue) query = query.Where(b => b.LineId == filter.LineId.Value);
-            query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender);
+            query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
 
             var grouped = await query
                 .GroupBy(b => b.Date.Year)
@@ -116,17 +116,23 @@ public class DailyRidershipRepository(AppDbContext dbContext)
 
     // ─── Helpers ────────────────────────────────────────────────────────────────
 
-    private static bool HasPassengerFilter(GetDailyFilterModel f) => f.BeginDateOfBirth.HasValue || f.EndDateOfBirth.HasValue || f.Gender.HasValue;
-    private static bool HasPassengerFilter(GetMonthlyFilterModel f) => f.BeginDateOfBirth.HasValue || f.EndDateOfBirth.HasValue || f.Gender.HasValue;
-    private static bool HasPassengerFilter(GetYearlyFilterModel f) => f.BeginDateOfBirth.HasValue || f.EndDateOfBirth.HasValue || f.Gender.HasValue;
+    private static bool HasPassengerFilter(GetDailyFilterModel f)
+        => f.BeginDateOfBirth.HasValue || f.EndDateOfBirth.HasValue || f.Gender.HasValue || f.Status.HasValue;
+
+    private static bool HasPassengerFilter(GetMonthlyFilterModel f)
+        => f.BeginDateOfBirth.HasValue || f.EndDateOfBirth.HasValue || f.Gender.HasValue || f.Status.HasValue;
+
+    private static bool HasPassengerFilter(GetYearlyFilterModel f)
+        => f.BeginDateOfBirth.HasValue || f.EndDateOfBirth.HasValue || f.Gender.HasValue || f.Status.HasValue;
 
     private static IQueryable<BookingEntity> ApplyPassengerFilters(
         IQueryable<BookingEntity> query,
-        DateTime? begin, DateTime? end, Gender? gender)
+        DateTime? begin, DateTime? end, Gender? gender, BookingStatus? status)
     {
         if (begin.HasValue) query = query.Where(b => b.Passenger.DateOfBirth >= DateOnly.FromDateTime(begin.Value));
         if (end.HasValue) query = query.Where(b => b.Passenger.DateOfBirth <= DateOnly.FromDateTime(end.Value));
         if (gender.HasValue) query = query.Where(b => b.Passenger.Gender == gender.Value);
+        if (status.HasValue) query = query.Where(b => b.Status == status.Value);
         return query;
     }
 }

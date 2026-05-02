@@ -10,4 +10,5 @@ public record GetReportFilterModel(
     int? BusId,
     DateTime? BeginDateOfBirth,
     DateTime? EndDateOfBirth,
-    Gender? Gender);
+    Gender? Gender,
+    BookingStatus? Status);

@@ -22,7 +22,7 @@ public class ReportService(IUnitOfWork unitOfWork) : IReportService
         DateOnly.FromDateTime(filter.From),
         DateOnly.FromDateTime(filter.To),
         filter.LineId, filter.BusId,
-        filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender);
+        filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
 
         var entities = await unitOfWork.DailyRidershipRepository.GetDailyAsync(dailyFilter, ct);
 
@@ -45,7 +45,7 @@ public class ReportService(IUnitOfWork unitOfWork) : IReportService
          filter.From.Year, filter.From.Month,
          filter.To.Year, filter.To.Month,
          filter.LineId, filter.BusId,
-         filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender);
+         filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
 
         var results = await unitOfWork.DailyRidershipRepository.GetMonthlyAsync(monthlyFilter, ct);
 
@@ -59,7 +59,7 @@ public class ReportService(IUnitOfWork unitOfWork) : IReportService
         var yearlyFilter = new GetYearlyFilterModel(
        filter.From.Year, filter.To.Year,
        filter.LineId, filter.BusId,
-       filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender);
+       filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
 
         var results = await unitOfWork.DailyRidershipRepository.GetYearlyAsync(yearlyFilter, ct);
 

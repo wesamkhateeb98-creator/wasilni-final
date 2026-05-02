@@ -8,4 +8,5 @@ public record GetReportFilterRequest(
     DateTime To,
     DateTime? BeginDateOfBirth,
     DateTime? EndDateOfBirth,
-    Gender? Gender);
+    Gender? Gender,
+    BookingStatus? Status);
