@@ -99,4 +99,12 @@ public class TrackingHub(IBusService busService, IMemoryCache cache) : Hub
 
     public Task UnsubscribeFromLine(int lineId)
         => Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.Line(lineId), Context.ConnectionAborted);
+
+    [Authorize(Roles = nameof(Role.Admin))]
+    public Task SubscribeToLineBooking(int lineId)
+        => Groups.AddToGroupAsync(Context.ConnectionId, TrackingGroups.LineBooking(lineId), Context.ConnectionAborted);
+
+    [Authorize(Roles = nameof(Role.Admin))]
+    public Task UnsubscribeFromLineBooking(int lineId)
+        => Groups.RemoveFromGroupAsync(Context.ConnectionId, TrackingGroups.LineBooking(lineId), Context.ConnectionAborted);
 }
