@@ -27,8 +27,8 @@ public class DailyRidershipRepository(AppDbContext dbContext)
 
             return await query
                 .GroupBy(b => new { b.Date, b.LineId })
+                .OrderBy(g => g.Key.Date)
                 .Select(g => new DailyRidershipData(g.Key.LineId, 0, g.Key.Date, g.Count()))
-                .OrderBy(r => r.Day)
                 .ToListAsync(cancellationToken);
         }
 
