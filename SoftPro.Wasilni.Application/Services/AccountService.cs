@@ -19,9 +19,22 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 {
     private int RefreshDays => jwtOption.Value.RefreshTokenDurationDays;
 
-    public async Task<Page<SearchByPhoneNumberModel>> GetByPhonenumberAsync(int pageNumber, int pageSize, string? phonenumber, CancellationToken cancellationToken)
-       => await unitOfWork.AccountRepository.GetByFilter(pageNumber, pageSize, phonenumber, cancellationToken);
-
+    public async Task<Page<SearchByPhoneNumberModel>> GetByPhonenumberAsync(
+    int pageNumber,
+    int pageSize,
+    string? phonenumber,
+    string? firstName,
+    string? lastName,
+    Gender? gender,
+    DateOnly? dateOfBirthFrom,
+    DateOnly? dateOfBirthTo,
+    CancellationToken cancellationToken)
+    => await unitOfWork.AccountRepository.GetByFilter(
+        pageNumber, pageSize,
+        phonenumber, firstName, lastName,
+        gender,
+        dateOfBirthFrom, dateOfBirthTo,
+        cancellationToken);
 
     public async Task<LoginModelExtended> LoginAsync(LoginModel loginModel, CancellationToken cancellationToken)
     {

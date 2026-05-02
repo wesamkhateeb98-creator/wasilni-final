@@ -45,15 +45,20 @@ public class AccountsController(IAccountService accountService) : BaseController
     [Authorize(Roles = nameof(Role.Admin))]
     public async Task<Page<UserResponse>> GetUsersAsync([FromQuery] GetUsersRequest request, CancellationToken cancellationToken)
     {
-        Page<SearchByPhoneNumberModel> data = await accountService.GetByPhonenumberAsync(request.PageNumber, request.PageSize, request.PhoneNumber, cancellationToken);
-        return data.ToUserResponse();
+        Page<SearchByPhoneNumberModel> data = await accountService.GetByPhonenumberAsync(
+      request.PageNumber, request.PageSize,
+      request.PhoneNumber, request.FirstName, request.LastName,
+      request.Gender,
+      request.DateOfBirthFrom, request.DateOfBirthTo,
+      cancellationToken); 
+      return data.ToUserResponse();
     }
 
     [HttpGet("search/by-phonenumber")]
     [Authorize(Roles = nameof(Role.Admin))]
     public async Task<Page<SearchByPhonenumberResponse>> SearchByPhonenumberAsync([FromQuery] SearchAccountByPhoneNumberRequest request, CancellationToken cancellationToken)
     {
-        Page<SearchByPhoneNumberModel> data = await accountService.GetByPhonenumberAsync(request.PageNumber, request.PageSize, request.Phonenumber, cancellationToken);
+        Page<SearchByPhoneNumberModel> data = await accountService.GetByPhonenumberAsync(request.PageNumber, request.PageSize, request.Phonenumber,null,null,null,null,null, cancellationToken);
         return data.ToResponse();
     }
 
