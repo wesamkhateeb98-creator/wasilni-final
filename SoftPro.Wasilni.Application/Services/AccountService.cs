@@ -70,7 +70,7 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         byte[] salt = AuthHelper.GenerateSalt();
         byte[] passwordHashed = AuthHelper.HashPasswordWithSalt(registerModel.Password, salt);
         string refreshToken = AuthHelper.GenerateRefreshToken();
-        string code = AuthHelper.GenerateCode();
+        string code = "000000";//AuthHelper.GenerateCode();
 
         AccountEntity account = AccountEntity.Create(registerModel, passwordHashed, salt, refreshToken, code, RefreshDays);
 
@@ -83,7 +83,7 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         await unitOfWork.AccountRepository.AddAsync(account, cancellationToken);
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        await WhatsAppRepository.SendCode(registerModel.Phonenumber, code, cancellationToken);
+        //await WhatsAppRepository.SendCode(registerModel.Phonenumber, code, cancellationToken);
 
         return account.Id;
     }
@@ -102,10 +102,10 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
         if (account.SendCodeCount <= 0 && account.CodeExpiration.HasValue && DateTime.UtcNow > account.CodeExpiration.Value.AddMinutes(30))
             account.SetCountCode(3);
 
-        //if (account.SendCodeCount <= 0)
-        //throw new FailedPreconditionException(Phrases.SendCodeMoreTime);
+        if (account.SendCodeCount <= 0)
+            throw new FailedPreconditionException(Phrases.SendCodeMoreTime);
 
-        string code = AuthHelper.GenerateCode();
+        string code = "000000";//AuthHelper.GenerateCode();
 
         account.SetCode(code);
 
@@ -115,10 +115,10 @@ public class AccountService(IUnitOfWork unitOfWork, IWhatsAppRepository WhatsApp
 
         await unitOfWork.CompleteAsync(cancellationToken);
 
-        bool sendSucceeded = await WhatsAppRepository.SendCode(account.PhoneNumber, code, cancellationToken);
+        //bool sendSucceeded = await WhatsAppRepository.SendCode(account.PhoneNumber, code, cancellationToken);
 
-        if (!sendSucceeded)
-            throw new FailedPreconditionException(Phrases.SendCodeFailed);
+        //if (!sendSucceeded)
+        //    throw new FailedPreconditionException(Phrases.SendCodeFailed);
 
         return account.Id;
     }
