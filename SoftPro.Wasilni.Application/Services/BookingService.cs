@@ -107,7 +107,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMemoryCache cache) : IBooki
         if (GeoHelper.Distance(booking.Latitude, booking.Longitude, busLocation.Latitude, busLocation.Longitude) > 100)
             throw new FailedPreconditionException(Phrases.InvalidDistanceBetweenDriverAndPassenger);
 
-        booking.Cancel();
+        booking.NoShown();
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return new BookingActionResult(booking.Id, booking.LineId, booking.PassengerId);

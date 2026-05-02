@@ -32,5 +32,8 @@ public class BookingEntity : IEntity
         };
 
     public void Cancel() => Status = BookingStatus.Cancelled;
+
+    public void NoShown() => Status = BookingStatus.NotShown;
+
     public void MarkPickedUp() => Status = BookingStatus.PickedUp;
 }

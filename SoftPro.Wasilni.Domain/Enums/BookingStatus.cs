@@ -4,5 +4,6 @@ public enum BookingStatus
 {
     Waiting,
     PickedUp,
-    Cancelled
+    Cancelled,
+    NotShown
 }

@@ -23,7 +23,10 @@ public class DailyRidershipRepository(AppDbContext dbContext)
                 .Where(b => b.Date >= filter.From && b.Date <= filter.To);
 
             if (filter.LineId.HasValue) query = query.Where(b => b.LineId == filter.LineId.Value);
-            query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
+            if(HasPassengerFilter(filter))
+            {
+                query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
+            }
 
             return await query
                 .GroupBy(b => new { b.Date, b.LineId })
@@ -111,6 +114,8 @@ public class DailyRidershipRepository(AppDbContext dbContext)
             .OrderBy(g => g.Year)
             .ToListAsync(cancellationToken);
 
+
+
         return results.Select(g => new YearlyRidershipResult(g.Year, g.Total)).ToList();
     }
 
@@ -130,7 +135,7 @@ public class DailyRidershipRepository(AppDbContext dbContext)
         DateTime? begin, DateTime? end, Gender? gender, BookingStatus? status)
     {
         if (begin.HasValue) query = query.Where(b => b.Passenger.DateOfBirth >= DateOnly.FromDateTime(begin.Value));
-        if (end.HasValue) query = query.Where(b => b.Passenger.DateOfBirth <= DateOnly.FromDateTime(end.Value));
+        if (end.HasValue) query = query.Where(b => b.Passenger.DateOfBirth < DateOnly.FromDateTime(end.Value));
         if (gender.HasValue) query = query.Where(b => b.Passenger.Gender == gender.Value);
         if (status.HasValue) query = query.Where(b => b.Status == status.Value);
         return query;
