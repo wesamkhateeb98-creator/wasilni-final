@@ -4,5 +4,6 @@ namespace SoftPro.Wasilni.Application.Abstracts.Services;
 
 public interface IReportService
 {
-    Task<List<RidershipReportItem>> GetAsync(GetReportFilterModel filter, CancellationToken cancellationToken);
+    Task<List<RidershipReportItem>> GetFromBookingsAsync(BookingReportFilterModel filter, CancellationToken cancellationToken);
+    Task<List<RidershipReportItem>> GetFromRidershipAsync(RidershipReportFilterModel filter, CancellationToken cancellationToken);
 }

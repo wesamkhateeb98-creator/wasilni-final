@@ -1,10 +1,12 @@
+// Infrastructure/Repositories/DailyRidershipRepository.cs
 using Microsoft.EntityFrameworkCore;
 using SoftPro.Wasilni.Application.Abstracts.Repositories;
 using SoftPro.Wasilni.Domain.Entities;
 using SoftPro.Wasilni.Domain.Enums;
 using SoftPro.Wasilni.Domain.Models.Reports;
 using SoftPro.Wasilni.Infrastructure.Persistence;
-using SoftPro.Wasilni.Infrastructure.Repositories;
+
+namespace SoftPro.Wasilni.Infrastructure.Repositories;
 
 public class DailyRidershipRepository(AppDbContext dbContext)
     : Repository<DailyRidershipEntity>(dbContext), IDailyRidershipRepository
@@ -15,129 +17,157 @@ public class DailyRidershipRepository(AppDbContext dbContext)
                 r => r.LineId == model.LineId && r.BusId == model.BusId && r.Day == model.Day,
                 cancellationToken);
 
-    public async Task<List<DailyRidershipData>> GetDailyAsync(GetDailyFilterModel filter, CancellationToken cancellationToken)
+    // ═══════════════════════════════════════════════════════════════════
+    // Bookings Source — supports passenger filters
+    // ═══════════════════════════════════════════════════════════════════
+
+    public async Task<List<RidershipReportItem>> GetFromBookingsAsync(
+        BookingReportFilterModel filter, CancellationToken cancellationToken)
     {
-        if (HasPassengerFilter(filter))
+        var from = DateOnly.FromDateTime(filter.From);
+        var to = DateOnly.FromDateTime(filter.To);
+
+        var query = dbContext.Bookings
+            .Where(b => b.Date >= from && b.Date <= to);
+
+        if (filter.LineId.HasValue)
+            query = query.Where(b => b.LineId == filter.LineId.Value);
+        if (filter.BeginDateOfBirth.HasValue)
+            query = query.Where(b => b.Passenger.DateOfBirth >= DateOnly.FromDateTime(filter.BeginDateOfBirth.Value));
+        if (filter.EndDateOfBirth.HasValue)
+            query = query.Where(b => b.Passenger.DateOfBirth < DateOnly.FromDateTime(filter.EndDateOfBirth.Value));
+        if (filter.Gender.HasValue)
+            query = query.Where(b => b.Passenger.Gender == filter.Gender.Value);
+        if (filter.Status.HasValue)
+            query = query.Where(b => b.Status == filter.Status.Value);
+
+        return filter.Type switch
         {
-            var query = dbContext.Bookings
-                .Where(b => b.Date >= filter.From && b.Date <= filter.To);
-
-            if (filter.LineId.HasValue) query = query.Where(b => b.LineId == filter.LineId.Value);
-            if(HasPassengerFilter(filter))
-            {
-                query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
-            }
-
-            return await query
-                .GroupBy(b => new { b.Date, b.LineId })
-                .OrderBy(g => g.Key.Date)
-                .Select(g => new DailyRidershipData(g.Key.LineId, 0, g.Key.Date, g.Count()))
-                .ToListAsync(cancellationToken);
-        }
-
-        var baseQuery = dbContext.DailyRiderships
-            .Where(r => r.Day >= filter.From && r.Day <= filter.To);
-
-        if (filter.LineId.HasValue) baseQuery = baseQuery.Where(r => r.LineId == filter.LineId.Value);
-        if (filter.BusId.HasValue) baseQuery = baseQuery.Where(r => r.BusId == filter.BusId.Value);
-
-        return await baseQuery
-            .OrderBy(r => r.Day)
-            .Select(r => new DailyRidershipData(r.LineId, r.BusId, r.Day, r.NumberOfRiders))
-            .ToListAsync(cancellationToken);
+            ReportType.Daily => await GetDailyFromBookingsAsync(query, filter.LineId, cancellationToken),
+            ReportType.Monthly => await GetMonthlyFromBookingsAsync(query, filter.LineId, cancellationToken),
+            ReportType.Yearly => await GetYearlyFromBookingsAsync(query, filter.LineId, cancellationToken),
+            _ => []
+        };
     }
 
-    public async Task<List<MonthlyRidershipResult>> GetMonthlyAsync(GetMonthlyFilterModel filter, CancellationToken cancellationToken)
+    private static async Task<List<RidershipReportItem>> GetDailyFromBookingsAsync(
+        IQueryable<BookingEntity> query, int? lineId, CancellationToken ct)
     {
-        var from = new DateOnly(filter.FromYear, filter.FromMonth, 1);
-        var to = new DateOnly(filter.ToYear, filter.ToMonth, 1).AddMonths(1).AddDays(-1);
+        var rows = await query
+            .GroupBy(b => new { b.Date, b.LineId })
+            .OrderBy(g => g.Key.Date)
+            .Select(g => new { g.Key.LineId, g.Key.Date, Count = g.Count() })
+            .ToListAsync(ct);
 
-        if (HasPassengerFilter(filter))
+        return rows
+            .Select(r => new RidershipReportItem(r.LineId, null, r.Date.Year, r.Date.Month, r.Date, r.Count))
+            .ToList();
+    }
+
+    private static async Task<List<RidershipReportItem>> GetMonthlyFromBookingsAsync(
+        IQueryable<BookingEntity> query, int? lineId, CancellationToken ct)
+    {
+        var rows = await query
+            .GroupBy(b => new { b.Date.Year, b.Date.Month })
+            .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+            .ToListAsync(ct);
+
+        return rows
+            .Select(r => new RidershipReportItem(lineId, null, r.Year, r.Month, null, r.Count))
+            .ToList();
+    }
+
+    private static async Task<List<RidershipReportItem>> GetYearlyFromBookingsAsync(
+        IQueryable<BookingEntity> query, int? lineId, CancellationToken ct)
+    {
+        var rows = await query
+            .GroupBy(b => b.Date.Year)
+            .OrderBy(g => g.Key)
+            .Select(g => new { Year = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        return rows
+            .Select(r => new RidershipReportItem(lineId, null, r.Year, null, null, r.Count))
+            .ToList();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // DailyRidership Source — fast aggregated counter
+    // ═══════════════════════════════════════════════════════════════════
+
+    public async Task<List<RidershipReportItem>> GetFromRidershipAsync(
+        RidershipReportFilterModel filter, CancellationToken cancellationToken)
+    {
+        var from = DateOnly.FromDateTime(filter.From);
+        var to = DateOnly.FromDateTime(filter.To);
+
+        var query = dbContext.DailyRiderships
+            .Where(r => r.Day >= from && r.Day <= to);
+
+        if (filter.LineId.HasValue)
+            query = query.Where(r => r.LineId == filter.LineId.Value);
+        if (filter.BusId.HasValue)
+            query = query.Where(r => r.BusId == filter.BusId.Value);
+
+        return filter.Type switch
         {
-            var query = dbContext.Bookings
-                .Where(b => b.Date >= from && b.Date <= to);
+            ReportType.Daily => await GetDailyFromRidershipAsync(query, filter, cancellationToken),
+            ReportType.Monthly => await GetMonthlyFromRidershipAsync(query, filter, cancellationToken),
+            ReportType.Yearly => await GetYearlyFromRidershipAsync(query, filter, cancellationToken),
+            _ => []
+        };
+    }
 
-            if (filter.LineId.HasValue) query = query.Where(b => b.LineId == filter.LineId.Value);
-            query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
-
+    private static async Task<List<RidershipReportItem>> GetDailyFromRidershipAsync(
+        IQueryable<DailyRidershipEntity> query, RidershipReportFilterModel filter, CancellationToken ct)
+    {
+        // لاين بدون باص: نجمع كل الباصات في نفس اليوم
+        if (filter.LineId.HasValue && !filter.BusId.HasValue)
+        {
             var grouped = await query
-                .GroupBy(b => new { b.Date.Year, b.Date.Month })
-                .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Count() })
-                .OrderBy(g => g.Year).ThenBy(g => g.Month)
-                .ToListAsync(cancellationToken);
+                .GroupBy(r => r.Day)
+                .OrderBy(g => g.Key)
+                .Select(g => new { Day = g.Key, Total = g.Sum(r => r.NumberOfRiders) })
+                .ToListAsync(ct);
 
-            return grouped.Select(g => new MonthlyRidershipResult(g.Year, g.Month, g.Total)).ToList();
+            return grouped
+                .Select(r => new RidershipReportItem(filter.LineId, null, r.Day.Year, r.Day.Month, r.Day, r.Total))
+                .ToList();
         }
 
-        var baseQuery = dbContext.DailyRiderships.Where(r => r.Day >= from && r.Day <= to);
+        var rows = await query.OrderBy(r => r.Day).ToListAsync(ct);
 
-        if (filter.LineId.HasValue) baseQuery = baseQuery.Where(r => r.LineId == filter.LineId.Value);
-        if (filter.BusId.HasValue) baseQuery = baseQuery.Where(r => r.BusId == filter.BusId.Value);
+        return rows
+            .Select(r => new RidershipReportItem(r.LineId, r.BusId, r.Day.Year, r.Day.Month, r.Day, r.NumberOfRiders))
+            .ToList();
+    }
 
-        var results = await baseQuery
+    private static async Task<List<RidershipReportItem>> GetMonthlyFromRidershipAsync(
+        IQueryable<DailyRidershipEntity> query, RidershipReportFilterModel filter, CancellationToken ct)
+    {
+        var rows = await query
             .GroupBy(r => new { r.Day.Year, r.Day.Month })
+            .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
             .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(r => r.NumberOfRiders) })
-            .OrderBy(g => g.Year).ThenBy(g => g.Month)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
 
-        return results.Select(g => new MonthlyRidershipResult(g.Year, g.Month, g.Total)).ToList();
+        return rows
+            .Select(r => new RidershipReportItem(filter.LineId, filter.BusId, r.Year, r.Month, null, r.Total))
+            .ToList();
     }
 
-    public async Task<List<YearlyRidershipResult>> GetYearlyAsync(GetYearlyFilterModel filter, CancellationToken cancellationToken)
+    private static async Task<List<RidershipReportItem>> GetYearlyFromRidershipAsync(
+        IQueryable<DailyRidershipEntity> query, RidershipReportFilterModel filter, CancellationToken ct)
     {
-        if (HasPassengerFilter(filter))
-        {
-            var query = dbContext.Bookings
-                .Where(b => b.Date.Year >= filter.FromYear && b.Date.Year <= filter.ToYear);
-
-            if (filter.LineId.HasValue) query = query.Where(b => b.LineId == filter.LineId.Value);
-            query = ApplyPassengerFilters(query, filter.BeginDateOfBirth, filter.EndDateOfBirth, filter.Gender, filter.Status);
-
-            var grouped = await query
-                .GroupBy(b => b.Date.Year)
-                .Select(g => new { Year = g.Key, Total = g.Count() })
-                .OrderBy(g => g.Year)
-                .ToListAsync(cancellationToken);
-
-            return grouped.Select(g => new YearlyRidershipResult(g.Year, g.Total)).ToList();
-        }
-
-        var baseQuery = dbContext.DailyRiderships
-            .Where(r => r.Day.Year >= filter.FromYear && r.Day.Year <= filter.ToYear);
-
-        if (filter.LineId.HasValue) baseQuery = baseQuery.Where(r => r.LineId == filter.LineId.Value);
-        if (filter.BusId.HasValue) baseQuery = baseQuery.Where(r => r.BusId == filter.BusId.Value);
-
-        var results = await baseQuery
+        var rows = await query
             .GroupBy(r => r.Day.Year)
+            .OrderBy(g => g.Key)
             .Select(g => new { Year = g.Key, Total = g.Sum(r => r.NumberOfRiders) })
-            .OrderBy(g => g.Year)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
 
-
-
-        return results.Select(g => new YearlyRidershipResult(g.Year, g.Total)).ToList();
-    }
-
-    // ─── Helpers ────────────────────────────────────────────────────────────────
-
-    private static bool HasPassengerFilter(GetDailyFilterModel f)
-        => f.BeginDateOfBirth.HasValue || f.EndDateOfBirth.HasValue || f.Gender.HasValue || f.Status.HasValue;
-
-    private static bool HasPassengerFilter(GetMonthlyFilterModel f)
-        => f.BeginDateOfBirth.HasValue || f.EndDateOfBirth.HasValue || f.Gender.HasValue || f.Status.HasValue;
-
-    private static bool HasPassengerFilter(GetYearlyFilterModel f)
-        => f.BeginDateOfBirth.HasValue || f.EndDateOfBirth.HasValue || f.Gender.HasValue || f.Status.HasValue;
-
-    private static IQueryable<BookingEntity> ApplyPassengerFilters(
-        IQueryable<BookingEntity> query,
-        DateTime? begin, DateTime? end, Gender? gender, BookingStatus? status)
-    {
-        if (begin.HasValue) query = query.Where(b => b.Passenger.DateOfBirth >= DateOnly.FromDateTime(begin.Value));
-        if (end.HasValue) query = query.Where(b => b.Passenger.DateOfBirth < DateOnly.FromDateTime(end.Value));
-        if (gender.HasValue) query = query.Where(b => b.Passenger.Gender == gender.Value);
-        if (status.HasValue) query = query.Where(b => b.Status == status.Value);
-        return query;
+        return rows
+            .Select(r => new RidershipReportItem(filter.LineId, filter.BusId, r.Year, null, null, r.Total))
+            .ToList();
     }
 }

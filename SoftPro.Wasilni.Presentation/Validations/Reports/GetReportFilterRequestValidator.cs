@@ -4,7 +4,7 @@ using SoftPro.Wasilni.Presentation.Models.Request.Report;
 
 namespace SoftPro.Wasilni.Presentation.Validations.Reports;
 
-public class GetReportFilterRequestValidator : AbstractValidator<GetReportFilterRequest>
+public class GetReportFilterRequestValidator : AbstractValidator<GetBookingReportRequest>
 {
     public GetReportFilterRequestValidator()
     {

@@ -1,3 +1,4 @@
+// Presentation/Controllers/ReportsController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SoftPro.Wasilni.Application.Abstracts.Services;
@@ -12,17 +13,55 @@ namespace SoftPro.Wasilni.Presentation.Controllers;
 [Authorize(Roles = nameof(Role.Admin))]
 public class ReportsController(IReportService reportService) : BaseController
 {
-    [HttpGet("bus/{busId}")]
-    public Task<List<RidershipReportItem>> GetByBusAsync(
+    // GET api/v1.0/reports/bus/5/bookings
+    [HttpGet("bus/{busId}/bookings")]
+    public Task<List<RidershipReportItem>> GetBusBookingsAsync(
         [FromRoute] int busId,
-        [FromQuery] GetReportFilterRequest request,
+        [FromQuery] GetBookingReportRequest request,
         CancellationToken cancellationToken)
-        => reportService.GetAsync(new GetReportFilterModel(request.Type, request.From, request.To, null, busId,request.BeginDateOfBirth, request.EndDateOfBirth, request.Gender, request.Status), cancellationToken);
+        => reportService.GetFromBookingsAsync(
+            new BookingReportFilterModel(
+                request.Type, request.From, request.To,
+                LineId: null, // BookingEntity has no BusId
+                request.BeginDateOfBirth, request.EndDateOfBirth,
+                request.Gender, request.Status),
+            cancellationToken);
 
-    [HttpGet("line/{lineId}")]
-    public Task<List<RidershipReportItem>> GetByLineAsync(
-        [FromRoute] int lineId,
-        [FromQuery] GetReportFilterRequest request,
+    // GET api/v1.0/reports/bus/5/ridership
+    [HttpGet("bus/{busId}/ridership")]
+    public Task<List<RidershipReportItem>> GetBusRidershipAsync(
+        [FromRoute] int busId,
+        [FromQuery] GetRidershipReportRequest request,
         CancellationToken cancellationToken)
-        => reportService.GetAsync(new GetReportFilterModel(request.Type, request.From, request.To, lineId, null, request.BeginDateOfBirth, request.EndDateOfBirth, request.Gender, request.Status), cancellationToken);
+        => reportService.GetFromRidershipAsync(
+            new RidershipReportFilterModel(
+                request.Type, request.From, request.To,
+                LineId: null, BusId: busId),
+            cancellationToken);
+
+    // GET api/v1.0/reports/line/3/bookings
+    [HttpGet("line/{lineId}/bookings")]
+    public Task<List<RidershipReportItem>> GetLineBookingsAsync(
+        [FromRoute] int lineId,
+        [FromQuery] GetBookingReportRequest request,
+        CancellationToken cancellationToken)
+        => reportService.GetFromBookingsAsync(
+            new BookingReportFilterModel(
+                request.Type, request.From, request.To,
+                LineId: lineId,
+                request.BeginDateOfBirth, request.EndDateOfBirth,
+                request.Gender, request.Status),
+            cancellationToken);
+
+    // GET api/v1.0/reports/line/3/ridership
+    [HttpGet("line/{lineId}/ridership")]
+    public Task<List<RidershipReportItem>> GetLineRidershipAsync(
+        [FromRoute] int lineId,
+        [FromQuery] GetRidershipReportRequest request,
+        CancellationToken cancellationToken)
+        => reportService.GetFromRidershipAsync(
+            new RidershipReportFilterModel(
+                request.Type, request.From, request.To,
+                LineId: lineId, BusId: null),
+            cancellationToken);
 }
